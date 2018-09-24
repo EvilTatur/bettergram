@@ -57,9 +57,16 @@ public:
 
 	QString settingsDirPath() const;
 	QString settingsPath(const QString &name) const;
-	QSettings settings(const QString &name, QObject *parent = nullptr) const;
+	QSettings settings(const QString &name) const;
 
-	QSettings rssSettings() const;
+	QSettings bettergramSettings() const;
+
+	/// Port settings files from the first Bettergram version.
+	/// At the first version of the Bettergram we save settings at the QSettings() instance,
+	/// on Windows it means that the settings are stored to Windows Registry.
+	/// At the next releases we store Bettergram settings in separated .ini files
+	/// into the `tdata/bettergram` directory.
+	void portSettingsFiles();
 
 	/// Download and parse crypto price list
 	void getCryptoPriceList();
@@ -91,6 +98,7 @@ private:
 
 	QNetworkAccessManager _networkManager;
 
+	bool _isSettingsPorted = false;
 	bool _isPaid = false;
 	BillingPlan _billingPlan = BillingPlan::Unknown;
 
@@ -109,6 +117,8 @@ private:
 	base::Observable<void> _billingPlanObservable;
 
 	explicit BettergramService(QObject *parent = nullptr);
+
+	void portSettingsFiles(QSettings &oldSettings, QSettings &newSettings);
 
 	void setIsPaid(bool isPaid);
 	void setBillingPlan(BillingPlan billingPlan);

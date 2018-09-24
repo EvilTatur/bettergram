@@ -16,6 +16,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/flags.h"
 #include "auth_session.h"
 #include "data/data_session.h"
+#include "bettergram/bettergramservice.h"
 
 #include <QSettings>
 
@@ -58,7 +59,7 @@ void Entry::cachePinnedIndex(int index) {
 			changedChatListPinHook();
 		}
 
-		QSettings settings;
+		QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 		settings.beginGroup(App::self()->phone());
 		settings.beginGroup("pinned");
 		settings.setValue(QString::number(_key.id()), _pinnedIndex);
@@ -237,9 +238,11 @@ void Entry::updateChatListEntry(Row *row) const
 }
 
 void Entry::loadIsFavorite(uint64 id) {
+	Bettergram::BettergramService::instance()->portSettingsFiles();
+
 	QString keyString = QString::number(id);
 
-	QSettings settings;
+	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 	settings.beginGroup(App::self()->phone());
 	settings.beginGroup("favorites");
 
@@ -255,7 +258,8 @@ void Entry::loadIsFavorite(uint64 id) {
 
 void Entry::loadPinnedIndex(uint64 id)
 {
-	QSettings settings;
+	Bettergram::BettergramService::instance()->portSettingsFiles();
+	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 	settings.beginGroup(App::self()->phone());
 	settings.beginGroup("pinned");
 	_pinnedIndex = settings.value(QString::number(id)).toInt();
@@ -272,7 +276,7 @@ void Entry::setIsFavoriteDialog(bool isFavorite) {
 		_isFavorite = isFavorite;
 		QString keyString = QString::number(_key.id());
 
-		QSettings settings;
+		QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 		settings.beginGroup(App::self()->phone());
 		settings.beginGroup("favorites");
 

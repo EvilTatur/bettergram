@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "dialogs_chat_tab_button.h"
 #include "ui/widgets/buttons.h"
 #include "styles/style_dialogs.h"
+#include "bettergram/bettergramservice.h"
 
 namespace Dialogs {
 
@@ -32,7 +33,7 @@ ChatTabs::ChatTabs(QWidget *parent) : TWidget(parent)
 	_oneOnOneButton->setClickedCallback([this] { onTabClicked(_oneOnOneButton->type()); });
 	_announcementButton->setClickedCallback([this] { onTabClicked(_announcementButton->type()); });
 
-	QSettings settings;
+	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 	_type = EntryTypes(static_cast<EntryType>(settings.value(qsl("last_tab"), static_cast<unsigned>(EntryType::None)).toUInt()));
 
    if(_type != EntryType::None)
@@ -52,7 +53,7 @@ void ChatTabs::selectTab(const EntryTypes &type)
 	_oneOnOneButton->unselect();
 	_announcementButton->unselect();
 
-	QSettings settings;
+	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 	settings.setValue(qsl("last_tab"), static_cast<unsigned>(type));
 
 	// Set highlighted icon to the current tab button

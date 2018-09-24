@@ -202,7 +202,7 @@ void RssChannelList::parse()
 
 void RssChannelList::save()
 {
-	QSettings settings = BettergramService::instance()->rssSettings();
+	QSettings settings = BettergramService::instance()->settings(_name);
 
 	settings.beginGroup(_name);
 
@@ -223,7 +223,7 @@ void RssChannelList::save()
 
 void RssChannelList::load()
 {
-	QSettings settings = BettergramService::instance()->rssSettings();
+	QSettings settings = BettergramService::instance()->settings(_name);
 
 	settings.beginGroup(_name);
 

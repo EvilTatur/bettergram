@@ -24,6 +24,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/bettergram_tabbed_selector.h"
 #include "chat_helpers/tabbed_selector.h"
 #include "boxes/send_files_box.h"
+#include "bettergram/bettergramservice.h"
 
 namespace {
 
@@ -42,7 +43,7 @@ AuthSessionSettings::Variables::Variables()
 QByteArray AuthSessionSettings::serialize() const {
 	// Because we can not use App::self()->phone() here we can not use settings group
 	// and we have to save these settings for all accounts
-	QSettings settings;
+	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 	settings.setValue("bettergramSelectorTab", static_cast<qint32>(_variables.bettergramSelectorTab));
 	settings.setValue("bettergramTabsSectionEnabled", _variables.bettergramTabsSectionEnabled);
 
@@ -87,7 +88,7 @@ QByteArray AuthSessionSettings::serialize() const {
 void AuthSessionSettings::constructFromSerialized(const QByteArray &serialized) {
 	// Because we can not use App::self()->phone() here we can not use settings group
 	// and we have to load these settings for all accounts
-	QSettings settings;
+	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
 	qint32 bettergramSelectorTab = settings.value("bettergramSelectorTab", static_cast<qint32>(ChatHelpers::BettergramSelectorTab::Prices)).toInt();
 	qint32 bettergramTabsSectionEnabled = settings.value("bettergramTabsSectionEnabled").toInt();
 

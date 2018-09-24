@@ -132,6 +132,61 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	_checkForUpdatesTimerId = startTimer(_checkForUpdatesPeriod, Qt::VeryCoarseTimer);
 
 	Platform::RegisterCustomScheme();
+
+	_isSettingsPorted = bettergramSettings().value("isSettingsPorted").toBool();
+}
+
+void BettergramService::portSettingsFiles()
+{
+	if (_isSettingsPorted) {
+		return;
+	}
+
+	QSettings oldSettings;
+	QSettings newSettings = bettergramSettings();
+
+	oldSettings.beginGroup(App::self()->phone());
+	newSettings.beginGroup(App::self()->phone());
+
+	oldSettings.beginGroup("favorites");
+	newSettings.beginGroup("favorites");
+
+	portSettingsFiles(oldSettings, newSettings);
+
+	oldSettings.endGroup();
+	newSettings.endGroup();
+
+	oldSettings.beginGroup("pinned");
+	newSettings.beginGroup("pinned");
+
+	portSettingsFiles(oldSettings, newSettings);
+
+	oldSettings.endGroup();
+	newSettings.endGroup();
+
+	newSettings.endGroup();
+
+	newSettings.sync();
+
+	oldSettings.remove("favorites");
+	oldSettings.remove("pinned");
+
+	oldSettings.endGroup();
+
+	oldSettings.remove("last_tab");
+	oldSettings.sync();
+
+	newSettings.setValue("isSettingsPorted", true);
+	newSettings.sync();
+
+	_isSettingsPorted = true;
+}
+
+void BettergramService::portSettingsFiles(QSettings &oldSettings, QSettings &newSettings)
+{
+	for (const QString &key : oldSettings.allKeys()) {
+		newSettings.setValue(key, oldSettings.value(key));
+	}
 }
 
 bool BettergramService::isPaid() const
@@ -217,22 +272,22 @@ base::Observable<void> &BettergramService::billingPlanObservable()
 
 QString BettergramService::settingsDirPath() const
 {
-	return cWorkingDir() + qstr("tdata");
+	return cWorkingDir() + QStringLiteral("tdata/bettergram/");
 }
 
 QString BettergramService::settingsPath(const QString &name) const
 {
-	return QStringLiteral("%1/%2").arg(settingsDirPath(), name);
+	return settingsDirPath() + name + QStringLiteral(".ini");
 }
 
-QSettings BettergramService::settings(const QString &name, QObject *parent) const
+QSettings BettergramService::settings(const QString &name) const
 {
-	return QSettings(settingsPath(name), QSettings::IniFormat, parent);
+	return QSettings(settingsPath(name), QSettings::IniFormat);
 }
 
-QSettings BettergramService::rssSettings() const
+QSettings BettergramService::bettergramSettings() const
 {
-	return settings(QStringLiteral("rss.ini"), nullptr);
+	return settings(QStringLiteral("bettergram"));
 }
 
 void BettergramService::getIsPaid()
