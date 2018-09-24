@@ -9,12 +9,14 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
+						 int rank,
 						 QObject *parent) :
 	QObject(parent),
 	_url(url),
 	_icon(new RemoteImage(iconUrl, st::pricesPanTableImageSize, st::pricesPanTableImageSize)),
 	_name(name),
-	_shortName(shortName)
+	_shortName(shortName),
+	_rank(rank)
 {
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
@@ -23,21 +25,21 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
+						 int rank,
 						 double currentPrice,
 						 double changeFor24Hours,
 						 bool isCurrentPriceGrown,
-						 int originSortIndex,
 						 QObject *parent) :
 	QObject(parent),
 	_url(url),
 	_icon(new RemoteImage(iconUrl, st::pricesPanTableImageSize, st::pricesPanTableImageSize)),
 	_name(name),
 	_shortName(shortName),
+	_rank(rank),
 	_currentPrice(currentPrice),
 	_changeFor24Hours(changeFor24Hours),
 	_isCurrentPriceGrown(isCurrentPriceGrown),
-	_isChangeFor24HoursGrown(_changeFor24Hours >= 0.0),
-	_originSortIndex(originSortIndex)
+	_isChangeFor24HoursGrown(_changeFor24Hours >= 0.0)
 {
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
@@ -48,11 +50,11 @@ CryptoPrice::CryptoPrice(const CryptoPrice &price, QObject *parent) :
 	_icon(price._icon),
 	_name(price._name),
 	_shortName(price._shortName),
+	_rank(price._rank),
 	_currentPrice(price._currentPrice),
 	_changeFor24Hours(price._changeFor24Hours),
 	_isCurrentPriceGrown(price._isCurrentPriceGrown),
-	_isChangeFor24HoursGrown(price._isChangeFor24HoursGrown),
-	_originSortIndex(price._originSortIndex)
+	_isChangeFor24HoursGrown(price._isChangeFor24HoursGrown)
 {
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
@@ -63,10 +65,10 @@ CryptoPrice &CryptoPrice::operator=(const CryptoPrice &price)
 	setIcon(price._icon);
 	setName(price._name);
 	setShortName(price._shortName);
+	setRank(price._rank);
 	setCurrentPrice(price._currentPrice);
 	setChangeFor24Hours(price._changeFor24Hours);
 	setIsCurrentPriceGrown(price._isCurrentPriceGrown);
-	setOriginSortIndex(price._originSortIndex);
 
 	return *this;
 }
@@ -114,6 +116,19 @@ const QString &CryptoPrice::shortName() const
 void CryptoPrice::setShortName(const QString &shortName)
 {
 	_shortName = shortName;
+}
+
+int CryptoPrice::rank() const
+{
+	return _rank;
+}
+
+void CryptoPrice::setRank(int rank)
+{
+	if (_rank != rank) {
+		_rank = rank;
+		emit rankChanged();
+	}
 }
 
 double CryptoPrice::currentPrice() const
@@ -181,19 +196,6 @@ void CryptoPrice::setIsChangeFor24HoursGrown(bool isChangeFor24HoursGrown)
 	if (_isChangeFor24HoursGrown != isChangeFor24HoursGrown) {
 		_isChangeFor24HoursGrown = isChangeFor24HoursGrown;
 		emit isChangeFor24HoursGrownChanged();
-	}
-}
-
-int CryptoPrice::originSortIndex() const
-{
-	return _originSortIndex;
-}
-
-void CryptoPrice::setOriginSortIndex(int originSortIndex)
-{
-	if (_originSortIndex != originSortIndex) {
-		_originSortIndex = originSortIndex;
-		emit isOriginSortIndexChanged();
 	}
 }
 

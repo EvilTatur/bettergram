@@ -18,16 +18,17 @@ public:
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
+						 int rank,
 						 QObject *parent = nullptr);
 
 	explicit CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
+						 int rank,
 						 double currentPrice,
 						 double changeFor24Hours,
 						 bool isCurrentPriceGrown,
-						 int originSortIndex,
 						 QObject *parent = nullptr);
 
 	explicit CryptoPrice(const CryptoPrice &price, QObject *parent = nullptr);
@@ -39,6 +40,8 @@ public:
 	const QPixmap &icon() const;
 	const QString &name() const;
 	const QString &shortName() const;
+
+	int rank() const;
 
 	double currentPrice() const;
 	QString currentPriceString() const;
@@ -53,22 +56,19 @@ public:
 
 	bool isChangeFor24HoursGrown() const;
 
-	int originSortIndex() const;
-
 	void updateData(const CryptoPrice &price);
 
 public slots:
 
 signals:
 	void iconChanged();
+	void rankChanged();
 
 	void currentPriceChanged();
 	void changeFor24HoursChanged();
 
 	void isCurrentPriceGrownChanged();
 	void isChangeFor24HoursGrownChanged();
-
-	void isOriginSortIndexChanged();
 
 protected:
 
@@ -85,6 +85,9 @@ private:
 	/// Short name of the cryptocurrency. For example: BTC
 	QString _shortName;
 
+	/// Rank of the cryptocurrency
+	int _rank = 0;
+
 	/// Current price of the cryptocurrency. For example: $7935.96
 	double _currentPrice;
 
@@ -97,15 +100,12 @@ private:
 	/// True if the price change of the cryptocurrency for the latest 24 hours is grown
 	bool _isChangeFor24HoursGrown;
 
-	/// Sort index in the price list fetched from the server.
-	int _originSortIndex = 0;
-
 	void setUrl(const QUrl &url);
 	void setIcon(const QSharedPointer<RemoteImage> &icon);
 	void setName(const QString &name);
 	void setShortName(const QString &shortName);
+	void setRank(int rank);
 	void setIsChangeFor24HoursGrown(bool isChangeFor24HoursGrown);
-	void setOriginSortIndex(int originSortIndex);
 };
 
 } // namespace Bettergram

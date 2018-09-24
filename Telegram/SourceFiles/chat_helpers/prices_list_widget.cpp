@@ -462,12 +462,12 @@ void PricesListWidget::onCoinColumnSortOrderChanged()
 	_priceHeader->resetSortOrder(false);
 	_24hHeader->resetSortOrder(false);
 
-	CryptoPriceList::SortOrder sortOrder = CryptoPriceList::SortOrder::Origin;
+	CryptoPriceList::SortOrder sortOrder = CryptoPriceList::SortOrder::Rank;
 
 	switch (_coinHeader->sortOrder())
 	{
 	case (TableColumnHeaderWidget::SortOrder::None):
-		sortOrder = CryptoPriceList::SortOrder::Origin;
+		sortOrder = CryptoPriceList::SortOrder::Rank;
 		break;
 	case (TableColumnHeaderWidget::SortOrder::Ascending):
 		sortOrder = CryptoPriceList::SortOrder::NameAscending;
@@ -476,7 +476,7 @@ void PricesListWidget::onCoinColumnSortOrderChanged()
 		sortOrder = CryptoPriceList::SortOrder::NameDescending;
 		break;
 	default:
-		sortOrder = CryptoPriceList::SortOrder::Origin;
+		sortOrder = CryptoPriceList::SortOrder::Rank;
 		LOG(("Can not recognize sort order %1").arg(static_cast<int>(_coinHeader->sortOrder())));
 		break;
 	}
@@ -489,12 +489,12 @@ void PricesListWidget::onPriceColumnSortOrderChanged()
 	_coinHeader->resetSortOrder(false);
 	_24hHeader->resetSortOrder(false);
 
-	CryptoPriceList::SortOrder sortOrder = CryptoPriceList::SortOrder::Origin;
+	CryptoPriceList::SortOrder sortOrder = CryptoPriceList::SortOrder::Rank;
 
 	switch (_priceHeader->sortOrder())
 	{
 	case (TableColumnHeaderWidget::SortOrder::None):
-		sortOrder = CryptoPriceList::SortOrder::Origin;
+		sortOrder = CryptoPriceList::SortOrder::Rank;
 		break;
 	case (TableColumnHeaderWidget::SortOrder::Ascending):
 		sortOrder = CryptoPriceList::SortOrder::PriceAscending;
@@ -503,7 +503,7 @@ void PricesListWidget::onPriceColumnSortOrderChanged()
 		sortOrder = CryptoPriceList::SortOrder::PriceDescending;
 		break;
 	default:
-		sortOrder = CryptoPriceList::SortOrder::Origin;
+		sortOrder = CryptoPriceList::SortOrder::Rank;
 		LOG(("Can not recognize sort order %1").arg(static_cast<int>(_priceHeader->sortOrder())));
 		break;
 	}
@@ -516,12 +516,12 @@ void PricesListWidget::on24hColumnSortOrderChanged()
 	_coinHeader->resetSortOrder(false);
 	_priceHeader->resetSortOrder(false);
 
-	CryptoPriceList::SortOrder sortOrder = CryptoPriceList::SortOrder::Origin;
+	CryptoPriceList::SortOrder sortOrder = CryptoPriceList::SortOrder::Rank;
 
 	switch (_24hHeader->sortOrder())
 	{
 	case (TableColumnHeaderWidget::SortOrder::None):
-		sortOrder = CryptoPriceList::SortOrder::Origin;
+		sortOrder = CryptoPriceList::SortOrder::Rank;
 		break;
 	case (TableColumnHeaderWidget::SortOrder::Ascending):
 		sortOrder = CryptoPriceList::SortOrder::ChangeFor24hAscending;
@@ -530,7 +530,7 @@ void PricesListWidget::on24hColumnSortOrderChanged()
 		sortOrder = CryptoPriceList::SortOrder::ChangeFor24hDescending;
 		break;
 	default:
-		sortOrder = CryptoPriceList::SortOrder::Origin;
+		sortOrder = CryptoPriceList::SortOrder::Rank;
 		LOG(("Can not recognize sort order %1").arg(static_cast<int>(_24hHeader->sortOrder())));
 		break;
 	}

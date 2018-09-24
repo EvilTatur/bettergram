@@ -14,7 +14,7 @@ class CryptoPriceList : public QObject {
 
 public:
 	enum class SortOrder {
-		Origin,
+		Rank,
 
 		NameAscending,
 		NameDescending,
@@ -75,11 +75,11 @@ private:
 	QDateTime _lastUpdate;
 	QString _lastUpdateString;
 
-	SortOrder _sortOrder = SortOrder::Origin;
+	SortOrder _sortOrder = SortOrder::Rank;
 
 	static bool containsName(const QList<CryptoPrice> &priceList, const QString &name);
 
-	static bool sortByOriginSortIndex(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByRank(const CryptoPrice *price1, const CryptoPrice *price2);
 	static bool sortByName(const CryptoPrice *price1, const CryptoPrice *price2);
 	static bool sortByPrice(const CryptoPrice *price1, const CryptoPrice *price2);
 	static bool sortBy24h(const CryptoPrice *price1, const CryptoPrice *price2);
@@ -94,6 +94,7 @@ private:
 					 const QUrl &iconUrl,
 					 const QString &name,
 					 const QString &shortName,
+					 int rank,
 					 double currentPrice,
 					 double changeFor24Hours,
 					 bool isCurrentPriceGrown);
