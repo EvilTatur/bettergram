@@ -4,10 +4,6 @@
 #include <logs.h>
 #include <styles/style_chat_helpers.h>
 
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkRequest>
-#include <QtNetwork/QNetworkReply>
-
 namespace Bettergram {
 
 ResourceGroup::ResourceGroup(QObject *parent) :

@@ -127,7 +127,6 @@ private:
 	void getNextAd(bool reset);
 	void getNextAdLater(bool reset = false);
 
-	void parseCryptoPriceList(const QByteArray &byteArray);
 	bool parseNextAd(const QByteArray &byteArray);
 
 	void getRssFeeds(RssChannelList *rssChannelList, const QSharedPointer<RssChannel> &channel);

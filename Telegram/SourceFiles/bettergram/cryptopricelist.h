@@ -48,7 +48,7 @@ public:
 	SortOrder sortOrder() const;
 	void setSortOrder(const SortOrder &sortOrder);
 
-	void updateData(double marketCap, int freq, const QList<CryptoPrice> &priceList);
+	void parse(const QByteArray &byteArray);
 
 	void createTestData();
 
@@ -97,6 +97,9 @@ private:
 					 double currentPrice,
 					 double changeFor24Hours,
 					 bool isCurrentPriceGrown);
+
+	void updateData(double marketCap, int freq, const QList<CryptoPrice> &priceList);
+
 	void clear();
 };
 

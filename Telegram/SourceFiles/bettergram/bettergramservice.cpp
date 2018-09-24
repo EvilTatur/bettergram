@@ -440,102 +440,12 @@ void BettergramService::getResourceGroupList()
 #endif
 }
 
-void BettergramService::parseCryptoPriceList(const QByteArray &byteArray)
-{
-	if (byteArray.isEmpty()) {
-		LOG(("Can not get crypto price list. Response is emtpy"));
-		return;
-	}
-
-	QJsonParseError parseError;
-	QJsonDocument doc = QJsonDocument::fromJson(byteArray, &parseError);
-
-	if (!doc.isObject()) {
-		LOG(("Can not get crypto price list. Response is wrong. %1 (%2). Response: %3")
-			.arg(parseError.errorString())
-			.arg(parseError.error)
-			.arg(QString::fromUtf8(byteArray)));
-		return;
-	}
-
-	QJsonObject json = doc.object();
-
-	if (json.isEmpty()) {
-		LOG(("Can not get crypto price list. Response is emtpy or wrong"));
-		return;
-	}
-
-	bool success = json.value("success").toBool();
-
-	if (!success) {
-		QString errorMessage = json.value("message").toString("Unknown error");
-		LOG(("Can not get crypto price list. %1").arg(errorMessage));
-		return;
-	}
-
-	double marketCap = json.value("marketCap").toDouble();
-
-	// It is optionally parameter.
-	// This parameter may contain number of seconds for the next update
-	// (5, 60, 90 seconds and etc.).
-	int freq = qAbs(json.value("freq").toInt());
-
-	QList<CryptoPrice> priceList;
-
-	QJsonArray priceListJson = json.value("prices").toArray();
-	int i = 0;
-
-	for (const QJsonValue &jsonValue : priceListJson) {
-		QJsonObject priceJson = jsonValue.toObject();
-
-		if (priceJson.isEmpty()) {
-			LOG(("Price json is empty"));
-			continue;
-		}
-
-		QString name = priceJson.value("name").toString();
-		if (name.isEmpty()) {
-			LOG(("Price name is empty"));
-			continue;
-		}
-
-		QString shortName = priceJson.value("code").toString();
-		if (shortName.isEmpty()) {
-			LOG(("Price code is empty"));
-			continue;
-		}
-
-		QString url = priceJson.value("url").toString();
-		if (url.isEmpty()) {
-			LOG(("Price url is empty"));
-			continue;
-		}
-
-		QString iconUrl = priceJson.value("iconUrl").toString();
-		if (iconUrl.isEmpty()) {
-			LOG(("Price icon url is empty"));
-			continue;
-		}
-
-		double price = priceJson.value("price").toDouble();
-		double changeFor24Hours = priceJson.value("day").toDouble();
-		bool isCurrentPriceGrown = priceJson.value("isGrown").toBool();
-
-		CryptoPrice cryptoPrice(url, iconUrl, name, shortName, price, changeFor24Hours, isCurrentPriceGrown, i);
-		priceList.push_back(cryptoPrice);
-
-		i++;
-	}
-
-	_cryptoPriceList->updateData(marketCap, freq, priceList);
-}
-
 void BettergramService::onGetCryptoPriceListFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 
 	if(reply->error() == QNetworkReply::NoError) {
-		parseCryptoPriceList(reply->readAll());
+		_cryptoPriceList->parse(reply->readAll());
 	} else {
 		LOG(("Can not get crypto price list. %1 (%2)")
 			.arg(reply->errorString())
