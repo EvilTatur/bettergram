@@ -1,7 +1,9 @@
 #include "cryptoprice.h"
 #include "remoteimage.h"
 
-#include "styles/style_chat_helpers.h"
+#include <styles/style_chat_helpers.h>
+
+#include <QSettings>
 
 namespace Bettergram {
 
@@ -191,6 +193,11 @@ bool CryptoPrice::isChangeFor24HoursGrown() const
 	return _isChangeFor24HoursGrown;
 }
 
+bool CryptoPrice::isEmpty() const
+{
+	return !_url.isValid() || !_icon->link().isValid() || _name.isEmpty() || _shortName.isEmpty();
+}
+
 void CryptoPrice::setIsChangeFor24HoursGrown(bool isChangeFor24HoursGrown)
 {
 	if (_isChangeFor24HoursGrown != isChangeFor24HoursGrown) {
@@ -204,6 +211,59 @@ void CryptoPrice::updateData(const CryptoPrice &price)
 	setCurrentPrice(price.currentPrice());
 	setChangeFor24Hours(price.changeFor24Hours());
 	setIsCurrentPriceGrown(price.isCurrentPriceGrown());
+}
+
+void CryptoPrice::save(QSettings &settings) const
+{
+	settings.setValue("link", url().toString());
+	settings.setValue("iconLink", iconUrl().toString());
+	settings.setValue("name", name());
+	settings.setValue("code", shortName());
+	settings.setValue("rank", rank());
+	settings.setValue("price", currentPrice());
+	settings.setValue("changeForDay", changeFor24Hours());
+	settings.setValue("isGrown", isCurrentPriceGrown());
+}
+
+CryptoPrice *CryptoPrice::load(const QSettings &settings)
+{
+	QString name = settings.value("name").toString();
+	if (name.isEmpty()) {
+		LOG(("Price name is empty"));
+		return nullptr;
+	}
+
+	QString shortName = settings.value("code").toString();
+	if (shortName.isEmpty()) {
+		LOG(("Price code is empty"));
+		return nullptr;
+	}
+
+	QString url = settings.value("link").toString();
+	if (url.isEmpty()) {
+		LOG(("Price url is empty"));
+		return nullptr;
+	}
+
+	QString iconUrl = settings.value("iconLink").toString();
+	if (iconUrl.isEmpty()) {
+		LOG(("Price icon url is empty"));
+		return nullptr;
+	}
+
+	int rank = settings.value("rank").toInt();
+	double price = settings.value("price").toDouble();
+	double changeFor24Hours = settings.value("changeForDay").toDouble();
+	bool isCurrentPriceGrown = settings.value("isGrown").toBool();
+
+	return new CryptoPrice(url,
+						   iconUrl,
+						   name,
+						   shortName,
+						   rank,
+						   price,
+						   changeFor24Hours,
+						   isCurrentPriceGrown);
 }
 
 } // namespace Bettergrams

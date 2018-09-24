@@ -66,7 +66,7 @@ int CryptoPriceList::freq() const
 
 void CryptoPriceList::setFreq(int freq)
 {
-	if (freq == 0) {
+	if (freq <= 0) {
 		freq = _defaultFreq;
 	}
 
@@ -93,6 +93,13 @@ void CryptoPriceList::setLastUpdate(const QDateTime &lastUpdate)
 
 		_lastUpdateString = BettergramService::generateLastUpdateString(_lastUpdate, true);
 	}
+}
+
+void CryptoPriceList::addPrivate(CryptoPrice *price)
+{
+	connect(price, &CryptoPrice::iconChanged, this, &CryptoPriceList::updated);
+
+	_list.push_back(price);
 }
 
 CryptoPriceList::const_iterator CryptoPriceList::begin() const
@@ -217,13 +224,79 @@ void CryptoPriceList::parse(const QByteArray &byteArray)
 		double changeFor24Hours = priceJson.value("day").toDouble();
 		bool isCurrentPriceGrown = priceJson.value("isGrown").toBool();
 
-		CryptoPrice cryptoPrice(url, iconUrl, name, shortName, rank, price, changeFor24Hours, isCurrentPriceGrown);
+		CryptoPrice cryptoPrice(url,
+								iconUrl,
+								name,
+								shortName,
+								rank,
+								price,
+								changeFor24Hours,
+								isCurrentPriceGrown);
+
 		priceList.push_back(cryptoPrice);
 
 		i++;
 	}
 
 	updateData(marketCap, freq, priceList);
+}
+
+void CryptoPriceList::save() const
+{
+	QSettings settings = BettergramService::instance()->pricesSettings();
+
+	settings.beginGroup("metadata");
+
+	settings.setValue("marketCap", marketCap());
+	settings.setValue("lastUpdate", lastUpdate());
+
+	if (freq() == _defaultFreq) {
+		settings.remove("freq");
+	} else {
+		settings.setValue("freq", freq());
+	}
+
+	settings.endGroup();
+
+	settings.beginGroup("prices");
+	settings.beginWriteArray("prices", _list.size());
+
+	for (int i = 0; i < _list.size(); ++i) {
+		settings.setArrayIndex(i);
+		_list.at(i)->save(settings);
+	}
+
+	settings.endArray();
+	settings.endGroup();
+}
+
+void CryptoPriceList::load()
+{
+	QSettings settings = BettergramService::instance()->pricesSettings();
+
+	settings.beginGroup("metadata");
+
+	setMarketCap(settings.value("marketCap").toDouble());
+	setFreq(qAbs(settings.value("freq").toInt()));
+	setLastUpdate(settings.value("lastUpdate").toDateTime());
+
+	settings.endGroup();
+
+	settings.beginGroup("prices");
+	int size = settings.beginReadArray("prices");
+
+	for (int i = 0; i < size; ++i) {
+		settings.setArrayIndex(i);
+
+		CryptoPrice *price = CryptoPrice::load(settings);
+
+		if (price) {
+			addPrivate(price);
+		}
+	}
+
+	settings.endArray();
+	settings.endGroup();
 }
 
 void CryptoPriceList::updateData(double marketCap, int freq, const QList<CryptoPrice> &priceList)
@@ -253,9 +326,7 @@ void CryptoPriceList::updateData(double marketCap, int freq, const QList<CryptoP
 		} else {
 			existedPrice = new CryptoPrice(price, this);
 
-			connect(existedPrice, &CryptoPrice::iconChanged, this, &CryptoPriceList::updated);
-
-			_list.push_back(existedPrice);
+			addPrivate(existedPrice);
 		}
 	}
 

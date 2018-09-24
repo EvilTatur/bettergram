@@ -14,6 +14,8 @@ class CryptoPrice : public QObject {
 	Q_OBJECT
 
 public:
+	static CryptoPrice *load(const QSettings &settings);
+
 	explicit CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
 						 const QString &name,
@@ -56,7 +58,11 @@ public:
 
 	bool isChangeFor24HoursGrown() const;
 
+	bool isEmpty() const;
+
 	void updateData(const CryptoPrice &price);
+
+	void save(QSettings &settings) const;
 
 public slots:
 

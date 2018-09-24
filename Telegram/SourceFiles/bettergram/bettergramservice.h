@@ -61,6 +61,7 @@ public:
 	QSettings settings(const QString &name) const;
 
 	QSettings bettergramSettings() const;
+	QSettings pricesSettings() const;
 
 	/// Port settings files from the first Bettergram version.
 	/// At the first version of the Bettergram we save settings at the QSettings() instance,

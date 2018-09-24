@@ -50,6 +50,9 @@ public:
 
 	void parse(const QByteArray &byteArray);
 
+	void save() const;
+	void load();
+
 	void createTestData();
 
 public slots:
@@ -86,6 +89,8 @@ private:
 
 	void setFreq(int freq);
 	void setLastUpdate(const QDateTime &lastUpdate);
+
+	void addPrivate(CryptoPrice *price);
 
 	CryptoPrice *findByName(const QString &name);
 	void sort();

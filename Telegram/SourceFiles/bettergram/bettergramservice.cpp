@@ -14,6 +14,7 @@
 #include <styles/style_chat_helpers.h>
 #include <platform/platform_specific.h>
 
+#include <QCoreApplication>
 #include <QTimer>
 #include <QTimerEvent>
 #include <QJsonDocument>
@@ -135,7 +136,12 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	_resourceGroupList->parseFile(":/bettergram/default-resources.json");
 	getResourceGroupList();
 
-	QTimer::singleShot(_checkForFirstUpdatesDelay, Qt::VeryCoarseTimer, this, [] { checkForNewUpdates(); });
+	_cryptoPriceList->load();
+
+	connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { _cryptoPriceList->save(); });
+
+	QTimer::singleShot(_checkForFirstUpdatesDelay, Qt::VeryCoarseTimer,
+					   this, [] { checkForNewUpdates(); });
 
 	_checkForUpdatesTimerId = startTimer(_checkForUpdatesPeriod, Qt::VeryCoarseTimer);
 
@@ -296,6 +302,11 @@ QSettings BettergramService::settings(const QString &name) const
 QSettings BettergramService::bettergramSettings() const
 {
 	return settings(QStringLiteral("bettergram"));
+}
+
+QSettings BettergramService::pricesSettings() const
+{
+	return settings(QStringLiteral("prices"));
 }
 
 void BettergramService::getIsPaid()
