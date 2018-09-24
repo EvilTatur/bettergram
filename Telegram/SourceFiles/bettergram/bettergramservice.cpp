@@ -40,7 +40,7 @@ BettergramService *BettergramService::init()
 BettergramService *BettergramService::instance()
 {
 	if (!_instance) {
-		_instance = new BettergramService();
+		new BettergramService();
 	}
 
 	return _instance;
@@ -95,6 +95,8 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	_resourceGroupList(new ResourceGroupList(this)),
 	_currentAd(new AdItem(this))
 {
+	_instance = this;
+
 	getIsPaid();
 	getNextAd(true);
 
@@ -211,6 +213,26 @@ base::Observable<void> &BettergramService::isPaidObservable()
 base::Observable<void> &BettergramService::billingPlanObservable()
 {
 	return _billingPlanObservable;
+}
+
+QString BettergramService::settingsDirPath() const
+{
+	return cWorkingDir() + qstr("tdata");
+}
+
+QString BettergramService::settingsPath(const QString &name) const
+{
+	return QStringLiteral("%1/%2").arg(settingsDirPath(), name);
+}
+
+QSettings BettergramService::settings(const QString &name, QObject *parent) const
+{
+	return QSettings(settingsPath(name), QSettings::IniFormat, parent);
+}
+
+QSettings BettergramService::rssSettings() const
+{
+	return settings(QStringLiteral("rss.ini"), nullptr);
 }
 
 void BettergramService::getIsPaid()

@@ -202,9 +202,7 @@ void RssChannelList::parse()
 
 void RssChannelList::save()
 {
-	//TODO: bettergram: save rss channel list to local file, not in the Windows Registry
-
-	QSettings settings;
+	QSettings settings = BettergramService::instance()->rssSettings();
 
 	settings.beginGroup(_name);
 
@@ -225,7 +223,7 @@ void RssChannelList::save()
 
 void RssChannelList::load()
 {
-	QSettings settings;
+	QSettings settings = BettergramService::instance()->rssSettings();
 
 	settings.beginGroup(_name);
 

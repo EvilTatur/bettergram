@@ -1,8 +1,11 @@
 #pragma once
 
 #include "base/observer.h"
+
 #include <QObject>
+#include <QSettings>
 #include <QtNetwork/QNetworkAccessManager>
+
 #include <functional>
 
 namespace Bettergram {
@@ -51,6 +54,12 @@ public:
 
 	base::Observable<void> &isPaidObservable();
 	base::Observable<void> &billingPlanObservable();
+
+	QString settingsDirPath() const;
+	QString settingsPath(const QString &name) const;
+	QSettings settings(const QString &name, QObject *parent = nullptr) const;
+
+	QSettings rssSettings() const;
 
 	/// Download and parse crypto price list
 	void getCryptoPriceList();
