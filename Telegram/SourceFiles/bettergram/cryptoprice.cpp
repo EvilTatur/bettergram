@@ -11,15 +11,20 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
-						 int rank,
+						 bool isNeedDownloadIcon,
 						 QObject *parent) :
 	QObject(parent),
 	_url(url),
-	_icon(new RemoteImage(iconUrl, st::pricesPanTableImageSize, st::pricesPanTableImageSize)),
+	_icon(new RemoteImage(iconUrl,
+						  st::pricesPanTableImageSize,
+						  st::pricesPanTableImageSize,
+						  isNeedDownloadIcon)),
 	_name(name),
-	_shortName(shortName),
-	_rank(rank)
+	_shortName(shortName)
 {
+	updateCurrentPriceString();
+	updateChangeFor24HoursString();
+
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
 
@@ -31,10 +36,14 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 double currentPrice,
 						 double changeFor24Hours,
 						 bool isCurrentPriceGrown,
+						 bool isNeedDownloadIcon,
 						 QObject *parent) :
 	QObject(parent),
 	_url(url),
-	_icon(new RemoteImage(iconUrl, st::pricesPanTableImageSize, st::pricesPanTableImageSize)),
+	_icon(new RemoteImage(iconUrl,
+						  st::pricesPanTableImageSize,
+						  st::pricesPanTableImageSize,
+						  isNeedDownloadIcon)),
 	_name(name),
 	_shortName(shortName),
 	_rank(rank),
@@ -43,6 +52,9 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 	_isCurrentPriceGrown(isCurrentPriceGrown),
 	_isChangeFor24HoursGrown(_changeFor24Hours >= 0.0)
 {
+	updateCurrentPriceString();
+	updateChangeFor24HoursString();
+
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
 
@@ -54,7 +66,9 @@ CryptoPrice::CryptoPrice(const CryptoPrice &price, QObject *parent) :
 	_shortName(price._shortName),
 	_rank(price._rank),
 	_currentPrice(price._currentPrice),
+	_currentPriceString(price._currentPriceString),
 	_changeFor24Hours(price._changeFor24Hours),
+	_changeFor24HoursString(price._changeFor24HoursString),
 	_isCurrentPriceGrown(price._isCurrentPriceGrown),
 	_isChangeFor24HoursGrown(price._isChangeFor24HoursGrown)
 {
@@ -140,18 +154,25 @@ double CryptoPrice::currentPrice() const
 
 QString CryptoPrice::currentPriceString() const
 {
-	if (_currentPrice < 1.0) {
-		return QString("$%1").arg(_currentPrice, 0, 'f', 4);
-	} else {
-		return QString("$%1").arg(_currentPrice, 0, 'f', 2);
-	}
+	return _currentPriceString;
 }
 
 void CryptoPrice::setCurrentPrice(double currentPrice)
 {
 	if (_currentPrice != currentPrice) {
 		_currentPrice = currentPrice;
+		updateCurrentPriceString();
+
 		emit currentPriceChanged();
+	}
+}
+
+void CryptoPrice::updateCurrentPriceString()
+{
+	if (_currentPrice < 1.0) {
+		_currentPriceString = QString("$%1").arg(_currentPrice, 0, 'f', 4);
+	} else {
+		_currentPriceString = QString("$%1").arg(_currentPrice, 0, 'f', 2);
 	}
 }
 
@@ -162,17 +183,23 @@ double CryptoPrice::changeFor24Hours() const
 
 QString CryptoPrice::changeFor24HoursString() const
 {
-	return QString("%1%").arg(_changeFor24Hours, 0, 'f', 2);
+	return _changeFor24HoursString;
 }
 
 void CryptoPrice::setChangeFor24Hours(double changeFor24Hours)
 {
 	if (_changeFor24Hours != changeFor24Hours) {
 		_changeFor24Hours = changeFor24Hours;
+		updateChangeFor24HoursString();
 
 		setIsChangeFor24HoursGrown(_changeFor24Hours >= 0.0);
 		emit changeFor24HoursChanged();
 	}
+}
+
+void CryptoPrice::updateChangeFor24HoursString()
+{
+	_changeFor24HoursString = QString("%1%").arg(_changeFor24Hours, 0, 'f', 2);
 }
 
 bool CryptoPrice::isCurrentPriceGrown() const
@@ -263,7 +290,8 @@ CryptoPrice *CryptoPrice::load(const QSettings &settings)
 						   rank,
 						   price,
 						   changeFor24Hours,
-						   isCurrentPriceGrown);
+						   isCurrentPriceGrown,
+						   false);
 }
 
 } // namespace Bettergrams

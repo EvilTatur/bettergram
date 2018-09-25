@@ -20,7 +20,7 @@ ResourceItem::ResourceItem(const QString &title,
 	_title(title),
 	_description(description),
 	_link(link),
-	_icon(iconLink, st::resourcesPanImageSize, st::resourcesPanImageSize)
+	_icon(iconLink, st::resourcesPanImageSize, st::resourcesPanImageSize, true)
 {
 	connect(&_icon, &RemoteImage::imageChanged, this, &ResourceItem::iconChanged);
 }

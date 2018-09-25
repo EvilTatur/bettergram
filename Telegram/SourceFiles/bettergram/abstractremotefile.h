@@ -12,10 +12,14 @@ class AbstractRemoteFile : public QObject {
 
 public:
 	explicit AbstractRemoteFile(QObject *parent = nullptr);
-	explicit AbstractRemoteFile(const QUrl &link, QObject *parent = nullptr);
+	explicit AbstractRemoteFile(const QUrl &link, bool isNeedDownload, QObject *parent = nullptr);
 
 	const QUrl &link() const;
 	void setLink(const QUrl &link);
+
+	bool isNeedToDownload() const;
+
+	void downloadIfNeeded();
 
 public slots:
 
@@ -23,6 +27,7 @@ signals:
 	void linkChanged();
 
 protected:
+	virtual bool customIsNeedToDownload() const = 0;
 	virtual void dataDownloaded(const QByteArray &data) = 0;
 	virtual void resetData() = 0;
 
@@ -32,6 +37,7 @@ protected:
 
 private:
 	QUrl _link;
+	bool _isDownloading = false;
 
 	void downloadLater();
 };

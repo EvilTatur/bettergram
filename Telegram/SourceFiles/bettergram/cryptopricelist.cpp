@@ -142,10 +142,24 @@ void CryptoPriceList::setSortOrder(const SortOrder &sortOrder)
 	}
 }
 
-void CryptoPriceList::parse(const QByteArray &byteArray)
+bool CryptoPriceList::areNamesFetched() const
 {
+	return _areNamesFetched;
+}
+
+void CryptoPriceList::setAreNamesFetched(bool areNamesFetched)
+{
+	if (_areNamesFetched != areNamesFetched) {
+		_areNamesFetched = areNamesFetched;
+	}
+}
+
+void CryptoPriceList::parseNames(const QByteArray &byteArray)
+{
+	setAreNamesFetched(false);
+
 	if (byteArray.isEmpty()) {
-		LOG(("Can not get crypto price list. Response is emtpy"));
+		LOG(("Can not get crypto price names. Response is emtpy"));
 		return;
 	}
 
@@ -153,7 +167,7 @@ void CryptoPriceList::parse(const QByteArray &byteArray)
 	QJsonDocument doc = QJsonDocument::fromJson(byteArray, &parseError);
 
 	if (!doc.isObject()) {
-		LOG(("Can not get crypto price list. Response is wrong. %1 (%2). Response: %3")
+		LOG(("Can not get crypto price names. Response is wrong. %1 (%2). Response: %3")
 			.arg(parseError.errorString())
 			.arg(parseError.error)
 			.arg(QString::fromUtf8(byteArray)));
@@ -163,7 +177,7 @@ void CryptoPriceList::parse(const QByteArray &byteArray)
 	QJsonObject json = doc.object();
 
 	if (json.isEmpty()) {
-		LOG(("Can not get crypto price list. Response is emtpy or wrong"));
+		LOG(("Can not get crypto price names. Response is emtpy or wrong"));
 		return;
 	}
 
@@ -171,23 +185,21 @@ void CryptoPriceList::parse(const QByteArray &byteArray)
 
 	if (!success) {
 		QString errorMessage = json.value("message").toString("Unknown error");
-		LOG(("Can not get crypto price list. %1").arg(errorMessage));
+		LOG(("Can not get crypto price names. %1").arg(errorMessage));
 		return;
 	}
 
-	double marketCap = json.value("marketCap").toDouble();
+	QJsonArray priceListJson = json.value("data").toArray();
 
-	// It is optionally parameter.
-	// This parameter may contain number of seconds for the next update
-	// (5, 60, 90 seconds and etc.).
-	int freq = qAbs(json.value("freq").toInt());
+	if (priceListJson.isEmpty()) {
+		LOG(("Can not get crypto price names. The 'data' list is empty"));
+		return;
+	}
 
 	QList<CryptoPrice> priceList;
+	bool isAdded = false;
 
-	QJsonArray priceListJson = json.value("prices").toArray();
-	int i = 0;
-
-	for (const QJsonValue &jsonValue : priceListJson) {
+	for (QJsonValue jsonValue : priceListJson) {
 		QJsonObject priceJson = jsonValue.toObject();
 
 		if (priceJson.isEmpty()) {
@@ -195,9 +207,89 @@ void CryptoPriceList::parse(const QByteArray &byteArray)
 			continue;
 		}
 
+		QString url = priceJson.value("url").toString();
+		if (url.isEmpty()) {
+			continue;
+		}
+
+		QString iconUrl = priceJson.value("icon").toString();
+		if (iconUrl.isEmpty()) {
+			continue;
+		}
+
 		QString name = priceJson.value("name").toString();
 		if (name.isEmpty()) {
-			LOG(("Price name is empty"));
+			continue;
+		}
+
+		QString shortName = priceJson.value("code").toString();
+		if (shortName.isEmpty()) {
+			continue;
+		}
+
+		CryptoPrice cryptoPrice(url, iconUrl, name, shortName, false);
+
+		priceList.push_back(cryptoPrice);
+
+		isAdded = true;
+	}
+
+	mergeCryptoPriceList(priceList);
+
+	if (!_list.isEmpty() && isAdded) {
+		setAreNamesFetched(true);
+	}
+}
+
+void CryptoPriceList::parseValues(const QByteArray &byteArray)
+{
+	if (byteArray.isEmpty()) {
+		LOG(("Can not get crypto price values. Response is emtpy"));
+		return;
+	}
+
+	QJsonParseError parseError;
+	QJsonDocument doc = QJsonDocument::fromJson(byteArray, &parseError);
+
+	if (!doc.isObject()) {
+		LOG(("Can not get crypto price values. Response is wrong. %1 (%2). Response: %3")
+			.arg(parseError.errorString())
+			.arg(parseError.error)
+			.arg(QString::fromUtf8(byteArray)));
+		return;
+	}
+
+	QJsonObject json = doc.object();
+
+	if (json.isEmpty()) {
+		LOG(("Can not get crypto price values. Response is emtpy or wrong"));
+		return;
+	}
+
+	bool success = json.value("success").toBool();
+
+	if (!success) {
+		QString errorMessage = json.value("message").toString("Unknown error");
+		LOG(("Can not get crypto price values. %1").arg(errorMessage));
+		return;
+	}
+
+	double marketCap = json.value("cap").toDouble();
+
+	// It is optionally parameter.
+	// This parameter may contain number of seconds for the next update
+	// (5, 60, 90 seconds and etc.).
+	int freq = qAbs(json.value("freq").toInt());
+
+	QJsonArray priceListJson = json.value("data").toObject().value("list").toArray();
+
+	int i = 0;
+
+	for (QJsonValue jsonValue : priceListJson) {
+		QJsonObject priceJson = jsonValue.toObject();
+
+		if (priceJson.isEmpty()) {
+			LOG(("Price json is empty"));
 			continue;
 		}
 
@@ -207,38 +299,35 @@ void CryptoPriceList::parse(const QByteArray &byteArray)
 			continue;
 		}
 
-		QString url = priceJson.value("url").toString();
-		if (url.isEmpty()) {
-			LOG(("Price url is empty"));
-			continue;
-		}
+		QJsonObject deltaJson = priceJson.value("delta").toObject();
 
-		QString iconUrl = priceJson.value("iconUrl").toString();
-		if (iconUrl.isEmpty()) {
-			LOG(("Price icon url is empty"));
+		if (deltaJson.isEmpty()) {
+			LOG(("Price delta is empty"));
 			continue;
 		}
 
 		int rank = priceJson.contains("rank") ? priceJson.value("rank").toInt() : i;
-		double price = priceJson.value("price").toDouble();
-		double changeFor24Hours = priceJson.value("day").toDouble();
-		bool isCurrentPriceGrown = priceJson.value("isGrown").toBool();
+		double currentPrice = priceJson.value("price").toDouble();
 
-		CryptoPrice cryptoPrice(url,
-								iconUrl,
-								name,
-								shortName,
-								rank,
-								price,
-								changeFor24Hours,
-								isCurrentPriceGrown);
+		double changeFor24Hours = deltaJson.value("day").toDouble();
+		double changeForMinute = deltaJson.value("minute").toDouble();
 
-		priceList.push_back(cryptoPrice);
+		CryptoPrice *price = findByShortName(shortName);
+
+		if (!price) {
+			LOG(("Can not find price for crypto currency '%1'").arg(shortName));
+			continue;
+		}
+
+		price->setRank(rank);
+		price->setCurrentPrice(currentPrice);
+		price->setChangeFor24Hours(changeFor24Hours);
+		price->setIsCurrentPriceGrown(changeForMinute >= 0.0);
 
 		i++;
 	}
 
-	updateData(marketCap, freq, priceList);
+	updateData(marketCap, freq);
 }
 
 void CryptoPriceList::save() const
@@ -299,12 +388,15 @@ void CryptoPriceList::load()
 	settings.endGroup();
 }
 
-void CryptoPriceList::updateData(double marketCap, int freq, const QList<CryptoPrice> &priceList)
+void CryptoPriceList::updateData(double marketCap, int freq)
 {
 	setMarketCap(marketCap);
 	setFreq(freq);
 	setLastUpdate(QDateTime::currentDateTime());
+}
 
+void CryptoPriceList::mergeCryptoPriceList(const QList<CryptoPrice> &priceList)
+{
 	// Remove old crypto prices
 	for (QList<CryptoPrice*>::iterator it = _list.begin(); it != _list.end();) {
 		CryptoPrice *price = *it;
@@ -319,24 +411,33 @@ void CryptoPriceList::updateData(double marketCap, int freq, const QList<CryptoP
 
 	// Update existed crypto prices and add new ones
 	for (const CryptoPrice &price : priceList) {
-		CryptoPrice *existedPrice = findByName(price.name());
+		CryptoPrice *existedPrice = findByName(price.name(), price.shortName());
 
 		if (existedPrice) {
 			existedPrice->updateData(price);
 		} else {
-			existedPrice = new CryptoPrice(price, this);
-
-			addPrivate(existedPrice);
+			addPrivate(new CryptoPrice(price, this));
 		}
 	}
 
 	sort();
 }
 
-CryptoPrice *CryptoPriceList::findByName(const QString &name)
+CryptoPrice *CryptoPriceList::findByName(const QString &name, const QString &shortName)
 {
 	for (CryptoPrice *price : _list) {
-		if (price->name() == name) {
+		if (price->name() == name && price->shortName() == shortName) {
+			return price;
+		}
+	}
+
+	return nullptr;
+}
+
+CryptoPrice *CryptoPriceList::findByShortName(const QString &shortName)
+{
+	for (CryptoPrice *price : _list) {
+		if (price->shortName() == shortName) {
 			return price;
 		}
 	}
@@ -367,7 +468,7 @@ bool CryptoPriceList::sortByRankAsc(const CryptoPrice *price1, const CryptoPrice
 bool CryptoPriceList::sortByRankDesc(const CryptoPrice *price1, const CryptoPrice *price2)
 {
 	if (price1->rank() == price2->rank()) {
-		return sortByNameDesc(price1, price2);
+		return sortByNameAsc(price1, price2);
 	}
 
 	return price2->rank() < price1->rank();
@@ -395,7 +496,7 @@ bool CryptoPriceList::sortByPriceAsc(const CryptoPrice *price1, const CryptoPric
 bool CryptoPriceList::sortByPriceDesc(const CryptoPrice *price1, const CryptoPrice *price2)
 {
 	if (price1->currentPrice() == price2->currentPrice()) {
-		return sortByNameDesc(price1, price2);
+		return sortByNameAsc(price1, price2);
 	}
 
 	return price2->currentPrice() < price1->currentPrice();
@@ -413,7 +514,7 @@ bool CryptoPriceList::sortBy24hAsc(const CryptoPrice *price1, const CryptoPrice 
 bool CryptoPriceList::sortBy24hDesc(const CryptoPrice *price1, const CryptoPrice *price2)
 {
 	if (price1->changeFor24Hours() == price2->changeFor24Hours()) {
-		return sortByNameDesc(price1, price2);
+		return sortByNameAsc(price1, price2);
 	}
 
 	return price2->changeFor24Hours() < price1->changeFor24Hours();
@@ -475,11 +576,16 @@ void CryptoPriceList::addTestData(const QUrl &url,
 								  double changeFor24Hours,
 								  bool isCurrentPriceGrown)
 {
-	CryptoPrice *price = new CryptoPrice(url, iconUrl, name, shortName, rank, this);
-
-	price->setCurrentPrice(currentPrice);
-	price->setChangeFor24Hours(changeFor24Hours);
-	price->setIsCurrentPriceGrown(isCurrentPriceGrown);
+	CryptoPrice *price = new CryptoPrice(url,
+										 iconUrl,
+										 name,
+										 shortName,
+										 rank,
+										 currentPrice,
+										 changeFor24Hours,
+										 isCurrentPriceGrown,
+										 true,
+										 this);
 
 	_list.push_back(price);
 }

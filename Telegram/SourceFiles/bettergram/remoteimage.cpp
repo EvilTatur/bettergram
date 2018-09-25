@@ -7,12 +7,16 @@ RemoteImage::RemoteImage(QObject *parent) :
 {
 }
 
-RemoteImage::RemoteImage(const QUrl &link, QObject *parent) :
+RemoteImage::RemoteImage(const QUrl &link, bool isNeedDownloadIcon, QObject *parent) :
 	AbstractRemoteFile(link, parent)
 {
 }
 
-RemoteImage::RemoteImage(const QUrl &link, int scaledWidth, int scaledHeight, QObject *parent) :
+RemoteImage::RemoteImage(const QUrl &link,
+						 int scaledWidth,
+						 int scaledHeight,
+						 bool isNeedDownloadIcon,
+						 QObject *parent) :
 	AbstractRemoteFile(link, parent),
 	_scaledWidth(scaledWidth),
 	_scaledHeight(scaledHeight)
@@ -81,6 +85,11 @@ const QPixmap &RemoteImage::image() const
 bool RemoteImage::isNull() const
 {
 	return _image.isNull();
+}
+
+bool RemoteImage::customIsNeedToDownload() const
+{
+	return isNull();
 }
 
 void RemoteImage::dataDownloaded(const QByteArray &data)

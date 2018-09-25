@@ -70,8 +70,10 @@ public:
 	/// into the `tdata/bettergram` directory.
 	void portSettingsFiles();
 
-	/// Download and parse crypto price list
-	void getCryptoPriceList();
+	/// Download and parse crypto price values.
+	/// If crypto price names are not fetched we fetch it now.
+	/// We should call this every minute while the crypto price tab is shown
+	void getCryptoPriceValues();
 
 	/// Download and parse all RSS feeds
 	void getRssChannelList();
@@ -98,6 +100,7 @@ private:
 	static const int _networkTimeout;
 	static const int _checkForFirstUpdatesDelay;
 	static const int _checkForUpdatesPeriod;
+	static const int _updateCryptoPriceNamesPeriod;
 
 	bool _isSettingsPorted = false;
 	bool _isPaid = false;
@@ -109,6 +112,7 @@ private:
 	ResourceGroupList *_resourceGroupList = nullptr;
 	AdItem *_currentAd = nullptr;
 	int _checkForUpdatesTimerId = 0;
+	int _updateCryptoPriceNamesTimerId = 0;
 	bool _isWindowActive = true;
 	std::function<void()> _isWindowActiveHandler = nullptr;
 
@@ -130,14 +134,21 @@ private:
 
 	bool parseNextAd(const QByteArray &byteArray);
 
+	/// Download and parse crypto price names, without actual price values.
+	/// We should call this at each startup and in every 3 days.
+	void getCryptoPriceNames();
+
 	void getRssFeeds(RssChannelList *rssChannelList, const QSharedPointer<RssChannel> &channel);
 
 private slots:
 	void onUpdateRssChannelList();
 	void onUpdateVideoChannelList();
 
-	void onGetCryptoPriceListFinished();
-	void onGetCryptoPriceListSslFailed(QList<QSslError> errors);
+	void onGetCryptoPriceNamesFinished();
+	void onGetCryptoPriceNamesSslFailed(QList<QSslError> errors);
+
+	void onGetCryptoPriceValuesFinished();
+	void onGetCryptoPriceValuesSslFailed(QList<QSslError> errors);
 
 	void onGetNextAdFinished();
 	void onGetNextAdSslFailed(QList<QSslError> errors);

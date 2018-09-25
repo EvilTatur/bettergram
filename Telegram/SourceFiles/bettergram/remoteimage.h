@@ -13,11 +13,12 @@ class RemoteImage : public AbstractRemoteFile {
 public:
 	explicit RemoteImage(QObject *parent = nullptr);
 
-	explicit RemoteImage(const QUrl &link, QObject *parent = nullptr);
+	explicit RemoteImage(const QUrl &link, bool isNeedDownloadIcon, QObject *parent = nullptr);
 
 	explicit RemoteImage(const QUrl &link,
 						 int scaledWidth,
 						 int scaledHeight,
+						 bool isNeedDownloadIcon,
 						 QObject *parent = nullptr);
 
 	explicit RemoteImage(int scaledWidth,
@@ -42,6 +43,7 @@ signals:
 	void imageChanged();
 
 protected:
+	bool customIsNeedToDownload() const override;
 	void dataDownloaded(const QByteArray &data) override;
 	void resetData() override;
 

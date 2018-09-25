@@ -48,7 +48,10 @@ public:
 	SortOrder sortOrder() const;
 	void setSortOrder(const SortOrder &sortOrder);
 
-	void parse(const QByteArray &byteArray);
+	bool areNamesFetched() const;
+
+	void parseNames(const QByteArray &byteArray);
+	void parseValues(const QByteArray &byteArray);
 
 	void save() const;
 	void load();
@@ -80,6 +83,8 @@ private:
 
 	SortOrder _sortOrder = SortOrder::Rank;
 
+	bool _areNamesFetched = false;
+
 	static bool containsName(const QList<CryptoPrice> &priceList, const QString &name);
 
 	static bool sortByRankAsc(const CryptoPrice *price1, const CryptoPrice *price2);
@@ -96,10 +101,12 @@ private:
 
 	void setFreq(int freq);
 	void setLastUpdate(const QDateTime &lastUpdate);
+	void setAreNamesFetched(bool areNamesFetched);
 
 	void addPrivate(CryptoPrice *price);
 
-	CryptoPrice *findByName(const QString &name);
+	CryptoPrice *findByName(const QString &name, const QString &shortName);
+	CryptoPrice *findByShortName(const QString &shortName);
 	void sort();
 
 	void addTestData(const QUrl &url,
@@ -111,7 +118,8 @@ private:
 					 double changeFor24Hours,
 					 bool isCurrentPriceGrown);
 
-	void updateData(double marketCap, int freq, const QList<CryptoPrice> &priceList);
+	void updateData(double marketCap, int freq);
+	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);
 
 	void clear();
 };

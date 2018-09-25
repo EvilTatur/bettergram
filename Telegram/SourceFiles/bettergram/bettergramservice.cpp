@@ -36,6 +36,9 @@ const int BettergramService::_checkForFirstUpdatesDelay = 2 * 60 * 1000;
 // We check for new updates every 10 hours
 const int BettergramService::_checkForUpdatesPeriod = 10 * 60 * 60 * 1000;
 
+// We update crypto price names every 3 days
+const int BettergramService::_updateCryptoPriceNamesPeriod = 3 * 24 * 60 * 60 * 1000;
+
 BettergramService *BettergramService::init()
 {
 	return instance();
@@ -137,6 +140,10 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	getResourceGroupList();
 
 	_cryptoPriceList->load();
+
+	getCryptoPriceValues();
+
+	_updateCryptoPriceNamesTimerId = startTimer(_updateCryptoPriceNamesPeriod, Qt::VeryCoarseTimer);
 
 	connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { _cryptoPriceList->save(); });
 
@@ -315,9 +322,9 @@ void BettergramService::getIsPaid()
 	//					If the application is not paid then call getNextAd();
 }
 
-void BettergramService::getCryptoPriceList()
+void BettergramService::getCryptoPriceNames()
 {
-	QUrl url("https://http-api.livecoinwatch.com/bettergram/top10");
+	QUrl url("https://http-api.livecoinwatch.com/currencies");
 
 	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
 
@@ -327,7 +334,7 @@ void BettergramService::getCryptoPriceList()
 	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished,
-			this, &BettergramService::onGetCryptoPriceListFinished);
+			this, &BettergramService::onGetCryptoPriceNamesFinished);
 
 	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
 		reply->deleteLater();
@@ -339,11 +346,47 @@ void BettergramService::getCryptoPriceList()
 		reply->deleteLater();
 		networkManager->deleteLater();
 
-		LOG(("Can not get crypto price list due timeout"));
+		LOG(("Can not get crypto price names due timeout"));
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetCryptoPriceListSslFailed);
+			this, &BettergramService::onGetCryptoPriceNamesSslFailed);
+}
+
+void BettergramService::getCryptoPriceValues()
+{
+	if (!_cryptoPriceList->areNamesFetched()) {
+		getCryptoPriceNames();
+		return;
+	}
+
+	QUrl url("https://http-api.livecoinwatch.com/bettergram/top10");
+
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
+	QNetworkRequest request;
+	request.setUrl(url);
+
+	QNetworkReply *reply = networkManager->get(request);
+
+	connect(reply, &QNetworkReply::finished,
+			this, &BettergramService::onGetCryptoPriceValuesFinished);
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get crypto price values due timeout"));
+	});
+
+	connect(reply, &QNetworkReply::sslErrors,
+			this, &BettergramService::onGetCryptoPriceValuesSslFailed);
 }
 
 void BettergramService::getRssChannelList()
@@ -451,20 +494,44 @@ void BettergramService::getResourceGroupList()
 #endif
 }
 
-void BettergramService::onGetCryptoPriceListFinished()
+void BettergramService::onGetCryptoPriceNamesFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 
 	if(reply->error() == QNetworkReply::NoError) {
-		_cryptoPriceList->parse(reply->readAll());
+		_cryptoPriceList->parseNames(reply->readAll());
+
+		if (_cryptoPriceList->areNamesFetched()) {
+			getCryptoPriceValues();
+		}
 	} else {
-		LOG(("Can not get crypto price list. %1 (%2)")
+		LOG(("Can not get crypto price names. %1 (%2)")
 			.arg(reply->errorString())
 			.arg(reply->error()));
 	}
 }
 
-void BettergramService::onGetCryptoPriceListSslFailed(QList<QSslError> errors)
+void BettergramService::onGetCryptoPriceNamesSslFailed(QList<QSslError> errors)
+{
+	for(const QSslError &error : errors) {
+		LOG(("%1").arg(error.errorString()));
+	}
+}
+
+void BettergramService::onGetCryptoPriceValuesFinished()
+{
+	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+	if(reply->error() == QNetworkReply::NoError) {
+		_cryptoPriceList->parseValues(reply->readAll());
+	} else {
+		LOG(("Can not get crypto price values. %1 (%2)")
+			.arg(reply->errorString())
+			.arg(reply->error()));
+	}
+}
+
+void BettergramService::onGetCryptoPriceValuesSslFailed(QList<QSslError> errors)
 {
 	for(const QSslError &error : errors) {
 		LOG(("%1").arg(error.errorString()));
@@ -684,6 +751,8 @@ void BettergramService::timerEvent(QTimerEvent *timerEvent)
 {
 	if (timerEvent->timerId() == _checkForUpdatesTimerId) {
 		checkForNewUpdates();
+	} else if (timerEvent->timerId() == _updateCryptoPriceNamesTimerId) {
+		getCryptoPriceNames();
 	}
 }
 

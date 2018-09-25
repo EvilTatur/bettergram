@@ -92,8 +92,6 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(_24hHeader, &TableColumnHeaderWidget::sortOrderChanged,
 			this, &PricesListWidget::on24hColumnSortOrderChanged);
 
-	BettergramService::instance()->getCryptoPriceList();
-
 	updateControlsGeometry();
 	updateLastUpdateLabel();
 
@@ -125,7 +123,7 @@ void PricesListWidget::afterShown()
 {
 	startPriceListTimer();
 
-	BettergramService::instance()->getCryptoPriceList();
+	BettergramService::instance()->getCryptoPriceValues();
 }
 
 void PricesListWidget::beforeHiding()
@@ -136,7 +134,7 @@ void PricesListWidget::beforeHiding()
 void PricesListWidget::timerEvent(QTimerEvent *event)
 {
 	if (event->timerId() == _timerId) {
-		BettergramService::instance()->getCryptoPriceList();
+		BettergramService::instance()->getCryptoPriceValues();
 	}
 }
 

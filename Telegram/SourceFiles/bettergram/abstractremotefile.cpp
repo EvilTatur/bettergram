@@ -13,11 +13,13 @@ AbstractRemoteFile::AbstractRemoteFile(QObject *parent) :
 {
 }
 
-AbstractRemoteFile::AbstractRemoteFile(const QUrl &link, QObject *parent) :
+AbstractRemoteFile::AbstractRemoteFile(const QUrl &link, bool isNeedDownload, QObject *parent) :
 	QObject(parent),
 	_link(link)
 {
-	download();
+	if (isNeedDownload) {
+		download();
+	}
 }
 
 const QUrl &AbstractRemoteFile::link() const
@@ -39,12 +41,30 @@ void AbstractRemoteFile::setLink(const QUrl &link)
 	}
 }
 
+bool AbstractRemoteFile::isNeedToDownload() const
+{
+	return customIsNeedToDownload();
+}
+
+void AbstractRemoteFile::downloadIfNeeded()
+{
+	if (isNeedToDownload()) {
+		download();
+	}
+}
+
 void AbstractRemoteFile::download()
 {
 	if (!_link.isValid()) {
 		resetData();
 		return;
 	}
+
+	if (_isDownloading) {
+		return;
+	}
+
+	_isDownloading = true;
 
 	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
 
@@ -54,6 +74,8 @@ void AbstractRemoteFile::download()
 	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+		_isDownloading = false;
+
 		if(reply->error() == QNetworkReply::NoError) {
 			dataDownloaded(reply->readAll());
 		} else {
@@ -78,6 +100,8 @@ void AbstractRemoteFile::download()
 
 	QTimer::singleShot(BettergramService::networkTimeout(), Qt::VeryCoarseTimer, networkManager,
 					   [networkManager, reply, this] {
+		_isDownloading = false;
+
 		reply->deleteLater();
 		networkManager->deleteLater();
 

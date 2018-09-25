@@ -22,6 +22,7 @@ signals:
 	void downloaded(QByteArray data);
 
 protected:
+	bool customIsNeedToDownload() const override;
 	void dataDownloaded(const QByteArray &data) override;
 	void resetData() override;
 

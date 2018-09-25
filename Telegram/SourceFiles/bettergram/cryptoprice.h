@@ -20,7 +20,7 @@ public:
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
-						 int rank,
+						 bool isNeedDownloadIcon,
 						 QObject *parent = nullptr);
 
 	explicit CryptoPrice(const QUrl &url,
@@ -31,6 +31,7 @@ public:
 						 double currentPrice,
 						 double changeFor24Hours,
 						 bool isCurrentPriceGrown,
+						 bool isNeedDownloadIcon,
 						 QObject *parent = nullptr);
 
 	explicit CryptoPrice(const CryptoPrice &price, QObject *parent = nullptr);
@@ -44,6 +45,7 @@ public:
 	const QString &shortName() const;
 
 	int rank() const;
+	void setRank(int rank);
 
 	double currentPrice() const;
 	QString currentPriceString() const;
@@ -95,23 +97,27 @@ private:
 	int _rank = 0;
 
 	/// Current price of the cryptocurrency. For example: $7935.96
-	double _currentPrice;
+	double _currentPrice = 0.0;
+	QString _currentPriceString;
 
 	/// Price change of the cryptocurrency for the latest 24 hours. For example: -3.22%
-	double _changeFor24Hours;
+	double _changeFor24Hours = 0.0;
+	QString _changeFor24HoursString;
 
 	/// True if the current price of the cryptocurrency is grown
-	bool _isCurrentPriceGrown;
+	bool _isCurrentPriceGrown = false;
 
 	/// True if the price change of the cryptocurrency for the latest 24 hours is grown
-	bool _isChangeFor24HoursGrown;
+	bool _isChangeFor24HoursGrown = false;
 
 	void setUrl(const QUrl &url);
 	void setIcon(const QSharedPointer<RemoteImage> &icon);
 	void setName(const QString &name);
 	void setShortName(const QString &shortName);
-	void setRank(int rank);
 	void setIsChangeFor24HoursGrown(bool isChangeFor24HoursGrown);
+
+	void updateCurrentPriceString();
+	void updateChangeFor24HoursString();
 };
 
 } // namespace Bettergram

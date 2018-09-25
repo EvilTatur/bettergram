@@ -12,6 +12,10 @@ RemoteTempData::RemoteTempData(const QUrl &link, QObject *parent) :
 {
 }
 
+bool RemoteTempData::customIsNeedToDownload() const {
+	return true;
+}
+
 void RemoteTempData::dataDownloaded(const QByteArray &data)
 {
 	emit downloaded(data);
