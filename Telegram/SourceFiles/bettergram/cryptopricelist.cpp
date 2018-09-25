@@ -281,8 +281,28 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray)
 	// (5, 60, 90 seconds and etc.).
 	int freq = qAbs(json.value("freq").toInt());
 
-	QJsonArray priceListJson = json.value("data").toObject().value("list").toArray();
+	// Now we support two types of requests to server:
+	// 1. Enumerate required prices
+	// 2. Sort prices at the server side and request them at offset and count
+	//
+	// At first case we get results at the `favorites` property,
+	// at the second case we get results at the `list` property.
 
+	QJsonArray favoriteListJson = json.value("data").toObject().value("favorites").toArray();
+
+	if (favoriteListJson.isEmpty) {
+		QJsonArray priceListJson = json.value("data").toObject().value("list").toArray();
+
+		parsePriceListValues(priceListJson);
+	} else {
+		parsePriceListValues(favoriteListJson);
+	}
+
+	updateData(marketCap, freq);
+}
+
+void CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
+{
 	int i = 0;
 
 	for (QJsonValue jsonValue : priceListJson) {
@@ -326,8 +346,6 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray)
 
 		i++;
 	}
-
-	updateData(marketCap, freq);
 }
 
 void CryptoPriceList::save() const

@@ -109,6 +109,12 @@ private:
 	CryptoPrice *findByShortName(const QString &shortName);
 	void sort();
 
+	void parsePriceListValues(const QJsonArray &priceListJson);
+	void updateData(double marketCap, int freq);
+	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);
+
+	void clear();
+
 	void addTestData(const QUrl &url,
 					 const QUrl &iconUrl,
 					 const QString &name,
@@ -117,11 +123,6 @@ private:
 					 double currentPrice,
 					 double changeFor24Hours,
 					 CryptoPrice::Direction minuteDirection);
-
-	void updateData(double marketCap, int freq);
-	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);
-
-	void clear();
 };
 
 } // namespace Bettergram
