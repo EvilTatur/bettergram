@@ -385,19 +385,35 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 		painter.drawText(columnCoinTextLeft, top + st::pricesPanTableRowHeight / 2, columnCoinWidth, st::pricesPanTableRowHeight / 2,
 						 Qt::AlignLeft | Qt::AlignTop, price->shortName());
 
-		if (price->isCurrentPriceGrown()) {
+		switch (price->minuteDirection()) {
+		case(CryptoPrice::Direction::Up): {
 			painter.setPen(st::pricesPanTableUpFg);
-		} else {
+			break;
+		}
+		case(CryptoPrice::Direction::Down): {
 			painter.setPen(st::pricesPanTableDownFg);
+			break;
+		}
+		default: {
+			painter.setPen(st::pricesPanTableNoneFg);
+		}
 		}
 
 		painter.drawText(columnPriceLeft, top, columnPriceWidth, st::pricesPanTableRowHeight,
 						 Qt::AlignRight | Qt::AlignVCenter, price->currentPriceString());
 
-		if (price->isChangeFor24HoursGrown()) {
+		switch (price->dayDirection()) {
+		case(CryptoPrice::Direction::Up): {
 			painter.setPen(st::pricesPanTableUpFg);
-		} else {
+			break;
+		}
+		case(CryptoPrice::Direction::Down): {
 			painter.setPen(st::pricesPanTableDownFg);
+			break;
+		}
+		default: {
+			painter.setPen(st::pricesPanTableNoneFg);
+		}
 		}
 
 		painter.drawText(column24hLeft, top, column24hWidth, st::pricesPanTableRowHeight,

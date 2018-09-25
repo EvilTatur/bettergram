@@ -14,7 +14,14 @@ class CryptoPrice : public QObject {
 	Q_OBJECT
 
 public:
+	enum class Direction {
+		None,
+		Up,
+		Down
+	};
+
 	static CryptoPrice *load(const QSettings &settings);
+	static Direction countDirection(double value);
 
 	explicit CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
@@ -30,7 +37,7 @@ public:
 						 int rank,
 						 double currentPrice,
 						 double changeFor24Hours,
-						 bool isCurrentPriceGrown,
+						 Direction minuteDirection,
 						 bool isNeedDownloadIcon,
 						 QObject *parent = nullptr);
 
@@ -55,10 +62,10 @@ public:
 	QString changeFor24HoursString() const;
 	void setChangeFor24Hours(double changeFor24Hours);
 
-	bool isCurrentPriceGrown() const;
-	void setIsCurrentPriceGrown(bool isCurrentPriceGrown);
+	Direction minuteDirection() const;
+	void setMinuteDirection(Direction minuteDirection);
 
-	bool isChangeFor24HoursGrown() const;
+	Direction dayDirection() const;
 
 	bool isEmpty() const;
 
@@ -75,8 +82,8 @@ signals:
 	void currentPriceChanged();
 	void changeFor24HoursChanged();
 
-	void isCurrentPriceGrownChanged();
-	void isChangeFor24HoursGrownChanged();
+	void minuteDirectionChanged();
+	void dayDirectionChanged();
 
 protected:
 
@@ -104,17 +111,14 @@ private:
 	double _changeFor24Hours = 0.0;
 	QString _changeFor24HoursString;
 
-	/// True if the current price of the cryptocurrency is grown
-	bool _isCurrentPriceGrown = false;
-
-	/// True if the price change of the cryptocurrency for the latest 24 hours is grown
-	bool _isChangeFor24HoursGrown = false;
+	Direction _minuteDirection = Direction::None;
+	Direction _dayDirection = Direction::None;
 
 	void setUrl(const QUrl &url);
 	void setIcon(const QSharedPointer<RemoteImage> &icon);
 	void setName(const QString &name);
 	void setShortName(const QString &shortName);
-	void setIsChangeFor24HoursGrown(bool isChangeFor24HoursGrown);
+	void setDayDirection(Direction dayDirection);
 
 	void updateCurrentPriceString();
 	void updateChangeFor24HoursString();

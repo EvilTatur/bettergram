@@ -555,6 +555,7 @@ pricesPanTableCryptoNameFg: menuIconFgOver; // prices panel table cryptocurrency
 pricesPanTableCryptoShortNameFg: windowSubTextFg; // prices panel table cryptocurrency short name text
 pricesPanTableUpFg: historyPeer2NameFg; // prices panel table price text in case of up (green)
 pricesPanTableDownFg: attentionButtonFg; // prices panel table price text in case of down (red)
+pricesPanTableNoneFg: windowSubTextFg; // prices panel table price text in case of none
 
 newsPanBg: pricesPanBg; // news panel background
 newsPanSiteNameFg: windowSubTextFg; // news panel site name text

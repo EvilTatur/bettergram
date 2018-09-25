@@ -322,7 +322,7 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray)
 		price->setRank(rank);
 		price->setCurrentPrice(currentPrice);
 		price->setChangeFor24Hours(changeFor24Hours);
-		price->setIsCurrentPriceGrown(changeForMinute >= 0.0);
+		price->setMinuteDirection(CryptoPrice::countDirection(changeForMinute));
 
 		i++;
 	}
@@ -555,16 +555,16 @@ void CryptoPriceList::createTestData()
 {
 	clear();
 
-	addTestData(QUrl("https://www.livecoinwatch.com/price/Bitcoin-BTC"), QUrl("https://www.livecoinwatch.com/images/icons32/btc.png"), "Bitcoin", "BTC", 0, 7935.96, -3.22, false);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/Ethereum-ETH"), QUrl("https://www.livecoinwatch.com/images/icons32/eth.png"), "Ethereum", "ETH", 3, 625.64, -8.43, false);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/Ripple-XRP"), QUrl("https://www.livecoinwatch.com/images/icons32/xrp.png"), "Ripple", "XRP", 2, 0.6246, -6.59, true);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/BitcoinCash-BCH"), QUrl("https://www.livecoinwatch.com/images/icons32/bch.png"), "Bitcoin Cash", "BCH", 1, 10640.2856, 9.45, true);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/EOS-EOS"), QUrl("https://www.livecoinwatch.com/images/icons32/eos.png"), "EOS", "EOS", 4, 11.5, -100.6358, true);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/Litecoin-LTC"), QUrl("https://www.livecoinwatch.com/images/icons32/ltc.png"), "Litecoin", "LTC", 5, 125.46, -5.28, true);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/Cardano-ADA"), QUrl("https://www.livecoinwatch.com/images/icons32/ada.png"), "Cardano", "ADA", 6, 0.2151, -9.72, true);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/Stellar-XLM"), QUrl("https://www.livecoinwatch.com/images/icons32/xlm.png"), "Stellar", "XLM", 7, 0.2882, -6.81, true);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/TRON-TRX"), QUrl("https://www.livecoinwatch.com/images/icons32/trx.png"), "TRON", "TRX", 8, 0.071258, -8.4789, true);
-	addTestData(QUrl("https://www.livecoinwatch.com/price/IOTA-MIOTA"), QUrl("https://www.livecoinwatch.com/images/icons32/miota.png"), "IOTA", "MIOTA", 9, 1.55, 8.77, true);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/Bitcoin-BTC"), QUrl("https://www.livecoinwatch.com/images/icons32/btc.png"), "Bitcoin", "BTC", 0, 7935.96, -3.22, CryptoPrice::Direction::Down);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/Ethereum-ETH"), QUrl("https://www.livecoinwatch.com/images/icons32/eth.png"), "Ethereum", "ETH", 3, 625.64, -8.43, CryptoPrice::Direction::Down);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/Ripple-XRP"), QUrl("https://www.livecoinwatch.com/images/icons32/xrp.png"), "Ripple", "XRP", 2, 0.6246, -6.59, CryptoPrice::Direction::Up);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/BitcoinCash-BCH"), QUrl("https://www.livecoinwatch.com/images/icons32/bch.png"), "Bitcoin Cash", "BCH", 1, 10640.2856, 9.45, CryptoPrice::Direction::Up);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/EOS-EOS"), QUrl("https://www.livecoinwatch.com/images/icons32/eos.png"), "EOS", "EOS", 4, 11.5, -100.6358, CryptoPrice::Direction::None);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/Litecoin-LTC"), QUrl("https://www.livecoinwatch.com/images/icons32/ltc.png"), "Litecoin", "LTC", 5, 125.46, -5.28, CryptoPrice::Direction::Up);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/Cardano-ADA"), QUrl("https://www.livecoinwatch.com/images/icons32/ada.png"), "Cardano", "ADA", 6, 0.2151, -9.72, CryptoPrice::Direction::None);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/Stellar-XLM"), QUrl("https://www.livecoinwatch.com/images/icons32/xlm.png"), "Stellar", "XLM", 7, 0.2882, -6.81, CryptoPrice::Direction::None);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/TRON-TRX"), QUrl("https://www.livecoinwatch.com/images/icons32/trx.png"), "TRON", "TRX", 8, 0.071258, -8.4789, CryptoPrice::Direction::Down);
+	addTestData(QUrl("https://www.livecoinwatch.com/price/IOTA-MIOTA"), QUrl("https://www.livecoinwatch.com/images/icons32/miota.png"), "IOTA", "MIOTA", 9, 1.55, 8.77, CryptoPrice::Direction::Up);
 }
 
 void CryptoPriceList::addTestData(const QUrl &url,
@@ -574,7 +574,7 @@ void CryptoPriceList::addTestData(const QUrl &url,
 								  int rank,
 								  double currentPrice,
 								  double changeFor24Hours,
-								  bool isCurrentPriceGrown)
+								  CryptoPrice::Direction minuteDirection)
 {
 	CryptoPrice *price = new CryptoPrice(url,
 										 iconUrl,
@@ -583,7 +583,7 @@ void CryptoPriceList::addTestData(const QUrl &url,
 										 rank,
 										 currentPrice,
 										 changeFor24Hours,
-										 isCurrentPriceGrown,
+										 minuteDirection,
 										 true,
 										 this);
 

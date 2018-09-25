@@ -1,10 +1,10 @@
 #pragma once
 
+#include "cryptoprice.h"
+
 #include <QObject>
 
 namespace Bettergram {
-
-class CryptoPrice;
 
 /**
  * @brief The CryptoPriceList class contains list of CryptoPrice instances.
@@ -116,7 +116,7 @@ private:
 					 int rank,
 					 double currentPrice,
 					 double changeFor24Hours,
-					 bool isCurrentPriceGrown);
+					 CryptoPrice::Direction minuteDirection);
 
 	void updateData(double marketCap, int freq);
 	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);

@@ -35,7 +35,7 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 int rank,
 						 double currentPrice,
 						 double changeFor24Hours,
-						 bool isCurrentPriceGrown,
+						 Direction minuteDirection,
 						 bool isNeedDownloadIcon,
 						 QObject *parent) :
 	QObject(parent),
@@ -49,8 +49,8 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 	_rank(rank),
 	_currentPrice(currentPrice),
 	_changeFor24Hours(changeFor24Hours),
-	_isCurrentPriceGrown(isCurrentPriceGrown),
-	_isChangeFor24HoursGrown(_changeFor24Hours >= 0.0)
+	_minuteDirection(minuteDirection),
+	_dayDirection(countDirection(_changeFor24Hours))
 {
 	updateCurrentPriceString();
 	updateChangeFor24HoursString();
@@ -69,8 +69,8 @@ CryptoPrice::CryptoPrice(const CryptoPrice &price, QObject *parent) :
 	_currentPriceString(price._currentPriceString),
 	_changeFor24Hours(price._changeFor24Hours),
 	_changeFor24HoursString(price._changeFor24HoursString),
-	_isCurrentPriceGrown(price._isCurrentPriceGrown),
-	_isChangeFor24HoursGrown(price._isChangeFor24HoursGrown)
+	_minuteDirection(price._minuteDirection),
+	_dayDirection(price._dayDirection)
 {
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
@@ -84,7 +84,7 @@ CryptoPrice &CryptoPrice::operator=(const CryptoPrice &price)
 	setRank(price._rank);
 	setCurrentPrice(price._currentPrice);
 	setChangeFor24Hours(price._changeFor24Hours);
-	setIsCurrentPriceGrown(price._isCurrentPriceGrown);
+	setMinuteDirection(price._minuteDirection);
 
 	return *this;
 }
@@ -192,7 +192,7 @@ void CryptoPrice::setChangeFor24Hours(double changeFor24Hours)
 		_changeFor24Hours = changeFor24Hours;
 		updateChangeFor24HoursString();
 
-		setIsChangeFor24HoursGrown(_changeFor24Hours >= 0.0);
+		setDayDirection(countDirection(_changeFor24Hours));
 		emit changeFor24HoursChanged();
 	}
 }
@@ -202,22 +202,30 @@ void CryptoPrice::updateChangeFor24HoursString()
 	_changeFor24HoursString = QString("%1%").arg(_changeFor24Hours, 0, 'f', 2);
 }
 
-bool CryptoPrice::isCurrentPriceGrown() const
+CryptoPrice::Direction CryptoPrice::minuteDirection() const
 {
-	return _isCurrentPriceGrown;
+	return _minuteDirection;
 }
 
-void CryptoPrice::setIsCurrentPriceGrown(bool isCurrentPriceGrown)
+void CryptoPrice::setMinuteDirection(Direction minuteDirection)
 {
-	if (_isCurrentPriceGrown != isCurrentPriceGrown) {
-		_isCurrentPriceGrown = isCurrentPriceGrown;
-		emit currentPriceChanged();
+	if (_minuteDirection != minuteDirection) {
+		_minuteDirection = minuteDirection;
+		emit minuteDirectionChanged();
 	}
 }
 
-bool CryptoPrice::isChangeFor24HoursGrown() const
+CryptoPrice::Direction CryptoPrice::dayDirection() const
 {
-	return _isChangeFor24HoursGrown;
+	return _dayDirection;
+}
+
+void CryptoPrice::setDayDirection(Direction dayDirection)
+{
+	if (_dayDirection != dayDirection) {
+		_dayDirection = dayDirection;
+		emit dayDirectionChanged();
+	}
 }
 
 bool CryptoPrice::isEmpty() const
@@ -225,19 +233,11 @@ bool CryptoPrice::isEmpty() const
 	return !_url.isValid() || !_icon->link().isValid() || _name.isEmpty() || _shortName.isEmpty();
 }
 
-void CryptoPrice::setIsChangeFor24HoursGrown(bool isChangeFor24HoursGrown)
-{
-	if (_isChangeFor24HoursGrown != isChangeFor24HoursGrown) {
-		_isChangeFor24HoursGrown = isChangeFor24HoursGrown;
-		emit isChangeFor24HoursGrownChanged();
-	}
-}
-
 void CryptoPrice::updateData(const CryptoPrice &price)
 {
 	setCurrentPrice(price.currentPrice());
 	setChangeFor24Hours(price.changeFor24Hours());
-	setIsCurrentPriceGrown(price.isCurrentPriceGrown());
+	setMinuteDirection(price.minuteDirection());
 }
 
 void CryptoPrice::save(QSettings &settings) const
@@ -249,7 +249,7 @@ void CryptoPrice::save(QSettings &settings) const
 	settings.setValue("rank", rank());
 	settings.setValue("price", currentPrice());
 	settings.setValue("changeForDay", changeFor24Hours());
-	settings.setValue("isGrown", isCurrentPriceGrown());
+	settings.setValue("minuteDirection", static_cast<int>(minuteDirection()));
 }
 
 CryptoPrice *CryptoPrice::load(const QSettings &settings)
@@ -281,7 +281,19 @@ CryptoPrice *CryptoPrice::load(const QSettings &settings)
 	int rank = settings.value("rank").toInt();
 	double price = settings.value("price").toDouble();
 	double changeFor24Hours = settings.value("changeForDay").toDouble();
-	bool isCurrentPriceGrown = settings.value("isGrown").toBool();
+
+	Direction minuteDirection = Direction::None;
+
+	switch (settings.value("minuteDirection").toInt()) {
+	case(static_cast<int>(Direction::Up)):
+		minuteDirection = Direction::Up;
+		break;
+	case(static_cast<int>(Direction::Down)):
+		minuteDirection = Direction::Down;
+		break;
+	default:
+		minuteDirection = Direction::None;
+	}
 
 	return new CryptoPrice(url,
 						   iconUrl,
@@ -290,8 +302,19 @@ CryptoPrice *CryptoPrice::load(const QSettings &settings)
 						   rank,
 						   price,
 						   changeFor24Hours,
-						   isCurrentPriceGrown,
+						   minuteDirection,
 						   false);
+}
+
+CryptoPrice::Direction CryptoPrice::countDirection(double value)
+{
+	if (value > 0.0) {
+		return Direction::Up;
+	} else if (value < 0.0) {
+		return Direction::Down;
+	} else {
+		return Direction::None;
+	}
 }
 
 } // namespace Bettergrams
