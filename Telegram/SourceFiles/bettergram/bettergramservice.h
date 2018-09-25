@@ -4,7 +4,6 @@
 
 #include <QObject>
 #include <QSettings>
-#include <QtNetwork/QNetworkAccessManager>
 
 #include <functional>
 
@@ -32,6 +31,8 @@ public:
 
 	static BettergramService *init();
 	static BettergramService *instance();
+
+	static int networkTimeout();
 
 	static const QString &defaultLastUpdateString();
 	static QString generateLastUpdateString(const QDateTime &dateTime, bool isShowSeconds);
@@ -93,10 +94,9 @@ protected:
 private:
 	static BettergramService *_instance;
 	static const QString _defaultLastUpdateString;
+	static const int _networkTimeout;
 	static const int _checkForFirstUpdatesDelay;
 	static const int _checkForUpdatesPeriod;
-
-	QNetworkAccessManager _networkManager;
 
 	bool _isSettingsPorted = false;
 	bool _isPaid = false;

@@ -18,6 +18,7 @@
 #include <QTimerEvent>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
 
@@ -25,6 +26,8 @@ namespace Bettergram {
 
 BettergramService *BettergramService::_instance = nullptr;
 const QString BettergramService::_defaultLastUpdateString = "...";
+
+const int BettergramService::_networkTimeout = 10 * 1000;
 
 // We check for new updates in 2 minutes after application startup
 const int BettergramService::_checkForFirstUpdatesDelay = 2 * 60 * 1000;
@@ -44,6 +47,11 @@ BettergramService *BettergramService::instance()
 	}
 
 	return _instance;
+}
+
+int BettergramService::networkTimeout()
+{
+	return _networkTimeout;
 }
 
 const QString &BettergramService::defaultLastUpdateString()
@@ -300,13 +308,28 @@ void BettergramService::getCryptoPriceList()
 {
 	QUrl url("https://http-api.livecoinwatch.com/bettergram/top10");
 
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
 	QNetworkRequest request;
 	request.setUrl(url);
 
-	QNetworkReply *reply = _networkManager.get(request);
+	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished,
 			this, &BettergramService::onGetCryptoPriceListFinished);
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get crypto price list due timeout"));
+	});
 
 	connect(reply, &QNetworkReply::sslErrors,
 			this, &BettergramService::onGetCryptoPriceListSslFailed);
@@ -335,10 +358,12 @@ void BettergramService::getRssFeeds(RssChannelList *rssChannelList,
 {
 	channel->startFetching();
 
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
 	QNetworkRequest request;
 	request.setUrl(channel->feedLink());
 
-	QNetworkReply *reply = _networkManager.get(request);
+	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished, this, [rssChannelList, reply, channel] {
 		if(reply->error() == QNetworkReply::NoError) {
@@ -353,8 +378,22 @@ void BettergramService::getRssFeeds(RssChannelList *rssChannelList,
 		}
 
 		rssChannelList->parse();
+	});
 
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
 		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply, channel] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get RSS feeds from the channel %1 due timeout")
+			.arg(channel->feedLink().toString()));
+
+		channel->fetchingFailed();
 	});
 
 	connect(reply, &QNetworkReply::sslErrors, this, [channel] (QList<QSslError> errors) {
@@ -373,13 +412,28 @@ void BettergramService::getResourceGroupList()
 #if 0
 	QUrl url("https://api.bettergram.io/v1/resources");
 
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
 	QNetworkRequest request;
 	request.setUrl(url);
 
-	QNetworkReply *reply = _networkManager.get(request);
+	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished,
 			this, &BettergramService::onGetResourceGroupListFinished);
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get resource group list due timeout"));
+	});
 
 	connect(reply, &QNetworkReply::sslErrors,
 			this, &BettergramService::onGetResourceGroupListSslFailed);
@@ -487,8 +541,6 @@ void BettergramService::onGetCryptoPriceListFinished()
 			.arg(reply->errorString())
 			.arg(reply->error()));
 	}
-
-	reply->deleteLater();
 }
 
 void BettergramService::onGetCryptoPriceListSslFailed(QList<QSslError> errors)
@@ -509,8 +561,6 @@ void BettergramService::onGetResourceGroupListFinished()
 			.arg(reply->errorString())
 			.arg(reply->error()));
 	}
-
-	reply->deleteLater();
 }
 
 void BettergramService::onGetResourceGroupListSslFailed(QList<QSslError> errors)
@@ -534,13 +584,33 @@ void BettergramService::getNextAd(bool reset)
 		url += _currentAd->id();
 	}
 
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
 	QNetworkRequest request;
 	request.setUrl(url);
 
-	QNetworkReply *reply = _networkManager.get(request);
+	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished,
 			this, &BettergramService::onGetNextAdFinished);
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	connect(this, &BettergramService::destroyed, networkManager, [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply, this] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		getNextAdLater();
+	});
 
 	connect(reply, &QNetworkReply::sslErrors,
 			this, &BettergramService::onGetNextAdSslFailed);
@@ -654,8 +724,6 @@ void BettergramService::onGetNextAdFinished()
 
 		getNextAdLater();
 	}
-
-	reply->deleteLater();
 }
 
 void BettergramService::onGetNextAdSslFailed(QList<QSslError> errors)

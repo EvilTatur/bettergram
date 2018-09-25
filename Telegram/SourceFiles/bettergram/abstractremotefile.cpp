@@ -1,4 +1,5 @@
 #include "abstractremotefile.h"
+#include "bettergramservice.h"
 
 #include <QTimer>
 #include <QtNetwork/QNetworkAccessManager>
@@ -68,6 +69,22 @@ void AbstractRemoteFile::download()
 	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
 		reply->deleteLater();
 		networkManager->deleteLater();
+	});
+
+	connect(this, &AbstractRemoteFile::destroyed, networkManager, [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(BettergramService::networkTimeout(), Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply, this] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not download file at %1 due timeout")
+			.arg(_link.toString()));
+
+		downloadLater();
 	});
 
 	connect(reply, &QNetworkReply::sslErrors, this, [](QList<QSslError> errors) {
