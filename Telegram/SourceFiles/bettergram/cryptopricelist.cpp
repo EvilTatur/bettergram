@@ -355,70 +355,93 @@ bool CryptoPriceList::containsName(const QList<CryptoPrice> &priceList, const QS
 	return false;
 }
 
-bool CryptoPriceList::sortByRank(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByRankAsc(const CryptoPrice *price1, const CryptoPrice *price2)
 {
+	if (price1->rank() == price2->rank()) {
+		return sortByNameAsc(price1, price2);
+	}
+
 	return price1->rank() < price2->rank();
 }
 
-bool CryptoPriceList::sortByName(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByRankDesc(const CryptoPrice *price1, const CryptoPrice *price2)
+{
+	if (price1->rank() == price2->rank()) {
+		return sortByNameDesc(price1, price2);
+	}
+
+	return price2->rank() < price1->rank();
+}
+
+bool CryptoPriceList::sortByNameAsc(const CryptoPrice *price1, const CryptoPrice *price2)
 {
 	return QString::compare(price1->name(), price2->name(), Qt::CaseInsensitive) < 0;
 }
 
-bool CryptoPriceList::sortByPrice(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByNameDesc(const CryptoPrice *price1, const CryptoPrice *price2)
 {
+	return QString::compare(price2->name(), price1->name(), Qt::CaseInsensitive) < 0;
+}
+
+bool CryptoPriceList::sortByPriceAsc(const CryptoPrice *price1, const CryptoPrice *price2)
+{
+	if (price1->currentPrice() == price2->currentPrice()) {
+		return sortByNameAsc(price1, price2);
+	}
+
 	return price1->currentPrice() < price2->currentPrice();
 }
 
-bool CryptoPriceList::sortBy24h(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByPriceDesc(const CryptoPrice *price1, const CryptoPrice *price2)
 {
+	if (price1->currentPrice() == price2->currentPrice()) {
+		return sortByNameDesc(price1, price2);
+	}
+
+	return price2->currentPrice() < price1->currentPrice();
+}
+
+bool CryptoPriceList::sortBy24hAsc(const CryptoPrice *price1, const CryptoPrice *price2)
+{
+	if (price1->changeFor24Hours() == price2->changeFor24Hours()) {
+		return sortByNameAsc(price1, price2);
+	}
+
 	return price1->changeFor24Hours() < price2->changeFor24Hours();
+}
+
+bool CryptoPriceList::sortBy24hDesc(const CryptoPrice *price1, const CryptoPrice *price2)
+{
+	if (price1->changeFor24Hours() == price2->changeFor24Hours()) {
+		return sortByNameDesc(price1, price2);
+	}
+
+	return price2->changeFor24Hours() < price1->changeFor24Hours();
 }
 
 void CryptoPriceList::sort()
 {
 	switch (_sortOrder) {
 	case SortOrder::Rank:
-		std::sort(_list.begin(), _list.end(),
-				  [](const CryptoPrice *price1, const CryptoPrice *price2) {
-			return sortByRank(price1, price2);
-		});
+		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByRankAsc);
 		break;
 	case SortOrder::NameAscending:
-		std::sort(_list.begin(), _list.end(),
-				  [](const CryptoPrice *price1, const CryptoPrice *price2) {
-			return sortByName(price1, price2);
-		});
+		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByNameAsc);
 		break;
 	case SortOrder::NameDescending:
-		std::sort(_list.begin(), _list.end(),
-				  [](const CryptoPrice *price1, const CryptoPrice *price2) {
-			return !sortByName(price1, price2);
-		});
+		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByNameDesc);
 		break;
 	case SortOrder::PriceAscending:
-		std::sort(_list.begin(), _list.end(),
-				  [](const CryptoPrice *price1, const CryptoPrice *price2) {
-			return sortByPrice(price1, price2);
-		});
+		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByPriceAsc);
 		break;
 	case SortOrder::PriceDescending:
-		std::sort(_list.begin(), _list.end(),
-				  [](const CryptoPrice *price1, const CryptoPrice *price2) {
-			return !sortByPrice(price1, price2);
-		});
+		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByPriceDesc);
 		break;
 	case SortOrder::ChangeFor24hAscending:
-		std::sort(_list.begin(), _list.end(),
-				  [](const CryptoPrice *price1, const CryptoPrice *price2) {
-			return sortBy24h(price1, price2);
-		});
+		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortBy24hAsc);
 		break;
 	case SortOrder::ChangeFor24hDescending:
-		std::sort(_list.begin(), _list.end(),
-				  [](const CryptoPrice *price1, const CryptoPrice *price2) {
-			return !sortBy24h(price1, price2);
-		});
+		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortBy24hDesc);
 		break;
 	default:
 		break;

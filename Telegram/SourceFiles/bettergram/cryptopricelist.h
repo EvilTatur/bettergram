@@ -82,10 +82,17 @@ private:
 
 	static bool containsName(const QList<CryptoPrice> &priceList, const QString &name);
 
-	static bool sortByRank(const CryptoPrice *price1, const CryptoPrice *price2);
-	static bool sortByName(const CryptoPrice *price1, const CryptoPrice *price2);
-	static bool sortByPrice(const CryptoPrice *price1, const CryptoPrice *price2);
-	static bool sortBy24h(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByRankAsc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByRankDesc(const CryptoPrice *price1, const CryptoPrice *price2);
+
+	static bool sortByNameAsc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByNameDesc(const CryptoPrice *price1, const CryptoPrice *price2);
+
+	static bool sortByPriceAsc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByPriceDesc(const CryptoPrice *price1, const CryptoPrice *price2);
+
+	static bool sortBy24hAsc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortBy24hDesc(const CryptoPrice *price1, const CryptoPrice *price2);
 
 	void setFreq(int freq);
 	void setLastUpdate(const QDateTime &lastUpdate);
