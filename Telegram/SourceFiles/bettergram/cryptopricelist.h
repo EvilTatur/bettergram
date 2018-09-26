@@ -48,6 +48,9 @@ public:
 	SortOrder sortOrder() const;
 	void setSortOrder(const SortOrder &sortOrder);
 
+	const QString &sortString();
+	const QString &orderString();
+
 	bool areNamesFetched() const;
 
 	void parseNames(const QByteArray &byteArray);
@@ -64,7 +67,8 @@ signals:
 	void marketCapChanged();
 	void freqChanged();
 	void sortOrderChanged();
-	void updated();
+	void namesUpdated();
+	void valuesUpdated();
 
 protected:
 
@@ -84,6 +88,9 @@ private:
 	SortOrder _sortOrder = SortOrder::Rank;
 
 	bool _areNamesFetched = false;
+
+	static const QString &getSortString(SortOrder sortOrder);
+	static const QString &getOrderString(SortOrder sortOrder);
 
 	static bool containsName(const QList<CryptoPrice> &priceList, const QString &name);
 

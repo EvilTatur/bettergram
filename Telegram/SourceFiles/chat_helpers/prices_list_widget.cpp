@@ -96,9 +96,20 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	updateLastUpdateLabel();
 
 	CryptoPriceList *priceList = BettergramService::instance()->cryptoPriceList();
-	connect(priceList, &CryptoPriceList::updated, this, &PricesListWidget::onPriceListUpdated);
+
+	connect(priceList, &CryptoPriceList::namesUpdated,
+			this, &PricesListWidget::onCryptoPriceNamesUpdated);
+
+	connect(priceList, &CryptoPriceList::valuesUpdated,
+			this, &PricesListWidget::onCryptoPriceValuesUpdated);
 
 	setMouseTracking(true);
+}
+
+void PricesListWidget::getCryptoPriceValues()
+{
+	//TODO: bettergram: realize PricesListWidget::getCryptoPriceValues()
+	BettergramService::instance()->getCryptoPriceValues(0, 10);
 }
 
 void PricesListWidget::refreshRecent()
@@ -122,8 +133,7 @@ object_ptr<TabbedSelector::InnerFooter> PricesListWidget::createFooter()
 void PricesListWidget::afterShown()
 {
 	startPriceListTimer();
-
-	BettergramService::instance()->getCryptoPriceValues();
+	getCryptoPriceValues();
 }
 
 void PricesListWidget::beforeHiding()
@@ -134,7 +144,7 @@ void PricesListWidget::beforeHiding()
 void PricesListWidget::timerEvent(QTimerEvent *event)
 {
 	if (event->timerId() == _timerId) {
-		BettergramService::instance()->getCryptoPriceValues();
+		getCryptoPriceValues();
 	}
 }
 
@@ -552,7 +562,12 @@ void PricesListWidget::on24hColumnSortOrderChanged()
 	BettergramService::instance()->cryptoPriceList()->setSortOrder(sortOrder);
 }
 
-void PricesListWidget::onPriceListUpdated()
+void PricesListWidget::onCryptoPriceNamesUpdated()
+{
+	getCryptoPriceValues();
+}
+
+void PricesListWidget::onCryptoPriceValuesUpdated()
 {
 	updateLastUpdateLabel();
 	updateMarketCap();

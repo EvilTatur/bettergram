@@ -11,6 +11,60 @@ namespace Bettergram {
 
 const int CryptoPriceList::_defaultFreq = 60;
 
+const QString &CryptoPriceList::getSortString(SortOrder sortOrder)
+{
+	static const QString rank = QStringLiteral("rank");
+	static const QString name = QStringLiteral("name");
+	static const QString price = QStringLiteral("price");
+	static const QString delta = QStringLiteral("delta");
+
+	switch (sortOrder) {
+	case(SortOrder::Rank):
+		return rank;
+	case(SortOrder::NameAscending):
+		return name;
+	case(SortOrder::NameDescending):
+		return name;
+	case(SortOrder::PriceAscending):
+		return price;
+	case(SortOrder::PriceDescending):
+		return price;
+	case(SortOrder::ChangeFor24hAscending):
+		return delta;
+	case(SortOrder::ChangeFor24hDescending):
+		return delta;
+	default:
+		LOG(("Can not recognize sort order value %1").arg(static_cast<int>(sortOrder)));
+		return rank;
+	}
+}
+
+const QString &CryptoPriceList::getOrderString(SortOrder sortOrder)
+{
+	static const QString ascending = QStringLiteral("ascending");
+	static const QString descending = QStringLiteral("descending");
+
+	switch (sortOrder) {
+	case(SortOrder::Rank):
+		return ascending;
+	case(SortOrder::NameAscending):
+		return ascending;
+	case(SortOrder::NameDescending):
+		return descending;
+	case(SortOrder::PriceAscending):
+		return ascending;
+	case(SortOrder::PriceDescending):
+		return descending;
+	case(SortOrder::ChangeFor24hAscending):
+		return ascending;
+	case(SortOrder::ChangeFor24hDescending):
+		return descending;
+	default:
+		LOG(("Can not recognize sort order value %1").arg(static_cast<int>(sortOrder)));
+		return ascending;
+	}
+}
+
 CryptoPriceList::CryptoPriceList(QObject *parent) :
 	QObject(parent),
 	_freq(_defaultFreq),
@@ -97,7 +151,7 @@ void CryptoPriceList::setLastUpdate(const QDateTime &lastUpdate)
 
 void CryptoPriceList::addPrivate(CryptoPrice *price)
 {
-	connect(price, &CryptoPrice::iconChanged, this, &CryptoPriceList::updated);
+	connect(price, &CryptoPrice::iconChanged, this, &CryptoPriceList::valuesUpdated);
 
 	_list.push_back(price);
 }
@@ -140,6 +194,16 @@ void CryptoPriceList::setSortOrder(const SortOrder &sortOrder)
 		sort();
 		emit sortOrderChanged();
 	}
+}
+
+const QString &CryptoPriceList::sortString()
+{
+	return getSortString(_sortOrder);
+}
+
+const QString &CryptoPriceList::orderString()
+{
+	return getOrderString(_sortOrder);
 }
 
 bool CryptoPriceList::areNamesFetched() const
@@ -239,6 +303,10 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 	if (!_list.isEmpty() && isAdded) {
 		setAreNamesFetched(true);
 	}
+
+	if (_areNamesFetched) {
+		emit namesUpdated();
+	}
 }
 
 void CryptoPriceList::parseValues(const QByteArray &byteArray)
@@ -290,7 +358,7 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray)
 
 	QJsonArray favoriteListJson = json.value("data").toObject().value("favorites").toArray();
 
-	if (favoriteListJson.isEmpty) {
+	if (favoriteListJson.isEmpty()) {
 		QJsonArray priceListJson = json.value("data").toObject().value("list").toArray();
 
 		parsePriceListValues(priceListJson);
@@ -299,6 +367,7 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray)
 	}
 
 	updateData(marketCap, freq);
+	sort();
 }
 
 void CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
@@ -566,7 +635,7 @@ void CryptoPriceList::sort()
 		break;
 	}
 
-	emit updated();
+	emit valuesUpdated();
 }
 
 void CryptoPriceList::createTestData()

@@ -73,7 +73,8 @@ public:
 	/// Download and parse crypto price values.
 	/// If crypto price names are not fetched we fetch it now.
 	/// We should call this every minute while the crypto price tab is shown
-	void getCryptoPriceValues();
+	void getCryptoPriceValues(int offset, int count);
+	void getCryptoPriceValues(const QStringList &shortNames);
 
 	/// Download and parse all RSS feeds
 	void getRssChannelList();
@@ -137,6 +138,8 @@ private:
 	/// Download and parse crypto price names, without actual price values.
 	/// We should call this at each startup and in every 3 days.
 	void getCryptoPriceNames();
+
+	void getCryptoPriceValues(const QUrl &url);
 
 	void getRssFeeds(RssChannelList *rssChannelList, const QSharedPointer<RssChannel> &channel);
 

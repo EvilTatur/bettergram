@@ -66,6 +66,8 @@ private:
 	TableColumnHeaderWidget *_24hHeader = nullptr;
 	Footer *_footer = nullptr;
 
+	void getCryptoPriceValues();
+
 	void setSelectedRow(int selectedRow);
 
 	int getTableTop() const;
@@ -93,7 +95,8 @@ private slots:
 	void onPriceColumnSortOrderChanged();
 	void on24hColumnSortOrderChanged();
 
-	void onPriceListUpdated();
+	void onCryptoPriceNamesUpdated();
+	void onCryptoPriceValuesUpdated();
 };
 
 } // namespace ChatHelpers

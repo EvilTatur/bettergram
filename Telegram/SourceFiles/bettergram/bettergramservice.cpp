@@ -141,7 +141,7 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 
 	_cryptoPriceList->load();
 
-	getCryptoPriceValues();
+	getCryptoPriceNames();
 
 	_updateCryptoPriceNamesTimerId = startTimer(_updateCryptoPriceNamesPeriod, Qt::VeryCoarseTimer);
 
@@ -353,14 +353,41 @@ void BettergramService::getCryptoPriceNames()
 			this, &BettergramService::onGetCryptoPriceNamesSslFailed);
 }
 
-void BettergramService::getCryptoPriceValues()
+void BettergramService::getCryptoPriceValues(int offset, int count)
+{
+	if (offset < 0 || offset >= _cryptoPriceList->count() || count <= 0) {
+		return;
+	}
+
+	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?sort=%1&order=%2&offset=%3&limit=%4")
+			 .arg(_cryptoPriceList->sortString())
+			 .arg(_cryptoPriceList->orderString())
+			 .arg(offset)
+			 .arg(count));
+
+	getCryptoPriceValues(url);
+}
+
+void BettergramService::getCryptoPriceValues(const QStringList &shortNames)
+{
+	if (shortNames.isEmpty()) {
+		return;
+	}
+
+	//TODO: bettergram: remove 'limit=1' as soon as the server side will be fixed
+
+	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?limit=1&favorites=%1")
+			 .arg(shortNames.join(QStringLiteral(","))));
+
+	getCryptoPriceValues(url);
+}
+
+void BettergramService::getCryptoPriceValues(const QUrl &url)
 {
 	if (!_cryptoPriceList->areNamesFetched()) {
 		getCryptoPriceNames();
 		return;
 	}
-
-	QUrl url("https://http-api.livecoinwatch.com/bettergram/top10");
 
 	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
 
@@ -500,10 +527,6 @@ void BettergramService::onGetCryptoPriceNamesFinished()
 
 	if(reply->error() == QNetworkReply::NoError) {
 		_cryptoPriceList->parseNames(reply->readAll());
-
-		if (_cryptoPriceList->areNamesFetched()) {
-			getCryptoPriceValues();
-		}
 	} else {
 		LOG(("Can not get crypto price names. %1 (%2)")
 			.arg(reply->errorString())
