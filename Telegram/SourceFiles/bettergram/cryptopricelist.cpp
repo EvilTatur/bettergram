@@ -410,8 +410,21 @@ void CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
 		int rank = priceJson.contains("rank") ? priceJson.value("rank").toInt() : i;
 		double currentPrice = priceJson.value("price").toDouble();
 
-		double changeFor24Hours = deltaJson.value("day").toDouble();
-		double changeForMinute = deltaJson.value("minute").toDouble();
+		double changeFor24Hours = 0.0;
+
+		if (deltaJson.contains("day") && deltaJson.value("day").isDouble()) {
+			changeFor24Hours = (deltaJson.value("day").toDouble() - 1) * 100;
+		} else {
+			changeFor24Hours = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double changeForMinute = 0.0;
+
+		if (deltaJson.contains("day") && deltaJson.value("minute").isDouble()) {
+			changeForMinute = (deltaJson.value("minute").toDouble() - 1) * 100;
+		} else {
+			changeForMinute = std::numeric_limits<double>::quiet_NaN();
+		}
 
 		CryptoPrice *price = findByShortName(shortName);
 

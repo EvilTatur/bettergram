@@ -199,7 +199,12 @@ void CryptoPrice::setChangeFor24Hours(double changeFor24Hours)
 
 void CryptoPrice::updateChangeFor24HoursString()
 {
-	_changeFor24HoursString = QString("%1%").arg(_changeFor24Hours, 0, 'f', 2);
+	if (std::isnan(_changeFor24Hours)) {
+		_changeFor24HoursString = QStringLiteral("N/A");
+	} else {
+		_changeFor24HoursString = QStringLiteral("%1%").arg(_changeFor24Hours, 0, 'f', 2);
+	}
+
 }
 
 CryptoPrice::Direction CryptoPrice::minuteDirection() const
@@ -308,7 +313,9 @@ CryptoPrice *CryptoPrice::load(const QSettings &settings)
 
 CryptoPrice::Direction CryptoPrice::countDirection(double value)
 {
-	if (value > 0.0) {
+	if (std::isnan(value)) {
+		return Direction::None;
+	} else if (value > 0.0) {
 		return Direction::Up;
 	} else if (value < 0.0) {
 		return Direction::Down;
