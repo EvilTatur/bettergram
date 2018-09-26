@@ -108,8 +108,46 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 
 void PricesListWidget::getCryptoPriceValues()
 {
-	//TODO: bettergram: realize PricesListWidget::getCryptoPriceValues()
-	BettergramService::instance()->getCryptoPriceValues(0, 10);
+	BettergramService *service = BettergramService::instance();
+	CryptoPriceList *priceList = BettergramService::instance()->cryptoPriceList();
+
+	switch (priceList->sortOrder()) {
+	case(CryptoPriceList::SortOrder::Rank):
+		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		break;
+	case(CryptoPriceList::SortOrder::NameAscending):
+		service->getCryptoPriceValues(getCurrentShortNames());
+		break;
+	case(CryptoPriceList::SortOrder::NameDescending):
+		service->getCryptoPriceValues(getCurrentShortNames());
+		break;
+	case(CryptoPriceList::SortOrder::PriceAscending):
+		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		break;
+	case(CryptoPriceList::SortOrder::PriceDescending):
+		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		break;
+	case(CryptoPriceList::SortOrder::ChangeFor24hAscending):
+		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		break;
+	case(CryptoPriceList::SortOrder::ChangeFor24hDescending):
+		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		break;
+	default:
+		LOG(("Can not recognize sort order value %1")
+			.arg(static_cast<int>(priceList->sortOrder())));
+	}
+}
+
+int PricesListWidget::startRowIndexInCurrentPage() const
+{
+	return _currentPageIndex * _numberOfRowsInOnePage;
+}
+
+QStringList PricesListWidget::getCurrentShortNames() const
+{
+	return BettergramService::instance()->cryptoPriceList()->getShortNames(startRowIndexInCurrentPage(),
+																		   _numberOfRowsInOnePage);
 }
 
 void PricesListWidget::refreshRecent()

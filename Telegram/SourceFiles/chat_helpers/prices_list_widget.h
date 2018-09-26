@@ -58,6 +58,17 @@ private:
 	int _selectedRow = -1;
 	int _pressedRow = -1;
 
+	/// Index of the current page
+	int _currentPageIndex = 0;
+
+	/// Total number of pages
+	int _pagesCount = 0;
+
+	/// Number of rows (crypto prices) at one page.
+	/// It is dynamically changed value because we keep one page for one screen, without scrolling,
+	/// so when height of the window is changed we also change the number of rows in one page
+	int _numberOfRowsInOnePage = 1;
+
 	Ui::FlatLabel *_lastUpdateLabel = nullptr;
 	Ui::IconButton *_siteName = nullptr;
 	Ui::FlatLabel *_marketCap = nullptr;
@@ -67,6 +78,9 @@ private:
 	Footer *_footer = nullptr;
 
 	void getCryptoPriceValues();
+
+	int startRowIndexInCurrentPage() const;
+	QStringList getCurrentShortNames() const;
 
 	void setSelectedRow(int selectedRow);
 

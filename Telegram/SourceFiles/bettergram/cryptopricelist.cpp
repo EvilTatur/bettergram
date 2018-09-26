@@ -211,6 +211,18 @@ bool CryptoPriceList::areNamesFetched() const
 	return _areNamesFetched;
 }
 
+QStringList CryptoPriceList::getShortNames(int startIndex, int count) const
+{
+	QStringList result;
+	int end = std::min(startIndex + count, _list.size());
+
+	for (int i = startIndex; i < end; ++i) {
+		result.push_back(_list.at(i)->shortName());
+	}
+
+	return result;
+}
+
 void CryptoPriceList::setAreNamesFetched(bool areNamesFetched)
 {
 	if (_areNamesFetched != areNamesFetched) {

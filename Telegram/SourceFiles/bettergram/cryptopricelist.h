@@ -53,6 +53,8 @@ public:
 
 	bool areNamesFetched() const;
 
+	QStringList getShortNames(int startIndex, int count) const;
+
 	void parseNames(const QByteArray &byteArray);
 	void parseValues(const QByteArray &byteArray);
 
