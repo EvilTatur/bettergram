@@ -13,6 +13,7 @@ class IconButton;
 namespace ChatHelpers {
 
 class TableColumnHeaderWidget;
+class BettergramNumericPageIndicatorWidget;
 
 /**
  * @brief The PricesListWidget class shows cryptocurrency price list.
@@ -72,6 +73,7 @@ private:
 	Ui::FlatLabel *_lastUpdateLabel = nullptr;
 	Ui::IconButton *_siteName = nullptr;
 	Ui::FlatLabel *_marketCap = nullptr;
+	BettergramNumericPageIndicatorWidget *_pageIndicator = nullptr;
 	TableColumnHeaderWidget *_coinHeader = nullptr;
 	TableColumnHeaderWidget *_priceHeader = nullptr;
 	TableColumnHeaderWidget *_24hHeader = nullptr;

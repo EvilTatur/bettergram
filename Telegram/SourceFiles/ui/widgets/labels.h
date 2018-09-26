@@ -126,6 +126,8 @@ public:
 		QPoint fromPosition = QPoint(),
 		QPoint toPosition = QPoint());
 
+	bool isEmpty() const;
+
 protected:
 	void paintEvent(QPaintEvent *e) override;
 	void mouseMoveEvent(QMouseEvent *e) override;

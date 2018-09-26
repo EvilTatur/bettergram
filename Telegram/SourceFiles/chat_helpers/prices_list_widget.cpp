@@ -1,5 +1,6 @@
 #include "prices_list_widget.h"
 #include "table_column_header_widget.h"
+#include "bettergram_numeric_page_indicator_widget.h"
 
 #include "bettergram/bettergramservice.h"
 #include "bettergram/cryptopricelist.h"
@@ -70,6 +71,8 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	_marketCap->setRichText(textcmdLink(1, lang(lng_prices_market_cap)
 										.arg(BettergramService::instance()->cryptoPriceList()->marketCapString())));
 	_marketCap->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
+
+	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
 	_coinHeader = new TableColumnHeaderWidget(this);
 	_coinHeader->setText(lng_prices_header_coin);
@@ -223,7 +226,7 @@ void PricesListWidget::setSelectedRow(int selectedRow)
 
 int PricesListWidget::getTableTop() const
 {
-	return _marketCap->y() + _marketCap->height() + st::pricesPanPadding;
+	return _pageIndicator->y() + _pageIndicator->height() + st::pricesPanPadding;
 }
 
 int PricesListWidget::getTableBottom() const
@@ -484,6 +487,9 @@ void PricesListWidget::updateControlsGeometry()
 						  _lastUpdateLabel->y() + _lastUpdateLabel->height() + st::pricesPanPadding / 2);
 
 	updateMarketCap();
+
+	_pageIndicator->moveToLeft(0, _marketCap->y() + _marketCap->height() + st::pricesPanPadding);
+	_pageIndicator->resizeToWidth(width());
 
 	int columnCoinWidth = width() - st::pricesPanColumnPriceWidth - st::pricesPanColumn24hWidth;
 

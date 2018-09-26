@@ -312,6 +312,21 @@ tableColumnSortDescending: IconButton {
         iconPosition: point(0px, 0px);
 }
 
+bettergramNumericPageIndicatorLabelWidth: 40px;
+
+bettergramNumericPageIndicatorLabel: FlatLabel(defaultFlatLabel) {
+		align: align(center);
+		minWidth: bettergramNumericPageIndicatorLabelWidth;
+		textFg: windowSubTextFg;
+		style: TextStyle(defaultTextStyle) {
+				linkFont: semiboldFont;
+				linkFontOver: semiboldOverFont;
+		}
+		palette: TextPalette(defaultTextPalette) {
+				linkFg: windowSubTextFg;
+		}
+}
+
 hashtagClose: IconButton {
 	width: 30px;
 	height: 30px;

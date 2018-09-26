@@ -156,6 +156,8 @@
 <(src_loc)/chat_helpers/bettergram_tabbed_section.h
 <(src_loc)/chat_helpers/bettergram_tabbed_selector.cpp
 <(src_loc)/chat_helpers/bettergram_tabbed_selector.h
+<(src_loc)/chat_helpers/bettergram_numeric_page_indicator_widget.cpp
+<(src_loc)/chat_helpers/bettergram_numeric_page_indicator_widget.h
 <(src_loc)/core/basic_types.h
 <(src_loc)/core/changelogs.cpp
 <(src_loc)/core/changelogs.h

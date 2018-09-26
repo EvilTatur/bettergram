@@ -198,6 +198,10 @@ void FlatLabel::textUpdated() {
 	update();
 }
 
+bool FlatLabel::isEmpty() const {
+	return _text.isEmpty();
+}
+
 void FlatLabel::setText(const QString &text) {
 	_text.setText(_st.style, text, _labelOptions);
 	textUpdated();
