@@ -313,19 +313,13 @@ tableColumnSortDescending: IconButton {
 }
 
 bettergramNumericPageIndicatorLabelWidth: 40px;
+bettergramNumericPageIndicatorHeight: 20px;
 
-bettergramNumericPageIndicatorLabel: FlatLabel(defaultFlatLabel) {
-		align: align(center);
-		minWidth: bettergramNumericPageIndicatorLabelWidth;
-		textFg: windowSubTextFg;
-		style: TextStyle(defaultTextStyle) {
-				linkFont: semiboldFont;
-				linkFontOver: semiboldOverFont;
-		}
-		palette: TextPalette(defaultTextPalette) {
-				linkFg: windowSubTextFg;
-		}
-}
+bettergramNumericPageIndicatorLabelBg: 20px;
+bettergramNumericPageIndicatorLabelSelectedBg: 20px;
+
+bettergramNumericPageIndicatorLabelFg: windowSubTextFg;
+bettergramNumericPageIndicatorLabelSelectedFg: windowSubTextFg;
 
 hashtagClose: IconButton {
 	width: 30px;

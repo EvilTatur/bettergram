@@ -14,13 +14,7 @@ BettergramNumericPageIndicatorWidget::BettergramNumericPageIndicatorWidget(int p
 	  _pagesCount(std::max(1, pagesCount)),
 	  _currentPage(currentPage)
 {
-	// We have a strange bug when we try to add new labels at the width changed,
-	// so this is a workaround for that bug
-	_indicators.reserve(15);
-	for (int i = 0; i < 15; i++) {
-		_indicators.push_back(Indicator(createLabel(), this));
-	}
-
+	resize(width(), st::bettergramNumericPageIndicatorHeight);
 	updateControlsGeometry();
 }
 
@@ -56,7 +50,7 @@ void BettergramNumericPageIndicatorWidget::setCurrentPage(int currentPage)
 	}
 }
 
-int BettergramNumericPageIndicatorWidget::countNeededLabels() const
+int BettergramNumericPageIndicatorWidget::countNeededIndicators() const
 {
 	const QMargins margins = contentsMargins();
 
@@ -64,20 +58,26 @@ int BettergramNumericPageIndicatorWidget::countNeededLabels() const
 					static_cast<int>(floor((width() - margins.left() - margins.right()) / st::bettergramNumericPageIndicatorLabelWidth)));
 }
 
-void BettergramNumericPageIndicatorWidget::createLabels()
+void BettergramNumericPageIndicatorWidget::createIndicators()
 {
-	_indicatorsCount = countNeededLabels();
+	int count = countNeededIndicators();
 
-	if (_indicatorsCount > _indicators.size()) {
-		int diff = _indicatorsCount - _indicators.size();
+	if (count > _indicators.size()) {
+		int diff = count - _indicators.size();
 
 		for (int i = 0; i < diff; ++i) {
-			_indicators.push_back(Indicator(createLabel(), this));
+			_indicators.push_back(Indicator());
+		}
+	} else if (count < _indicators.size()) {
+		int diff = _indicators.size() - count;
+
+		for (int i = 0; i < diff; ++i) {
+			_indicators.removeLast();
 		}
 	}
 }
 
-void BettergramNumericPageIndicatorWidget::fillLabels()
+void BettergramNumericPageIndicatorWidget::fillIndicators()
 {
 	//TODO: bettergram: realize BettergramNumericPageIndicatorWidget::fillLabels()
 
@@ -85,28 +85,16 @@ void BettergramNumericPageIndicatorWidget::fillLabels()
 		return;
 	}
 
-	if (_indicatorsCount > _indicators.size()) {
-		return;
-	}
-
 	int left = getMargins().left();
 
-	_indicators.first().setPageIndex(0);
-	int top = (height() - _indicators.first().label()->height()) / 2;
-
-	for (int i = 0; i < _indicatorsCount; ++i) {
+	for (int i = 0; i < _indicators.size(); ++i) {
 		Indicator &indicator = _indicators[i];
 
+		indicator.setLeft(left);
 		indicator.setPageIndex(i);
-		indicator.label()->moveToLeft(left, top);
 
-		left += indicator.label()->width();
+		left += indicator.width();
 	}
-}
-
-Ui::FlatLabel *BettergramNumericPageIndicatorWidget::createLabel()
-{
-	return new Ui::FlatLabel(this, st::bettergramNumericPageIndicatorLabel);
 }
 
 void BettergramNumericPageIndicatorWidget::resizeEvent(QResizeEvent *e)
@@ -114,48 +102,68 @@ void BettergramNumericPageIndicatorWidget::resizeEvent(QResizeEvent *e)
 	updateControlsGeometry();
 }
 
-void BettergramNumericPageIndicatorWidget::updateControlsGeometry()
+void BettergramNumericPageIndicatorWidget::paintEvent(QPaintEvent *event)
 {
-	createLabels();
-	fillLabels();
+	Painter painter(this);
+	QRect r = event ? event->rect() : rect();
+
+	if (r != rect()) {
+		painter.setClipRect(r);
+	}
+
+	painter.fillRect(r, st::bettergramNumericPageIndicatorBg);
+
+	painter.setFont(st::semiboldFont);
+	painter.setPen(st::tableHeaderFg);
+
+	for (const Indicator &indicator : _indicators) {
+		painter.drawText(indicator.left(),
+						 0,
+						 indicator.width(),
+						 height(),
+						 Qt::AlignHCenter | Qt::AlignVCenter,
+						 indicator.text());
+
+	}
 }
 
-BettergramNumericPageIndicatorWidget::Indicator::Indicator(Ui::FlatLabel *label,
-														   BettergramNumericPageIndicatorWidget *widget) :
-	_widget(widget),
-	_label(label)
+void BettergramNumericPageIndicatorWidget::updateControlsGeometry()
 {
+	createIndicators();
+	fillIndicators();
+}
+
+void BettergramNumericPageIndicatorWidget::Indicator::setLeft(int left)
+{
+	_left = left;
+}
+
+int BettergramNumericPageIndicatorWidget::Indicator::width() const
+{
+	return st::bettergramNumericPageIndicatorLabelWidth;
+}
+
+QRect BettergramNumericPageIndicatorWidget::Indicator::rect() const
+{
+	return QRect(left(), 0, width(), st::bettergramNumericPageIndicatorHeight);
 }
 
 void BettergramNumericPageIndicatorWidget::Indicator::setPageIndex(int pageIndex)
 {
 	if (_pageIndex != pageIndex) {
 		_pageIndex = pageIndex;
-		setLabelText();
-	} else if (_label->isEmpty()) {
-		setLabelText();
+		setText();
+	} else if (_text.isEmpty()) {
+		setText();
 	}
 }
 
-ClickHandlerPtr BettergramNumericPageIndicatorWidget::Indicator::getIndicatorClickHandler()
-{
-	return std::make_shared<LambdaClickHandler>([this] { click(); });
-}
-
-void BettergramNumericPageIndicatorWidget::Indicator::click()
-{
-	if (_widget) {
-		_widget->setCurrentPage(_pageIndex);
-	}
-}
-
-void BettergramNumericPageIndicatorWidget::Indicator::setLabelText()
+void BettergramNumericPageIndicatorWidget::Indicator::setText()
 {
 	if (_pageIndex < 0) {
-		_label->setRichText(QStringLiteral("..."));
+		_text = QStringLiteral("...");
 	} else {
-		_label->setRichText(textcmdLink(1, QString::number(_pageIndex)));
-		_label->setLink(1, getIndicatorClickHandler());
+		_text = QString::number(_pageIndex);
 	}
 }
 

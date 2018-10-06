@@ -2,10 +2,6 @@
 
 #include <ui/twidget.h>
 
-namespace Ui {
-class FlatLabel;
-} // namespace Ui
-
 namespace ChatHelpers {
 
 /**
@@ -33,39 +29,44 @@ signals:
 
 protected:
 	void resizeEvent(QResizeEvent *e) override;
+	void paintEvent(QPaintEvent *event) override;
 
 private:
 	class Indicator
 	{
 	public:
-		explicit Indicator(Ui::FlatLabel *label, BettergramNumericPageIndicatorWidget *widget);
+		explicit Indicator() = default;
+
+		int left() const { return _left; }
+		void setLeft(int left);
+
+		int width() const;
+		int right() const { return left() + width(); }
+
+		QRect rect() const;
 
 		int pageIndex() const { return _pageIndex; }
 		void setPageIndex(int pageIndex);
 
-		Ui::FlatLabel *label() const { return _label; }
+		const QString &text() const { return _text; }
 
 	private:
-		BettergramNumericPageIndicatorWidget *_widget = nullptr;
+		int _left = 0;
 		int _pageIndex = 0;
-		Ui::FlatLabel *_label = nullptr;
+		QString _text;
 
-		ClickHandlerPtr getIndicatorClickHandler();
-		void click();
-
-		void setLabelText();
+		void setText();
 	};
 
 	int _pagesCount = 1;
-	int _indicatorsCount = 0;
 	int _currentPage = 0;
 
 	QList<Indicator> _indicators;
 
-	int countNeededLabels() const;
-	void createLabels();
-	void fillLabels();
-	Ui::FlatLabel *createLabel();
+	int countNeededIndicators() const;
+
+	void createIndicators();
+	void fillIndicators();
 
 	void updateControlsGeometry();
 };

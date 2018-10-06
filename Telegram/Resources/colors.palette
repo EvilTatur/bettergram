@@ -577,3 +577,5 @@ resourcesPanItemDescriptionFg: windowSubTextFg; // resources panel item descript
 tableHeaderBg: emojiPanCategories; // table header background
 tableHeaderFg: windowSubTextFg; // table header foreground
 tableColumnSortInactiveFg: #00000010 | dialogsMenuIconFg;
+
+bettergramNumericPageIndicatorBg: windowBg;
