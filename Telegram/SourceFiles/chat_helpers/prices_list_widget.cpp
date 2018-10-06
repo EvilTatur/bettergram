@@ -338,10 +338,7 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 		return;
 	}
 
-	QPointF point = e->localPos();
-
-	countSelectedRow(QPoint(static_cast<int>(qRound(point.x())),
-							static_cast<int>(qRound(point.y()))));
+	countSelectedRow(e->pos());
 
 	CryptoPriceList *priceList = BettergramService::instance()->cryptoPriceList();
 
@@ -355,10 +352,7 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 
 void PricesListWidget::mouseMoveEvent(QMouseEvent *e)
 {
-	QPointF point = e->localPos();
-
-	countSelectedRow(QPoint(static_cast<int>(qRound(point.x())),
-							static_cast<int>(qRound(point.y()))));
+	countSelectedRow(e->pos());
 }
 
 void PricesListWidget::enterEventHook(QEvent *e)
