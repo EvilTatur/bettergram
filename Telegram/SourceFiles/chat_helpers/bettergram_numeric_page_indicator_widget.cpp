@@ -16,6 +16,9 @@ BettergramNumericPageIndicatorWidget::BettergramNumericPageIndicatorWidget(int p
 {
 	resize(width(), st::bettergramNumericPageIndicatorHeight);
 	updateControlsGeometry();
+
+	setCursor(style::cur_pointer);
+	setMouseTracking(true);
 }
 
 int BettergramNumericPageIndicatorWidget::pagesCount() const
@@ -48,6 +51,26 @@ void BettergramNumericPageIndicatorWidget::setCurrentPage(int currentPage)
 
 		updateControlsGeometry();
 	}
+}
+
+void BettergramNumericPageIndicatorWidget::setHoveredPage(int hoveredPage)
+{
+	if (_hoveredPage != hoveredPage) {
+		_hoveredPage = hoveredPage;
+		update();
+	}
+}
+
+void BettergramNumericPageIndicatorWidget::countHoveredPage(const QPoint &position)
+{
+	for (int i = 0; i < _indicators.size(); ++i) {
+		if (_indicators[i].rect().contains(position)) {
+			setHoveredPage(i);
+			return;
+		}
+	}
+
+	setHoveredPage(-1);
 }
 
 int BettergramNumericPageIndicatorWidget::countNeededIndicators() const
@@ -97,6 +120,38 @@ void BettergramNumericPageIndicatorWidget::fillIndicators()
 	}
 }
 
+void BettergramNumericPageIndicatorWidget::mousePressEvent(QMouseEvent *e)
+{
+	_pressedPage = _hoveredPage;
+}
+
+void BettergramNumericPageIndicatorWidget::mouseReleaseEvent(QMouseEvent *e)
+{
+	if (_pressedPage < 0 || (_pressedPage != _hoveredPage)) {
+		return;
+	}
+
+	setCurrentPage(_pressedPage);
+}
+
+void BettergramNumericPageIndicatorWidget::mouseMoveEvent(QMouseEvent *e)
+{
+	countHoveredPage(e->pos());
+}
+
+void BettergramNumericPageIndicatorWidget::enterEventHook(QEvent *e)
+{
+	countHoveredPage(mapFromGlobal(QCursor::pos()));
+}
+
+void BettergramNumericPageIndicatorWidget::leaveEventHook(QEvent *e)
+{
+	_hoveredPage = -1;
+	_pressedPage = -1;
+
+	update();
+}
+
 void BettergramNumericPageIndicatorWidget::resizeEvent(QResizeEvent *e)
 {
 	updateControlsGeometry();
@@ -116,7 +171,20 @@ void BettergramNumericPageIndicatorWidget::paintEvent(QPaintEvent *event)
 	painter.setFont(st::semiboldFont);
 	painter.setPen(st::tableHeaderFg);
 
-	for (const Indicator &indicator : _indicators) {
+	for (int i = 0; i < _indicators.size(); ++i) {
+		const Indicator &indicator = _indicators[i];
+
+		if (i == _hoveredPage || i == _currentPage) {
+			QRect indicatorRectangle(indicator.left(),
+									 0,
+									 st::bettergramNumericPageIndicatorLabelWidth,
+									 height());
+			App::roundRect(painter,
+						   indicatorRectangle,
+						   st::bettergramNumericPageIndicatorLabelPanHover,
+						   StickerHoverCorners);
+		}
+
 		painter.drawText(indicator.left(),
 						 0,
 						 indicator.width(),
@@ -131,6 +199,7 @@ void BettergramNumericPageIndicatorWidget::updateControlsGeometry()
 {
 	createIndicators();
 	fillIndicators();
+	update();
 }
 
 void BettergramNumericPageIndicatorWidget::Indicator::setLeft(int left)

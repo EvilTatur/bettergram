@@ -28,6 +28,12 @@ signals:
 	void currentPageChanged();
 
 protected:
+	void mousePressEvent(QMouseEvent *e) override;
+	void mouseReleaseEvent(QMouseEvent *e) override;
+	void mouseMoveEvent(QMouseEvent *e) override;
+	void enterEventHook(QEvent *e) override;
+	void leaveEventHook(QEvent *e) override;
+
 	void resizeEvent(QResizeEvent *e) override;
 	void paintEvent(QPaintEvent *event) override;
 
@@ -60,9 +66,14 @@ private:
 
 	int _pagesCount = 1;
 	int _currentPage = 0;
+	int _hoveredPage = -1;
+	int _pressedPage = -1;
 
 	QList<Indicator> _indicators;
 
+	void setHoveredPage(int hoveredPage);
+
+	void countHoveredPage(const QPoint &position);
 	int countNeededIndicators() const;
 
 	void createIndicators();

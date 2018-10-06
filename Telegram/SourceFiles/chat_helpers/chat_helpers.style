@@ -321,6 +321,8 @@ bettergramNumericPageIndicatorLabelSelectedBg: 20px;
 bettergramNumericPageIndicatorLabelFg: windowSubTextFg;
 bettergramNumericPageIndicatorLabelSelectedFg: windowSubTextFg;
 
+bettergramNumericPageIndicatorLabelPanHover: windowBgOver; // background of selected indicator
+
 hashtagClose: IconButton {
 	width: 30px;
 	height: 30px;
