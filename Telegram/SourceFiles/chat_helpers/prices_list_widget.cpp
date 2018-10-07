@@ -529,10 +529,10 @@ void PricesListWidget::updatePagesCount()
 {
 	int pricesCount = BettergramService::instance()->cryptoPriceList()->count();
 
-	int numberOfRowsInOnePage = qMax(1,
-									 static_cast<int>(std::floor(getTableContentHeight() / st::pricesPanTableRowHeight)));
+	int numberOfRowsInOnePage = qMax(1, getTableContentHeight() / st::pricesPanTableRowHeight);
 
-	int pagesCount = qMax(1, static_cast<int>(std::ceil(pricesCount / numberOfRowsInOnePage)));
+	int pagesCount = qMax(1,
+						  static_cast<int>(std::ceil(static_cast<double>(pricesCount) / static_cast<double>(numberOfRowsInOnePage))));
 
 	// We have to do it because the number of rows in one page may be changed,
 	// but the current page may not. And we need to get new data from servers.
