@@ -20,7 +20,7 @@ public:
 		Down
 	};
 
-	static CryptoPrice *load(const QSettings &settings);
+	static QSharedPointer<CryptoPrice> load(const QSettings &settings);
 	static Direction countDirection(double value);
 
 	explicit CryptoPrice(const QUrl &url,

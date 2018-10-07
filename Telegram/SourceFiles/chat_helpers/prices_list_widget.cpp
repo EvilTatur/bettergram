@@ -109,6 +109,9 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(priceList, &CryptoPriceList::valuesUpdated,
 			this, &PricesListWidget::onCryptoPriceValuesUpdated);
 
+	connect(priceList, &CryptoPriceList::sortOrderChanged,
+			this, &PricesListWidget::onCryptoPriceSortOrderChanged);
+
 	setMouseTracking(true);
 }
 
@@ -119,25 +122,32 @@ void PricesListWidget::getCryptoPriceValues()
 
 	switch (priceList->sortOrder()) {
 	case(CryptoPriceList::SortOrder::Rank):
-		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
 		break;
 	case(CryptoPriceList::SortOrder::NameAscending):
-		service->getCryptoPriceValues(getCurrentShortNames());
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(getCurrentShortNames());
 		break;
 	case(CryptoPriceList::SortOrder::NameDescending):
-		service->getCryptoPriceValues(getCurrentShortNames());
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(getCurrentShortNames());
 		break;
 	case(CryptoPriceList::SortOrder::PriceAscending):
-		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
 		break;
 	case(CryptoPriceList::SortOrder::PriceDescending):
-		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
 		break;
 	case(CryptoPriceList::SortOrder::ChangeFor24hAscending):
-		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
 		break;
 	case(CryptoPriceList::SortOrder::ChangeFor24hDescending):
-		service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
 		break;
 	default:
 		LOG(("Can not recognize sort order value %1")
@@ -149,12 +159,6 @@ int PricesListWidget::startRowIndexInCurrentPage() const
 {
 	return qMax(0, qMin(BettergramService::instance()->cryptoPriceList()->count() - 1,
 						_pageIndicator->currentPage() * _numberOfRowsInOnePage));
-}
-
-int PricesListWidget::endRowIndexInCurrentPage() const
-{
-	return qMin(BettergramService::instance()->cryptoPriceList()->count(),
-				startRowIndexInCurrentPage() + _numberOfRowsInOnePage);
 }
 
 QStringList PricesListWidget::getCurrentShortNames() const
@@ -234,6 +238,16 @@ void PricesListWidget::setSelectedRow(int selectedRow)
 	}
 }
 
+void PricesListWidget::setNumberOfRowsInOnePage(int numberOfRowsInOnePage)
+{
+	if (_numberOfRowsInOnePage != numberOfRowsInOnePage) {
+		_numberOfRowsInOnePage = numberOfRowsInOnePage;
+
+		getCryptoPriceValues();
+		update();
+	}
+}
+
 int PricesListWidget::getTableTop() const
 {
 	return _pageIndicator->y() + _pageIndicator->height() + st::pricesPanPadding;
@@ -308,9 +322,7 @@ void PricesListWidget::countSelectedRow(const QPoint &point)
 		return;
 	}
 
-	int rowCount = BettergramService::instance()->cryptoPriceList()->count();
-
-	for (int row = 0; row < rowCount; row++) {
+	for (int row = 0; row < _pricesAtCurrentPage.count(); row++) {
 		if (getRowRectangle(row).contains(point)) {
 			setSelectedRow(row);
 			return;
@@ -350,10 +362,8 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 
 	countSelectedRow(e->pos());
 
-	CryptoPriceList *priceList = BettergramService::instance()->cryptoPriceList();
-
-	if (_pressedRow >= 0 && _pressedRow < priceList->count() && _pressedRow == _selectedRow) {
-		QUrl url = priceList->at(_pressedRow)->url();
+	if (_pressedRow >= 0 && _pressedRow < _pricesAtCurrentPage.count() && _pressedRow == _selectedRow) {
+		QUrl url = _pricesAtCurrentPage.at(_pressedRow)->url();
 		if (!url.isEmpty()) {
 			BettergramService::openUrl(url);
 		}
@@ -411,19 +421,16 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 	// Draw rows
 
 	int columnCoinTextLeft = columnCoinLeft + st::pricesPanTableImageSize + st::pricesPanTablePadding;
-	int rowCount = BettergramService::instance()->cryptoPriceList()->count();
 
-	if (_selectedRow != -1 && _selectedRow < rowCount) {
+	if (_selectedRow != -1 && _selectedRow < _pricesAtCurrentPage.count()) {
 		QRect rowRectangle(0, getRowTop(_selectedRow), width(), st::pricesPanTableRowHeight);
 		App::roundRect(painter, rowRectangle, st::pricesPanHover, StickerHoverCorners);
 	}
 
 	painter.setFont(st::semiboldFont);
 
-	int endRowIndex = endRowIndexInCurrentPage();
-
-	for (int i = startRowIndexInCurrentPage(); i < endRowIndex; ++i) {
-		const CryptoPrice *price = BettergramService::instance()->cryptoPriceList()->at(i);
+	for (int i = 0; i < _pricesAtCurrentPage.count(); ++i) {
+		const QSharedPointer<CryptoPrice> &price = _pricesAtCurrentPage.at(i);
 
 		if (!price->icon().isNull()) {
 			QRect targetRect(columnCoinLeft,
@@ -522,12 +529,23 @@ void PricesListWidget::updatePagesCount()
 {
 	int pricesCount = BettergramService::instance()->cryptoPriceList()->count();
 
-	_numberOfRowsInOnePage = qMax(1,
-								  static_cast<int>(std::floor(getTableContentHeight() / st::pricesPanTableRowHeight)));
+	int numberOfRowsInOnePage = qMax(1,
+									 static_cast<int>(std::floor(getTableContentHeight() / st::pricesPanTableRowHeight)));
 
-	int pagesCount = qMax(1, static_cast<int>(std::ceil(pricesCount / _numberOfRowsInOnePage)));
+	int pagesCount = qMax(1, static_cast<int>(std::ceil(pricesCount / numberOfRowsInOnePage)));
+
+	// We have to do it because the number of rows in one page may be changed,
+	// but the current page may not. And we need to get new data from servers.
+
+	disconnect(_pageIndicator, &BettergramNumericPageIndicatorWidget::currentPageChanged,
+			   this, &PricesListWidget::onCurrentPageChanged);
 
 	_pageIndicator->setPagesCount(pagesCount);
+
+	connect(_pageIndicator, &BettergramNumericPageIndicatorWidget::currentPageChanged,
+			this, &PricesListWidget::onCurrentPageChanged);
+
+	setNumberOfRowsInOnePage(numberOfRowsInOnePage);
 }
 
 void PricesListWidget::updateLastUpdateLabel()
@@ -632,15 +650,27 @@ void PricesListWidget::onCryptoPriceNamesUpdated()
 	getCryptoPriceValues();
 }
 
-void PricesListWidget::onCryptoPriceValuesUpdated()
+void PricesListWidget::onCryptoPriceValuesUpdated(const QUrl &url,
+												  const QList<QSharedPointer<CryptoPrice>> &prices)
 {
+	if (_urlForFetchingCurrentPage == url) {
+		_pricesAtCurrentPage = prices;
+	}
+
 	updateLastUpdateLabel();
 	updateMarketCap();
 	update();
 }
 
+void PricesListWidget::onCryptoPriceSortOrderChanged()
+{
+	getCryptoPriceValues();
+	update();
+}
+
 void PricesListWidget::onCurrentPageChanged()
 {
+	getCryptoPriceValues();
 	update();
 }
 

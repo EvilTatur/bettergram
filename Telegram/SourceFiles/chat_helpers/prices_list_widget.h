@@ -1,5 +1,10 @@
 #pragma once
+
 #include "chat_helpers/tabbed_selector.h"
+
+namespace Bettergram {
+class CryptoPrice;
+} // namespace Bettergram
 
 namespace Window {
 class Controller;
@@ -64,6 +69,9 @@ private:
 	/// so when height of the window is changed we also change the number of rows in one page
 	int _numberOfRowsInOnePage = 1;
 
+	QUrl _urlForFetchingCurrentPage;
+	QList<QSharedPointer<Bettergram::CryptoPrice>> _pricesAtCurrentPage;
+
 	Ui::FlatLabel *_lastUpdateLabel = nullptr;
 	Ui::IconButton *_siteName = nullptr;
 	Ui::FlatLabel *_marketCap = nullptr;
@@ -76,10 +84,10 @@ private:
 	void getCryptoPriceValues();
 
 	int startRowIndexInCurrentPage() const;
-	int endRowIndexInCurrentPage() const;
 	QStringList getCurrentShortNames() const;
 
 	void setSelectedRow(int selectedRow);
+	void setNumberOfRowsInOnePage(int numberOfRowsInOnePage);
 
 	int getTableTop() const;
 	int getTableBottom() const;
@@ -108,7 +116,11 @@ private slots:
 	void on24hColumnSortOrderChanged();
 
 	void onCryptoPriceNamesUpdated();
-	void onCryptoPriceValuesUpdated();
+
+	void onCryptoPriceValuesUpdated(const QUrl &url,
+									const QList<QSharedPointer<Bettergram::CryptoPrice>> &prices);
+
+	void onCryptoPriceSortOrderChanged();
 
 	void onCurrentPageChanged();
 };

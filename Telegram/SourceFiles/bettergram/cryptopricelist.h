@@ -26,7 +26,8 @@ public:
 		ChangeFor24hDescending,
 	};
 
-	typedef QList<CryptoPrice*>::const_iterator const_iterator;
+	typedef QList<QSharedPointer<CryptoPrice>>::const_iterator const_iterator;
+	typedef QList<QSharedPointer<CryptoPrice>>::iterator iterator;
 
 	explicit CryptoPriceList(QObject *parent = nullptr);
 
@@ -42,7 +43,7 @@ public:
 	const_iterator begin() const;
 	const_iterator end() const;
 
-	CryptoPrice *at(int index) const;
+	QSharedPointer<CryptoPrice> at(int index) const;
 	int count() const;
 
 	SortOrder sortOrder() const;
@@ -56,7 +57,7 @@ public:
 	QStringList getShortNames(int startIndex, int count) const;
 
 	void parseNames(const QByteArray &byteArray);
-	void parseValues(const QByteArray &byteArray);
+	void parseValues(const QByteArray &byteArray, const QUrl &url);
 
 	void save() const;
 	void load();
@@ -70,7 +71,7 @@ signals:
 	void freqChanged();
 	void sortOrderChanged();
 	void namesUpdated();
-	void valuesUpdated();
+	void valuesUpdated(const QUrl &url, const QList<QSharedPointer<CryptoPrice>> &prices);
 
 protected:
 
@@ -78,7 +79,7 @@ private:
 	/// Default frequency of updates in seconds
 	static const int _defaultFreq;
 
-	QList<CryptoPrice*> _list;
+	QList<QSharedPointer<CryptoPrice>> _list;
 	double _marketCap = 0.0;
 
 	/// Frequency of updates in seconds
@@ -96,29 +97,41 @@ private:
 
 	static bool containsName(const QList<CryptoPrice> &priceList, const QString &name);
 
-	static bool sortByRankAsc(const CryptoPrice *price1, const CryptoPrice *price2);
-	static bool sortByRankDesc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByRankAsc(const QSharedPointer<CryptoPrice> &price1,
+							  const QSharedPointer<CryptoPrice> &price2);
 
-	static bool sortByNameAsc(const CryptoPrice *price1, const CryptoPrice *price2);
-	static bool sortByNameDesc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByRankDesc(const QSharedPointer<CryptoPrice> &price1,
+							   const QSharedPointer<CryptoPrice> &price2);
 
-	static bool sortByPriceAsc(const CryptoPrice *price1, const CryptoPrice *price2);
-	static bool sortByPriceDesc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByNameAsc(const QSharedPointer<CryptoPrice> &price1,
+							  const QSharedPointer<CryptoPrice> &price2);
 
-	static bool sortBy24hAsc(const CryptoPrice *price1, const CryptoPrice *price2);
-	static bool sortBy24hDesc(const CryptoPrice *price1, const CryptoPrice *price2);
+	static bool sortByNameDesc(const QSharedPointer<CryptoPrice> &price1,
+							   const QSharedPointer<CryptoPrice> &price2);
+
+	static bool sortByPriceAsc(const QSharedPointer<CryptoPrice> &price1,
+							   const QSharedPointer<CryptoPrice> &price2);
+
+	static bool sortByPriceDesc(const QSharedPointer<CryptoPrice> &price1,
+								const QSharedPointer<CryptoPrice> &price2);
+
+	static bool sortBy24hAsc(const QSharedPointer<CryptoPrice> &price1,
+							 const QSharedPointer<CryptoPrice> &price2);
+
+	static bool sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
+							  const QSharedPointer<CryptoPrice> &price2);
 
 	void setFreq(int freq);
 	void setLastUpdate(const QDateTime &lastUpdate);
 	void setAreNamesFetched(bool areNamesFetched);
 
-	void addPrivate(CryptoPrice *price);
+	void addPrivate(const QSharedPointer<CryptoPrice> &price);
 
-	CryptoPrice *findByName(const QString &name, const QString &shortName);
-	CryptoPrice *findByShortName(const QString &shortName);
+	QSharedPointer<CryptoPrice> findByName(const QString &name, const QString &shortName);
+	QSharedPointer<CryptoPrice> findByShortName(const QString &shortName);
 	void sort();
 
-	void parsePriceListValues(const QJsonArray &priceListJson);
+	QList<QSharedPointer<CryptoPrice>> parsePriceListValues(const QJsonArray &priceListJson);
 	void updateData(double marketCap, int freq);
 	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);
 
@@ -132,6 +145,9 @@ private:
 					 double currentPrice,
 					 double changeFor24Hours,
 					 CryptoPrice::Direction minuteDirection);
+
+private slots:
+	void onIconChanged();
 };
 
 } // namespace Bettergram

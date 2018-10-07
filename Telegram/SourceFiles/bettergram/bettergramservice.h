@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/observer.h"
+#include <base/observer.h>
 
 #include <QObject>
 #include <QSettings>
@@ -73,8 +73,8 @@ public:
 	/// Download and parse crypto price values.
 	/// If crypto price names are not fetched we fetch it now.
 	/// We should call this every minute while the crypto price tab is shown
-	void getCryptoPriceValues(int offset, int count);
-	void getCryptoPriceValues(const QStringList &shortNames);
+	QUrl getCryptoPriceValues(int offset, int count);
+	QUrl getCryptoPriceValues(const QStringList &shortNames);
 
 	/// Download and parse all RSS feeds
 	void getRssChannelList();
@@ -150,7 +150,6 @@ private slots:
 	void onGetCryptoPriceNamesFinished();
 	void onGetCryptoPriceNamesSslFailed(QList<QSslError> errors);
 
-	void onGetCryptoPriceValuesFinished();
 	void onGetCryptoPriceValuesSslFailed(QList<QSslError> errors);
 
 	void onGetNextAdFinished();

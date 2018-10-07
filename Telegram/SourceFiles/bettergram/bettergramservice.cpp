@@ -353,10 +353,10 @@ void BettergramService::getCryptoPriceNames()
 			this, &BettergramService::onGetCryptoPriceNamesSslFailed);
 }
 
-void BettergramService::getCryptoPriceValues(int offset, int count)
+QUrl BettergramService::getCryptoPriceValues(int offset, int count)
 {
 	if (offset < 0 || offset >= _cryptoPriceList->count() || count <= 0) {
-		return;
+		return QUrl();
 	}
 
 	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?sort=%1&order=%2&offset=%3&limit=%4")
@@ -366,12 +366,14 @@ void BettergramService::getCryptoPriceValues(int offset, int count)
 			 .arg(count));
 
 	getCryptoPriceValues(url);
+
+	return url;
 }
 
-void BettergramService::getCryptoPriceValues(const QStringList &shortNames)
+QUrl BettergramService::getCryptoPriceValues(const QStringList &shortNames)
 {
 	if (shortNames.isEmpty()) {
-		return;
+		return QUrl();
 	}
 
 	//TODO: bettergram: remove 'limit=1' as soon as the server side will be fixed
@@ -380,6 +382,8 @@ void BettergramService::getCryptoPriceValues(const QStringList &shortNames)
 			 .arg(shortNames.join(QStringLiteral(","))));
 
 	getCryptoPriceValues(url);
+
+	return url;
 }
 
 void BettergramService::getCryptoPriceValues(const QUrl &url)
@@ -397,7 +401,17 @@ void BettergramService::getCryptoPriceValues(const QUrl &url)
 	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished,
-			this, &BettergramService::onGetCryptoPriceValuesFinished);
+			this, [this, url] {
+		QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+		if(reply->error() == QNetworkReply::NoError) {
+			_cryptoPriceList->parseValues(reply->readAll(), url);
+		} else {
+			LOG(("Can not get crypto price values. %1 (%2)")
+				.arg(reply->errorString())
+				.arg(reply->error()));
+		}
+	});
 
 	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
 		reply->deleteLater();
@@ -538,19 +552,6 @@ void BettergramService::onGetCryptoPriceNamesSslFailed(QList<QSslError> errors)
 {
 	for(const QSslError &error : errors) {
 		LOG(("%1").arg(error.errorString()));
-	}
-}
-
-void BettergramService::onGetCryptoPriceValuesFinished()
-{
-	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-
-	if(reply->error() == QNetworkReply::NoError) {
-		_cryptoPriceList->parseValues(reply->readAll());
-	} else {
-		LOG(("Can not get crypto price values. %1 (%2)")
-			.arg(reply->errorString())
-			.arg(reply->error()));
 	}
 }
 

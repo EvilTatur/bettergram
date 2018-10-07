@@ -149,9 +149,9 @@ void CryptoPriceList::setLastUpdate(const QDateTime &lastUpdate)
 	}
 }
 
-void CryptoPriceList::addPrivate(CryptoPrice *price)
+void CryptoPriceList::addPrivate(const QSharedPointer<CryptoPrice> &price)
 {
-	connect(price, &CryptoPrice::iconChanged, this, &CryptoPriceList::valuesUpdated);
+	connect(price.data(), &CryptoPrice::iconChanged, this, &CryptoPriceList::onIconChanged);
 
 	_list.push_back(price);
 }
@@ -166,11 +166,11 @@ CryptoPriceList::const_iterator CryptoPriceList::end() const
 	return _list.end();
 }
 
-CryptoPrice *CryptoPriceList::at(int index) const
+QSharedPointer<CryptoPrice> CryptoPriceList::at(int index) const
 {
 	if (index < 0 || index >= _list.size()) {
 		LOG(("Index is out of bounds"));
-		return nullptr;
+		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
 	return _list.at(index);
@@ -321,7 +321,7 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 	}
 }
 
-void CryptoPriceList::parseValues(const QByteArray &byteArray)
+void CryptoPriceList::parseValues(const QByteArray &byteArray, const QUrl &url)
 {
 	if (byteArray.isEmpty()) {
 		LOG(("Can not get crypto price values. Response is emtpy"));
@@ -368,22 +368,26 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray)
 	// At first case we get results at the `favorites` property,
 	// at the second case we get results at the `list` property.
 
+	QList<QSharedPointer<CryptoPrice>> prices;
 	QJsonArray favoriteListJson = json.value("data").toObject().value("favorites").toArray();
 
 	if (favoriteListJson.isEmpty()) {
 		QJsonArray priceListJson = json.value("data").toObject().value("list").toArray();
 
-		parsePriceListValues(priceListJson);
+		prices = parsePriceListValues(priceListJson);
 	} else {
-		parsePriceListValues(favoriteListJson);
+		prices = parsePriceListValues(favoriteListJson);
 	}
 
 	updateData(marketCap, freq);
 	sort();
+
+	emit valuesUpdated(url, prices);
 }
 
-void CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
+QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
 {
+	QList<QSharedPointer<CryptoPrice>> prices;
 	int i = 0;
 
 	for (QJsonValue jsonValue : priceListJson) {
@@ -426,7 +430,7 @@ void CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
 			changeForMinute = std::numeric_limits<double>::quiet_NaN();
 		}
 
-		CryptoPrice *price = findByShortName(shortName);
+		QSharedPointer<CryptoPrice> price = findByShortName(shortName);
 
 		if (!price) {
 			LOG(("Can not find price for crypto currency '%1'").arg(shortName));
@@ -438,8 +442,11 @@ void CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
 		price->setChangeFor24Hours(changeFor24Hours);
 		price->setMinuteDirection(CryptoPrice::countDirection(changeForMinute));
 
+		prices.push_back(price);
 		i++;
 	}
+
+	return prices;
 }
 
 void CryptoPriceList::save() const
@@ -489,7 +496,7 @@ void CryptoPriceList::load()
 	for (int i = 0; i < size; ++i) {
 		settings.setArrayIndex(i);
 
-		CryptoPrice *price = CryptoPrice::load(settings);
+		QSharedPointer<CryptoPrice> price = CryptoPrice::load(settings);
 
 		if (price) {
 			addPrivate(price);
@@ -510,51 +517,50 @@ void CryptoPriceList::updateData(double marketCap, int freq)
 void CryptoPriceList::mergeCryptoPriceList(const QList<CryptoPrice> &priceList)
 {
 	// Remove old crypto prices
-	for (QList<CryptoPrice*>::iterator it = _list.begin(); it != _list.end();) {
-		CryptoPrice *price = *it;
+	for (iterator it = _list.begin(); it != _list.end();) {
+		const QSharedPointer<CryptoPrice> &price = *it;
 
 		if (containsName(priceList, price->name())) {
 			++it;
 		} else {
-			price->deleteLater();
 			it = _list.erase(it);
 		}
 	}
 
 	// Update existed crypto prices and add new ones
 	for (const CryptoPrice &price : priceList) {
-		CryptoPrice *existedPrice = findByName(price.name(), price.shortName());
+		QSharedPointer<CryptoPrice> existedPrice = findByName(price.name(), price.shortName());
 
 		if (existedPrice) {
 			existedPrice->updateData(price);
 		} else {
-			addPrivate(new CryptoPrice(price, this));
+			addPrivate(QSharedPointer(new CryptoPrice(price, this)));
 		}
 	}
 
 	sort();
 }
 
-CryptoPrice *CryptoPriceList::findByName(const QString &name, const QString &shortName)
+QSharedPointer<CryptoPrice> CryptoPriceList::findByName(const QString &name, const QString &shortName)
 {
-	for (CryptoPrice *price : _list) {
+	for (const QSharedPointer<CryptoPrice> &price : _list) {
 		if (price->name() == name && price->shortName() == shortName) {
 			return price;
 		}
 	}
 
-	return nullptr;
+	return QSharedPointer<CryptoPrice>(nullptr);
 }
 
-CryptoPrice *CryptoPriceList::findByShortName(const QString &shortName)
+QSharedPointer<CryptoPrice> CryptoPriceList::findByShortName(const QString &shortName)
 {
-	for (CryptoPrice *price : _list) {
+	for (const QSharedPointer<CryptoPrice> &price : _list) {
 		if (price->shortName() == shortName) {
 			return price;
 		}
 	}
 
-	return nullptr;
+	return QSharedPointer<CryptoPrice>(nullptr);
 }
 
 bool CryptoPriceList::containsName(const QList<CryptoPrice> &priceList, const QString &name)
@@ -568,7 +574,8 @@ bool CryptoPriceList::containsName(const QList<CryptoPrice> &priceList, const QS
 	return false;
 }
 
-bool CryptoPriceList::sortByRankAsc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByRankAsc(const QSharedPointer<CryptoPrice> &price1,
+									const QSharedPointer<CryptoPrice> &price2)
 {
 	if (price1->rank() == price2->rank()) {
 		return sortByNameAsc(price1, price2);
@@ -577,7 +584,8 @@ bool CryptoPriceList::sortByRankAsc(const CryptoPrice *price1, const CryptoPrice
 	return price1->rank() < price2->rank();
 }
 
-bool CryptoPriceList::sortByRankDesc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByRankDesc(const QSharedPointer<CryptoPrice> &price1,
+									 const QSharedPointer<CryptoPrice> &price2)
 {
 	if (price1->rank() == price2->rank()) {
 		return sortByNameAsc(price1, price2);
@@ -586,17 +594,20 @@ bool CryptoPriceList::sortByRankDesc(const CryptoPrice *price1, const CryptoPric
 	return price2->rank() < price1->rank();
 }
 
-bool CryptoPriceList::sortByNameAsc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByNameAsc(const QSharedPointer<CryptoPrice> &price1,
+									const QSharedPointer<CryptoPrice> &price2)
 {
 	return QString::compare(price1->name(), price2->name(), Qt::CaseInsensitive) < 0;
 }
 
-bool CryptoPriceList::sortByNameDesc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByNameDesc(const QSharedPointer<CryptoPrice> &price1,
+									 const QSharedPointer<CryptoPrice> &price2)
 {
 	return QString::compare(price2->name(), price1->name(), Qt::CaseInsensitive) < 0;
 }
 
-bool CryptoPriceList::sortByPriceAsc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByPriceAsc(const QSharedPointer<CryptoPrice> &price1,
+									 const QSharedPointer<CryptoPrice> &price2)
 {
 	if (price1->currentPrice() == price2->currentPrice()) {
 		return sortByNameAsc(price1, price2);
@@ -605,7 +616,8 @@ bool CryptoPriceList::sortByPriceAsc(const CryptoPrice *price1, const CryptoPric
 	return price1->currentPrice() < price2->currentPrice();
 }
 
-bool CryptoPriceList::sortByPriceDesc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortByPriceDesc(const QSharedPointer<CryptoPrice> &price1,
+									  const QSharedPointer<CryptoPrice> &price2)
 {
 	if (price1->currentPrice() == price2->currentPrice()) {
 		return sortByNameAsc(price1, price2);
@@ -614,7 +626,8 @@ bool CryptoPriceList::sortByPriceDesc(const CryptoPrice *price1, const CryptoPri
 	return price2->currentPrice() < price1->currentPrice();
 }
 
-bool CryptoPriceList::sortBy24hAsc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortBy24hAsc(const QSharedPointer<CryptoPrice> &price1,
+								   const QSharedPointer<CryptoPrice> &price2)
 {
 	if (price1->changeFor24Hours() == price2->changeFor24Hours()) {
 		return sortByNameAsc(price1, price2);
@@ -623,7 +636,8 @@ bool CryptoPriceList::sortBy24hAsc(const CryptoPrice *price1, const CryptoPrice 
 	return price1->changeFor24Hours() < price2->changeFor24Hours();
 }
 
-bool CryptoPriceList::sortBy24hDesc(const CryptoPrice *price1, const CryptoPrice *price2)
+bool CryptoPriceList::sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
+									const QSharedPointer<CryptoPrice> &price2)
 {
 	if (price1->changeFor24Hours() == price2->changeFor24Hours()) {
 		return sortByNameAsc(price1, price2);
@@ -636,7 +650,7 @@ void CryptoPriceList::sort()
 {
 	switch (_sortOrder) {
 	case SortOrder::Rank:
-		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByRankAsc);
+		// We should not sort by rank locally
 		break;
 	case SortOrder::NameAscending:
 		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByNameAsc);
@@ -645,22 +659,20 @@ void CryptoPriceList::sort()
 		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByNameDesc);
 		break;
 	case SortOrder::PriceAscending:
-		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByPriceAsc);
+		// We should not sort by price locally
 		break;
 	case SortOrder::PriceDescending:
-		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortByPriceDesc);
+		// We should not sort by price locally
 		break;
 	case SortOrder::ChangeFor24hAscending:
-		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortBy24hAsc);
+		// We should not sort by change for 24 hours locally
 		break;
 	case SortOrder::ChangeFor24hDescending:
-		std::sort(_list.begin(), _list.end(), &CryptoPriceList::sortBy24hDesc);
+		// We should not sort by change for 24 hours locally
 		break;
 	default:
 		break;
 	}
-
-	emit valuesUpdated();
 }
 
 void CryptoPriceList::createTestData()
@@ -688,25 +700,26 @@ void CryptoPriceList::addTestData(const QUrl &url,
 								  double changeFor24Hours,
 								  CryptoPrice::Direction minuteDirection)
 {
-	CryptoPrice *price = new CryptoPrice(url,
-										 iconUrl,
-										 name,
-										 shortName,
-										 rank,
-										 currentPrice,
-										 changeFor24Hours,
-										 minuteDirection,
-										 true,
-										 this);
+	_list.push_back(QSharedPointer(new CryptoPrice(url,
+												   iconUrl,
+												   name,
+												   shortName,
+												   rank,
+												   currentPrice,
+												   changeFor24Hours,
+												   minuteDirection,
+												   true,
+												   this)));
+}
 
-	_list.push_back(price);
+void CryptoPriceList::onIconChanged()
+{
+	emit valuesUpdated(QUrl(), QList<QSharedPointer<CryptoPrice>>());
 }
 
 void CryptoPriceList::clear()
 {
-	while (!_list.isEmpty()) {
-		_list.takeFirst()->deleteLater();
-	}
+	_list.clear();
 }
 
 } // namespace Bettergrams

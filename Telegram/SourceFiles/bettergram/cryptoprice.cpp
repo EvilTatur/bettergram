@@ -257,30 +257,30 @@ void CryptoPrice::save(QSettings &settings) const
 	settings.setValue("minuteDirection", static_cast<int>(minuteDirection()));
 }
 
-CryptoPrice *CryptoPrice::load(const QSettings &settings)
+QSharedPointer<CryptoPrice> CryptoPrice::load(const QSettings &settings)
 {
 	QString name = settings.value("name").toString();
 	if (name.isEmpty()) {
 		LOG(("Price name is empty"));
-		return nullptr;
+		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
 	QString shortName = settings.value("code").toString();
 	if (shortName.isEmpty()) {
 		LOG(("Price code is empty"));
-		return nullptr;
+		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
 	QString url = settings.value("link").toString();
 	if (url.isEmpty()) {
 		LOG(("Price url is empty"));
-		return nullptr;
+		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
 	QString iconUrl = settings.value("iconLink").toString();
 	if (iconUrl.isEmpty()) {
 		LOG(("Price icon url is empty"));
-		return nullptr;
+		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
 	int rank = settings.value("rank").toInt();
@@ -300,15 +300,15 @@ CryptoPrice *CryptoPrice::load(const QSettings &settings)
 		minuteDirection = Direction::None;
 	}
 
-	return new CryptoPrice(url,
-						   iconUrl,
-						   name,
-						   shortName,
-						   rank,
-						   price,
-						   changeFor24Hours,
-						   minuteDirection,
-						   false);
+	return QSharedPointer<CryptoPrice>(new CryptoPrice(url,
+													   iconUrl,
+													   name,
+													   shortName,
+													   rank,
+													   price,
+													   changeFor24Hours,
+													   minuteDirection,
+													   false));
 }
 
 CryptoPrice::Direction CryptoPrice::countDirection(double value)
