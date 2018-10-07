@@ -172,9 +172,9 @@ void CryptoPrice::updateCurrentPriceString()
 	if (std::isnan(_currentPrice)) {
 		_currentPriceString = QStringLiteral("N/A");
 	} else if (_currentPrice < 1.0) {
-		_currentPriceString = QString("$%1").arg(_currentPrice, 0, 'f', 4);
+		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 4);
 	} else {
-		_currentPriceString = QString("$%1").arg(_currentPrice, 0, 'f', 2);
+		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 2);
 	}
 }
 

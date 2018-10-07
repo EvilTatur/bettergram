@@ -75,6 +75,9 @@ private:
 	Ui::FlatLabel *_lastUpdateLabel = nullptr;
 	Ui::IconButton *_siteName = nullptr;
 	Ui::FlatLabel *_marketCap = nullptr;
+	Ui::FlatLabel *_marketCapValue = nullptr;
+	Ui::FlatLabel *_btcDominance = nullptr;
+	Ui::FlatLabel *_btcDominanceValue = nullptr;
 	BettergramNumericPageIndicatorWidget *_pageIndicator = nullptr;
 	TableColumnHeaderWidget *_coinHeader = nullptr;
 	TableColumnHeaderWidget *_priceHeader = nullptr;
@@ -106,6 +109,7 @@ private:
 	void updatePagesCount();
 	void updateLastUpdateLabel();
 	void updateMarketCap();
+	void updateBtcDominance();
 
 	void startPriceListTimer();
 	void stopPriceListTimer();

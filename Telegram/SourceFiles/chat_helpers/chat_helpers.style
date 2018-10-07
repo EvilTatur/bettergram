@@ -212,6 +212,17 @@ pricesPanSiteNameLabel: FlatLabel(defaultFlatLabel) {
 // Market capitalization label at the PricesListWidget
 pricesPanMarketCapLabel: FlatLabel(defaultFlatLabel) {
         align: align(center);
+        textFg: windowSubTextFg;
+        style: TextStyle(defaultTextStyle) {
+        }
+        palette: TextPalette(defaultTextPalette) {
+                linkFg: windowSubTextFg;
+        }
+}
+
+// Market capitalization value label at the PricesListWidget
+pricesPanMarketCapValueLabel: FlatLabel(defaultFlatLabel) {
+        align: align(center);
         textFg: pricesPanHeaderFg;
         style: TextStyle(defaultTextStyle) {
         }

@@ -32,8 +32,12 @@ public:
 	explicit CryptoPriceList(QObject *parent = nullptr);
 
 	double marketCap() const;
-	QString marketCapString() const;
+	const QString &marketCapString() const;
 	void setMarketCap(double marketCap);
+
+	double btcDominance() const;
+	const QString &btcDominanceString() const;
+	void setBtcDominance(double btcDominance);
 
 	int freq() const;
 
@@ -68,6 +72,7 @@ public slots:
 
 signals:
 	void marketCapChanged();
+	void btcDominanceChanged();
 	void freqChanged();
 	void sortOrderChanged();
 	void namesUpdated();
@@ -80,7 +85,12 @@ private:
 	static const int _defaultFreq;
 
 	QList<QSharedPointer<CryptoPrice>> _list;
-	double _marketCap = 0.0;
+
+	double _marketCap = std::numeric_limits<double>::quiet_NaN();
+	QString _marketCapString;
+
+	double _btcDominance = std::numeric_limits<double>::quiet_NaN();
+	QString _btcDominanceString;
 
 	/// Frequency of updates in seconds
 	int _freq;
@@ -130,6 +140,9 @@ private:
 	void setLastUpdate(const QDateTime &lastUpdate);
 	void setAreNamesFetched(bool areNamesFetched);
 
+	void updateMarketCapString();
+	void updateBtcDominanceString();
+
 	void addPrivate(const QSharedPointer<CryptoPrice> &price);
 
 	QSharedPointer<CryptoPrice> findByName(const QString &name, const QString &shortName);
@@ -143,7 +156,7 @@ private:
 	void fillMissedPrices(QList<QSharedPointer<CryptoPrice>> &prices,
 						  const QStringList &shortNames);
 
-	void updateData(double marketCap, int freq);
+	void updateData(double marketCap, double btcDominance, int freq);
 	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);
 
 	void clear();

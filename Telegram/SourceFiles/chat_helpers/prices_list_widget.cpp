@@ -68,9 +68,20 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	_siteName->setClickedCallback([] { BettergramService::openUrl(QUrl("https://www.livecoinwatch.com")); });
 
 	_marketCap = new Ui::FlatLabel(this, st::pricesPanMarketCapLabel);
-	_marketCap->setRichText(textcmdLink(1, lang(lng_prices_market_cap)
-										.arg(BettergramService::instance()->cryptoPriceList()->marketCapString())));
+	_marketCap->setRichText(textcmdLink(1, lang(lng_prices_market_cap)));
 	_marketCap->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
+
+	_marketCapValue = new Ui::FlatLabel(this, st::pricesPanMarketCapValueLabel);
+	_marketCapValue->setRichText(textcmdLink(1, BettergramService::instance()->cryptoPriceList()->marketCapString()));
+	_marketCapValue->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
+
+	_btcDominance = new Ui::FlatLabel(this, st::pricesPanMarketCapLabel);
+	_btcDominance->setRichText(textcmdLink(1, lang(lng_prices_btc_dominance)));
+	_btcDominance->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
+
+	_btcDominanceValue = new Ui::FlatLabel(this, st::pricesPanMarketCapValueLabel);
+	_btcDominanceValue->setRichText(textcmdLink(1, BettergramService::instance()->cryptoPriceList()->btcDominanceString()));
+	_btcDominanceValue->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
 
 	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
@@ -502,9 +513,10 @@ void PricesListWidget::updateControlsGeometry()
 						  _lastUpdateLabel->y() + _lastUpdateLabel->height() + st::pricesPanPadding / 2);
 
 	updateMarketCap();
+	updateBtcDominance();
 	updatePagesCount();
 
-	_pageIndicator->moveToLeft(0, _marketCap->y() + _marketCap->height() + st::pricesPanPadding);
+	_pageIndicator->moveToLeft(0, _marketCapValue->y() + _marketCapValue->height() + st::pricesPanPadding);
 	_pageIndicator->resizeToWidth(width());
 
 	int columnCoinWidth = width() - st::pricesPanColumnPriceWidth - st::pricesPanColumn24hWidth;
@@ -556,12 +568,32 @@ void PricesListWidget::updateLastUpdateLabel()
 
 void PricesListWidget::updateMarketCap()
 {
-	_marketCap->setRichText(textcmdLink(1, lang(lng_prices_market_cap)
-										.arg(BettergramService::instance()->cryptoPriceList()->marketCapString())));
-	_marketCap->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
+	_marketCapValue->setRichText(textcmdLink(1, BettergramService::instance()->cryptoPriceList()->marketCapString()));
+	_marketCapValue->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
 
-	_marketCap->moveToLeft((width() - _marketCap->width()) / 2,
-						   _siteName->y() + _siteName->height() + st::pricesPanPadding);
+	int marketCapWidth = qMax(_marketCap->width(), _marketCapValue->width());
+	int xOffset = st::pricesPanPadding;
+
+	_marketCap->moveToLeft(xOffset + (marketCapWidth - _marketCap->width()) / 2,
+						   _siteName->y() + _siteName->height() + st::pricesPanPadding / 2);
+
+	_marketCapValue->moveToLeft(xOffset + (marketCapWidth - _marketCapValue->width()) / 2,
+								_marketCap->y() + _marketCap->height());
+}
+
+void PricesListWidget::updateBtcDominance()
+{
+	_btcDominanceValue->setRichText(textcmdLink(1, BettergramService::instance()->cryptoPriceList()->btcDominanceString()));
+	_btcDominanceValue->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
+
+	int btcDominanceWidth = qMax(_btcDominance->width(), _btcDominanceValue->width());
+	int xOffset = width() - btcDominanceWidth - st::pricesPanPadding;
+
+	_btcDominance->moveToLeft(xOffset + (btcDominanceWidth - _btcDominance->width()) / 2,
+							  _marketCap->y());
+
+	_btcDominanceValue->moveToLeft(xOffset + (btcDominanceWidth - _btcDominanceValue->width()) / 2,
+								   _marketCapValue->y());
 }
 
 void PricesListWidget::onCoinColumnSortOrderChanged()
@@ -659,6 +691,7 @@ void PricesListWidget::onCryptoPriceValuesUpdated(const QUrl &url,
 
 	updateLastUpdateLabel();
 	updateMarketCap();
+	updateBtcDominance();
 	update();
 }
 

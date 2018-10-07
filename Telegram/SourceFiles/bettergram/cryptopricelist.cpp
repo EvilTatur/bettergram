@@ -70,6 +70,8 @@ CryptoPriceList::CryptoPriceList(QObject *parent) :
 	_freq(_defaultFreq),
 	_lastUpdateString(BettergramService::defaultLastUpdateString())
 {
+	updateMarketCapString();
+	updateBtcDominanceString();
 }
 
 double CryptoPriceList::marketCap() const
@@ -77,39 +79,86 @@ double CryptoPriceList::marketCap() const
 	return _marketCap;
 }
 
-QString CryptoPriceList::marketCapString() const
+const QString &CryptoPriceList::marketCapString() const
 {
-	QString result;
-	qint64 value = qAbs(qRound64(_marketCap));
-
-	if (!value) {
-		result = "0";
-		return result;
-	}
-
-	while (true) {
-		qint64 temp = value % 1000;
-		value /= 1000;
-
-		if (!result.isEmpty()) {
-			result.prepend(",");
-		}
-
-		result.prepend(QString("%1").arg(temp, 3, 10, QLatin1Char('0')));
-
-		if (!value) {
-			break;
-		}
-	}
-
-	return result;
+	return _marketCapString;
 }
 
 void CryptoPriceList::setMarketCap(double marketCap)
 {
 	if (_marketCap != marketCap) {
 		_marketCap = marketCap;
+
+		updateMarketCapString();
 		emit marketCapChanged();
+	}
+}
+
+void CryptoPriceList::updateMarketCapString()
+{
+	if (std::isnan(_marketCap)) {
+		_marketCapString = QStringLiteral("N/A");
+		return;
+	}
+
+	qint64 value = qAbs(qRound64(_marketCap));
+
+	if (!value) {
+		_marketCapString = "0";
+		return;
+	}
+
+	_marketCapString.clear();
+
+	while (true) {
+		qint64 temp = value % 1000;
+		value /= 1000;
+
+		if (!_marketCapString.isEmpty()) {
+			_marketCapString.prepend(",");
+		}
+
+		_marketCapString.prepend(QString("%1").arg(temp, 3, 10, QLatin1Char('0')));
+
+		if (!value) {
+			break;
+		}
+	}
+
+	_marketCapString.prepend(QStringLiteral("$"));
+}
+
+double CryptoPriceList::btcDominance() const
+{
+	return _btcDominance;
+}
+
+const QString &CryptoPriceList::btcDominanceString() const
+{
+	return _btcDominanceString;
+}
+
+void CryptoPriceList::setBtcDominance(double btcDominance)
+{
+	if (_btcDominance != btcDominance) {
+		_btcDominance = btcDominance;
+
+		updateBtcDominanceString();
+		emit btcDominanceChanged();
+	}
+}
+
+void CryptoPriceList::updateBtcDominanceString()
+{
+	if (std::isnan(_btcDominance)) {
+		_btcDominanceString = QStringLiteral("N/A");
+		return;
+	}
+
+	if (qAbs(_btcDominance) < 1.0) {
+		_btcDominanceString = QStringLiteral("%1%").arg(_btcDominance, 0, 'f', 4);
+	} else {
+		_btcDominanceString = QStringLiteral("%1%").arg(_btcDominance, 0, 'f', 2);
 	}
 }
 
@@ -357,6 +406,7 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 	}
 
 	double marketCap = json.value("cap").toDouble();
+	double btcDominance = json.value("btcDominance").toDouble();
 
 	// It is optionally parameter.
 	// This parameter may contain number of seconds for the next update
@@ -383,7 +433,7 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 
 	fillMissedPrices(prices, shortNames);
 
-	updateData(marketCap, freq);
+	updateData(marketCap, btcDominance, freq);
 
 	sort();
 	sort(prices, _sortOrder);
@@ -477,6 +527,7 @@ void CryptoPriceList::save() const
 	settings.beginGroup("metadata");
 
 	settings.setValue("marketCap", marketCap());
+	settings.setValue("btcDominance", btcDominance());
 	settings.setValue("lastUpdate", lastUpdate());
 
 	if (freq() == _defaultFreq) {
@@ -506,6 +557,7 @@ void CryptoPriceList::load()
 	settings.beginGroup("metadata");
 
 	setMarketCap(settings.value("marketCap").toDouble());
+	setBtcDominance(settings.value("btcDominance").toDouble());
 	setFreq(qAbs(settings.value("freq").toInt()));
 	setLastUpdate(settings.value("lastUpdate").toDateTime());
 
@@ -528,9 +580,10 @@ void CryptoPriceList::load()
 	settings.endGroup();
 }
 
-void CryptoPriceList::updateData(double marketCap, int freq)
+void CryptoPriceList::updateData(double marketCap, double btcDominance, int freq)
 {
 	setMarketCap(marketCap);
+	setBtcDominance(btcDominance);
 	setFreq(freq);
 	setLastUpdate(QDateTime::currentDateTime());
 }
