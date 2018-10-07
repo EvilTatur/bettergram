@@ -70,6 +70,7 @@ public:
 	bool isEmpty() const;
 
 	void updateData(const CryptoPrice &price);
+	void resetValues();
 
 	void save(QSettings &settings) const;
 
@@ -104,11 +105,11 @@ private:
 	int _rank = 0;
 
 	/// Current price of the cryptocurrency. For example: $7935.96
-	double _currentPrice = 0.0;
+	double _currentPrice = std::numeric_limits<double>::quiet_NaN();
 	QString _currentPriceString;
 
 	/// Price change of the cryptocurrency for the latest 24 hours. For example: -3.22%
-	double _changeFor24Hours = 0.0;
+	double _changeFor24Hours = std::numeric_limits<double>::quiet_NaN();
 	QString _changeFor24HoursString;
 
 	Direction _minuteDirection = Direction::None;

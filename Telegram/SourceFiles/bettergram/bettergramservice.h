@@ -139,7 +139,7 @@ private:
 	/// We should call this at each startup and in every 3 days.
 	void getCryptoPriceNames();
 
-	void getCryptoPriceValues(const QUrl &url);
+	void getCryptoPriceValues(const QUrl &url, const QStringList &shortNames);
 
 	void getRssFeeds(RssChannelList *rssChannelList, const QSharedPointer<RssChannel> &channel);
 

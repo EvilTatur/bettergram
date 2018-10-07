@@ -169,7 +169,9 @@ void CryptoPrice::setCurrentPrice(double currentPrice)
 
 void CryptoPrice::updateCurrentPriceString()
 {
-	if (_currentPrice < 1.0) {
+	if (std::isnan(_currentPrice)) {
+		_currentPriceString = QStringLiteral("N/A");
+	} else if (_currentPrice < 1.0) {
 		_currentPriceString = QString("$%1").arg(_currentPrice, 0, 'f', 4);
 	} else {
 		_currentPriceString = QString("$%1").arg(_currentPrice, 0, 'f', 2);
@@ -243,6 +245,12 @@ void CryptoPrice::updateData(const CryptoPrice &price)
 	setCurrentPrice(price.currentPrice());
 	setChangeFor24Hours(price.changeFor24Hours());
 	setMinuteDirection(price.minuteDirection());
+}
+
+void CryptoPrice::resetValues()
+{
+	setCurrentPrice(std::numeric_limits<double>::quiet_NaN());
+	setChangeFor24Hours(std::numeric_limits<double>::quiet_NaN());
 }
 
 void CryptoPrice::save(QSettings &settings) const

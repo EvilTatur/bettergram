@@ -365,7 +365,7 @@ QUrl BettergramService::getCryptoPriceValues(int offset, int count)
 			 .arg(offset)
 			 .arg(count));
 
-	getCryptoPriceValues(url);
+	getCryptoPriceValues(url, QStringList());
 
 	return url;
 }
@@ -381,12 +381,12 @@ QUrl BettergramService::getCryptoPriceValues(const QStringList &shortNames)
 	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?limit=1&favorites=%1")
 			 .arg(shortNames.join(QStringLiteral(","))));
 
-	getCryptoPriceValues(url);
+	getCryptoPriceValues(url, shortNames);
 
 	return url;
 }
 
-void BettergramService::getCryptoPriceValues(const QUrl &url)
+void BettergramService::getCryptoPriceValues(const QUrl &url, const QStringList &shortNames)
 {
 	if (!_cryptoPriceList->areNamesFetched()) {
 		getCryptoPriceNames();
@@ -401,11 +401,11 @@ void BettergramService::getCryptoPriceValues(const QUrl &url)
 	QNetworkReply *reply = networkManager->get(request);
 
 	connect(reply, &QNetworkReply::finished,
-			this, [this, url] {
+			this, [this, url, shortNames] {
 		QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 
 		if(reply->error() == QNetworkReply::NoError) {
-			_cryptoPriceList->parseValues(reply->readAll(), url);
+			_cryptoPriceList->parseValues(reply->readAll(), url, shortNames);
 		} else {
 			LOG(("Can not get crypto price values. %1 (%2)")
 				.arg(reply->errorString())

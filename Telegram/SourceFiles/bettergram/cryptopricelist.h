@@ -57,7 +57,7 @@ public:
 	QStringList getShortNames(int startIndex, int count) const;
 
 	void parseNames(const QByteArray &byteArray);
-	void parseValues(const QByteArray &byteArray, const QUrl &url);
+	void parseValues(const QByteArray &byteArray, const QUrl &url, const QStringList &shortNames);
 
 	void save() const;
 	void load();
@@ -97,6 +97,9 @@ private:
 
 	static bool containsName(const QList<CryptoPrice> &priceList, const QString &name);
 
+	static bool containsShortName(const QList<QSharedPointer<CryptoPrice>> &priceList,
+								  const QString &shortName);
+
 	static bool sortByRankAsc(const QSharedPointer<CryptoPrice> &price1,
 							  const QSharedPointer<CryptoPrice> &price2);
 
@@ -121,6 +124,8 @@ private:
 	static bool sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
 							  const QSharedPointer<CryptoPrice> &price2);
 
+	static void sort(QList<QSharedPointer<CryptoPrice>> &list, SortOrder sortOrder);
+
 	void setFreq(int freq);
 	void setLastUpdate(const QDateTime &lastUpdate);
 	void setAreNamesFetched(bool areNamesFetched);
@@ -132,6 +137,12 @@ private:
 	void sort();
 
 	QList<QSharedPointer<CryptoPrice>> parsePriceListValues(const QJsonArray &priceListJson);
+
+	/// If we ask server for prices by names it may return not all requested prices.
+	/// To fix that we should fill missed prices
+	void fillMissedPrices(QList<QSharedPointer<CryptoPrice>> &prices,
+						  const QStringList &shortNames);
+
 	void updateData(double marketCap, int freq);
 	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);
 
