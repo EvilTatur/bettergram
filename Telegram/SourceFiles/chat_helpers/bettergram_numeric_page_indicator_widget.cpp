@@ -109,6 +109,9 @@ void BettergramNumericPageIndicatorWidget::fillIndicators()
 	}
 
 	int left = getMargins().left();
+	int right = getMargins().right();
+
+	left = (width() - (_indicators.size() * st::bettergramNumericPageIndicatorLabelWidth)) / 2;
 
 	for (int i = 0; i < _indicators.size(); ++i) {
 		Indicator &indicator = _indicators[i];
