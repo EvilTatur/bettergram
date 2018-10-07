@@ -319,7 +319,7 @@ bettergramNumericPageIndicatorLabelBg: 20px;
 bettergramNumericPageIndicatorLabelSelectedBg: 20px;
 
 bettergramNumericPageIndicatorLabelFg: windowSubTextFg;
-bettergramNumericPageIndicatorLabelSelectedFg: windowSubTextFg;
+bettergramNumericPageIndicatorLabelSelectedFg: windowActiveTextFg;
 
 bettergramNumericPageIndicatorLabelPanHover: windowBgOver; // background of selected indicator
 

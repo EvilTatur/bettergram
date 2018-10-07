@@ -65,6 +65,7 @@ private:
 	};
 
 	int _pagesCount = 1;
+	int _fitPages = 0;
 	int _currentPage = 0;
 	int _hoveredPage = -1;
 	int _pressedPage = -1;
@@ -74,10 +75,11 @@ private:
 	void setHoveredPage(int hoveredPage);
 
 	void countHoveredPage(const QPoint &position);
-	int countNeededIndicators() const;
+	void countFitPages();
 
 	void createIndicators();
 	void fillIndicators();
+	void fillIndicators(int count);
 
 	void updateControlsGeometry();
 };

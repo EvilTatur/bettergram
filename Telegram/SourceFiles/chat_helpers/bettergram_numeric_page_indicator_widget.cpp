@@ -34,7 +34,14 @@ void BettergramNumericPageIndicatorWidget::setPagesCount(int pagesCount)
 		_pagesCount = effectivePagesCount;
 		emit pagesCountChanged();
 
-		updateControlsGeometry();
+		if (_currentPage >= _pagesCount) {
+			setCurrentPage(_pagesCount - 1);
+		} else if (_currentPage < 0 && _pagesCount > 0) {
+			setCurrentPage(0);
+		} else {
+			updateControlsGeometry();
+		}
+
 	}
 }
 
@@ -65,7 +72,7 @@ void BettergramNumericPageIndicatorWidget::countHoveredPage(const QPoint &positi
 {
 	for (int i = 0; i < _indicators.size(); ++i) {
 		if (_indicators[i].rect().contains(position)) {
-			setHoveredPage(i);
+			setHoveredPage(_indicators[i].pageIndex());
 			return;
 		}
 	}
@@ -73,17 +80,23 @@ void BettergramNumericPageIndicatorWidget::countHoveredPage(const QPoint &positi
 	setHoveredPage(-1);
 }
 
-int BettergramNumericPageIndicatorWidget::countNeededIndicators() const
+void BettergramNumericPageIndicatorWidget::countFitPages()
 {
 	const QMargins margins = contentsMargins();
 
-	return std::max(1,
-					static_cast<int>(floor((width() - margins.left() - margins.right()) / st::bettergramNumericPageIndicatorLabelWidth)));
+	_fitPages = std::max(1,
+						 static_cast<int>(floor((width() - margins.left() - margins.right()) / st::bettergramNumericPageIndicatorLabelWidth)));
 }
 
 void BettergramNumericPageIndicatorWidget::createIndicators()
 {
-	int count = countNeededIndicators();
+	countFitPages();
+
+	int count = qMin(_fitPages, _pagesCount);
+
+	if ((count < _pagesCount) && (_currentPage >= count - 3) && (count > 7) && (count % 2 == 0)) {
+		count--;
+	}
 
 	if (count > _indicators.size()) {
 		int diff = count - _indicators.size();
@@ -102,8 +115,6 @@ void BettergramNumericPageIndicatorWidget::createIndicators()
 
 void BettergramNumericPageIndicatorWidget::fillIndicators()
 {
-	//TODO: bettergram: realize BettergramNumericPageIndicatorWidget::fillLabels()
-
 	if (_indicators.isEmpty()) {
 		return;
 	}
@@ -114,12 +125,194 @@ void BettergramNumericPageIndicatorWidget::fillIndicators()
 	left = (width() - (_indicators.size() * st::bettergramNumericPageIndicatorLabelWidth)) / 2;
 
 	for (int i = 0; i < _indicators.size(); ++i) {
-		Indicator &indicator = _indicators[i];
+		_indicators[i].setLeft(left);
+		left += st::bettergramNumericPageIndicatorLabelWidth;
+	}
 
-		indicator.setLeft(left);
-		indicator.setPageIndex(i);
+	if (_indicators.size() == _pagesCount) {
+		fillIndicators(_indicators.size());
+		return;
+	}
 
-		left += indicator.width();
+	if (_currentPage < _indicators.size() - 3) {
+		fillIndicators(_indicators.size() - 2);
+
+		_indicators[_indicators.size() - 2].setPageIndex(-1);
+		_indicators[_indicators.size() - 1].setPageIndex(_pagesCount - 1);
+
+		return;
+	}
+
+	if (_indicators.size() >= 7) {
+		_indicators[0].setPageIndex(0);
+		_indicators[1].setPageIndex(-1);
+
+		_indicators[_indicators.size() - 1].setPageIndex(_pagesCount - 1);
+
+		const int delta = _indicators.size() - 4;
+		int startPageIndex = _currentPage - (delta / 2);
+
+		if (startPageIndex + delta >= _pagesCount - 2) {
+			for (int i = 2; i < _indicators.size() - 1; ++i) {
+				_indicators[i].setPageIndex(_pagesCount - _indicators.size() + i);
+			}
+		} else {
+			_indicators[_indicators.size() - 2].setPageIndex(-1);
+
+			for (int i = 0; i < delta; ++i) {
+				_indicators[2 + i].setPageIndex(startPageIndex + i);
+			}
+		}
+
+	} else if (_indicators.size() == 6) {
+		if (_currentPage > 0) {
+			if (_currentPage + 1 < _pagesCount) {
+				if (_currentPage == _pagesCount - 2 || _currentPage == _pagesCount - 3) {
+					_indicators[0].setPageIndex(0);
+					_indicators[1].setPageIndex(-1);
+					_indicators[2].setPageIndex(_pagesCount - 4);
+					_indicators[3].setPageIndex(_pagesCount - 3);
+					_indicators[4].setPageIndex(_pagesCount - 2);
+					_indicators[5].setPageIndex(_pagesCount - 1);
+				} else if (_currentPage > 1) {
+					_indicators[0].setPageIndex(0);
+
+					if (_currentPage == 3) {
+						_indicators[1].setPageIndex(1);
+					} else {
+						_indicators[1].setPageIndex(-1);
+					}
+
+					_indicators[2].setPageIndex(_currentPage - 1);
+					_indicators[3].setPageIndex(_currentPage);
+					_indicators[4].setPageIndex(_currentPage + 1);
+					_indicators[5].setPageIndex(_pagesCount - 1);
+				} else {
+					// Current page is 1
+					_indicators[0].setPageIndex(0);
+					_indicators[1].setPageIndex(1);
+					_indicators[2].setPageIndex(2);
+					_indicators[3].setPageIndex(3);
+					_indicators[4].setPageIndex(-1);
+					_indicators[5].setPageIndex(_pagesCount - 1);
+				}
+			} else {
+				// Current page is (_pagesCount - 1)
+				_indicators[0].setPageIndex(0);
+				_indicators[1].setPageIndex(1);
+				_indicators[2].setPageIndex(2);
+				_indicators[3].setPageIndex(-1);
+				_indicators[4].setPageIndex(_pagesCount - 2);
+				_indicators[5].setPageIndex(_pagesCount - 1);
+			}
+		} else {
+			// Current page is 0
+			_indicators[0].setPageIndex(0);
+			_indicators[1].setPageIndex(1);
+			_indicators[2].setPageIndex(2);
+			_indicators[3].setPageIndex(3);
+			_indicators[4].setPageIndex(-1);
+			_indicators[5].setPageIndex(_pagesCount - 1);
+		}
+	} else if (_indicators.size() == 5) {
+		if (_currentPage > 0) {
+			if (_currentPage + 1 < _pagesCount) {
+				if (_currentPage > 1) {
+					_indicators[0].setPageIndex(0);
+
+					if (_currentPage == 3) {
+						_indicators[1].setPageIndex(1);
+					} else {
+						_indicators[1].setPageIndex(-1);
+					}
+
+					_indicators[2].setPageIndex(_currentPage - 1);
+					_indicators[3].setPageIndex(_currentPage);
+					_indicators[4].setPageIndex(_currentPage + 1);
+				} else {
+					// Current page is 1
+					_indicators[0].setPageIndex(0);
+					_indicators[1].setPageIndex(1);
+					_indicators[2].setPageIndex(2);
+					_indicators[3].setPageIndex(-1);
+					_indicators[4].setPageIndex(_pagesCount - 1);
+				}
+			} else {
+				// Current page is (_pagesCount - 1)
+				_indicators[0].setPageIndex(0);
+				_indicators[1].setPageIndex(1);
+				_indicators[2].setPageIndex(-1);
+				_indicators[3].setPageIndex(_pagesCount - 2);
+				_indicators[4].setPageIndex(_pagesCount - 1);
+			}
+		} else {
+			// Current page is 0
+			_indicators[0].setPageIndex(0);
+			_indicators[1].setPageIndex(1);
+			_indicators[2].setPageIndex(2);
+			_indicators[3].setPageIndex(-1);
+			_indicators[4].setPageIndex(_pagesCount - 1);
+		}
+	} else if (_indicators.size() == 4) {
+		if (_currentPage > 0) {
+			if (_currentPage + 1 < _pagesCount) {
+				if (_currentPage > 1) {
+					_indicators[0].setPageIndex(0);
+					_indicators[1].setPageIndex(_currentPage - 1);
+					_indicators[2].setPageIndex(_currentPage);
+					_indicators[3].setPageIndex(_currentPage + 1);
+				} else {
+					// Current page is 1
+					_indicators[0].setPageIndex(0);
+					_indicators[1].setPageIndex(1);
+					_indicators[2].setPageIndex(2);
+					_indicators[3].setPageIndex(_pagesCount - 1);
+				}
+			} else {
+				// Current page is (_pagesCount - 1)
+				_indicators[0].setPageIndex(0);
+				_indicators[1].setPageIndex(-1);
+				_indicators[2].setPageIndex(_pagesCount - 2);
+				_indicators[3].setPageIndex(_pagesCount - 1);
+			}
+		} else {
+			// Current page is 0
+			_indicators[0].setPageIndex(0);
+			_indicators[1].setPageIndex(1);
+			_indicators[2].setPageIndex(-1);
+			_indicators[3].setPageIndex(_pagesCount - 1);
+		}
+	} else if (_indicators.size() == 3) {
+		if (_currentPage > 0) {
+			if (_currentPage + 1 < _pagesCount) {
+				_indicators[0].setPageIndex(_currentPage - 1);
+				_indicators[1].setPageIndex(_currentPage);
+				_indicators[2].setPageIndex(_currentPage + 1);
+			} else {
+				// Current page is (_pagesCount - 1)
+				_indicators[0].setPageIndex(0);
+				_indicators[1].setPageIndex(_pagesCount - 2);
+				_indicators[2].setPageIndex(_pagesCount - 1);
+			}
+		} else {
+			// Current page is 0
+			_indicators[0].setPageIndex(0);
+			_indicators[1].setPageIndex(1);
+			_indicators[2].setPageIndex(_pagesCount - 1);
+		}
+	} else if (_indicators.size() == 2) {
+		// Current page is 0
+		_indicators[0].setPageIndex(0);
+		_indicators[1].setPageIndex(1);
+	} else if (_indicators.size() == 1) {
+		_indicators[0].setPageIndex(_currentPage);
+	}
+}
+
+void BettergramNumericPageIndicatorWidget::fillIndicators(int count)
+{
+	for (int i = 0; i < count; ++i) {
+		_indicators[i].setPageIndex(i);
 	}
 }
 
@@ -135,6 +328,7 @@ void BettergramNumericPageIndicatorWidget::mouseReleaseEvent(QMouseEvent *e)
 	}
 
 	setCurrentPage(_pressedPage);
+	countHoveredPage(e->pos());
 }
 
 void BettergramNumericPageIndicatorWidget::mouseMoveEvent(QMouseEvent *e)
@@ -172,12 +366,13 @@ void BettergramNumericPageIndicatorWidget::paintEvent(QPaintEvent *event)
 	painter.fillRect(r, st::bettergramNumericPageIndicatorBg);
 
 	painter.setFont(st::semiboldFont);
-	painter.setPen(st::tableHeaderFg);
+	painter.setPen(st::bettergramNumericPageIndicatorLabelFg);
 
 	for (int i = 0; i < _indicators.size(); ++i) {
 		const Indicator &indicator = _indicators[i];
 
-		if (i == _hoveredPage || i == _currentPage) {
+		if ((indicator.pageIndex() == _hoveredPage || indicator.pageIndex() == _currentPage)
+				&& (indicator.pageIndex() != -1)) {
 			QRect indicatorRectangle(indicator.left(),
 									 0,
 									 st::bettergramNumericPageIndicatorLabelWidth,
@@ -186,6 +381,10 @@ void BettergramNumericPageIndicatorWidget::paintEvent(QPaintEvent *event)
 						   indicatorRectangle,
 						   st::bettergramNumericPageIndicatorLabelPanHover,
 						   StickerHoverCorners);
+
+			if (indicator.pageIndex() == _currentPage) {
+				painter.setPen(st::bettergramNumericPageIndicatorLabelSelectedFg);
+			}
 		}
 
 		painter.drawText(indicator.left(),
@@ -195,6 +394,9 @@ void BettergramNumericPageIndicatorWidget::paintEvent(QPaintEvent *event)
 						 Qt::AlignHCenter | Qt::AlignVCenter,
 						 indicator.text());
 
+		if (indicator.pageIndex() == _currentPage) {
+			painter.setPen(st::bettergramNumericPageIndicatorLabelFg);
+		}
 	}
 }
 
@@ -235,7 +437,7 @@ void BettergramNumericPageIndicatorWidget::Indicator::setText()
 	if (_pageIndex < 0) {
 		_text = QStringLiteral("...");
 	} else {
-		_text = QString::number(_pageIndex);
+		_text = QString::number(_pageIndex + 1);
 	}
 }
 

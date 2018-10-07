@@ -74,6 +74,9 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 
 	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
+	connect(_pageIndicator, &BettergramNumericPageIndicatorWidget::currentPageChanged,
+			this, &PricesListWidget::onCurrentPageChanged);
+
 	_coinHeader = new TableColumnHeaderWidget(this);
 	_coinHeader->setText(lng_prices_header_coin);
 	_coinHeader->setTextFlags(Qt::AlignLeft | Qt::AlignVCenter);
@@ -144,7 +147,14 @@ void PricesListWidget::getCryptoPriceValues()
 
 int PricesListWidget::startRowIndexInCurrentPage() const
 {
-	return _currentPageIndex * _numberOfRowsInOnePage;
+	return qMax(0, qMin(BettergramService::instance()->cryptoPriceList()->count() - 1,
+						_pageIndicator->currentPage() * _numberOfRowsInOnePage));
+}
+
+int PricesListWidget::endRowIndexInCurrentPage() const
+{
+	return qMin(BettergramService::instance()->cryptoPriceList()->count(),
+				startRowIndexInCurrentPage() + _numberOfRowsInOnePage);
 }
 
 QStringList PricesListWidget::getCurrentShortNames() const
@@ -241,7 +251,7 @@ int PricesListWidget::getTableContentTop() const
 
 int PricesListWidget::getTableContentHeight() const
 {
-	return st::pricesPanTableRowHeight * BettergramService::instance()->cryptoPriceList()->count();
+	return parentWidget() ? parentWidget()->height() - getTableContentTop() : 0;
 }
 
 int PricesListWidget::getRowTop(int row) const
@@ -410,7 +420,11 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 
 	painter.setFont(st::semiboldFont);
 
-	for (const CryptoPrice *price : *BettergramService::instance()->cryptoPriceList()) {
+	int endRowIndex = endRowIndexInCurrentPage();
+
+	for (int i = startRowIndexInCurrentPage(); i < endRowIndex; ++i) {
+		const CryptoPrice *price = BettergramService::instance()->cryptoPriceList()->at(i);
+
 		if (!price->icon().isNull()) {
 			QRect targetRect(columnCoinLeft,
 							 top + (st::pricesPanTableRowHeight - st::pricesPanTableImageSize) / 2,
@@ -481,6 +495,7 @@ void PricesListWidget::updateControlsGeometry()
 						  _lastUpdateLabel->y() + _lastUpdateLabel->height() + st::pricesPanPadding / 2);
 
 	updateMarketCap();
+	updatePagesCount();
 
 	_pageIndicator->moveToLeft(0, _marketCap->y() + _marketCap->height() + st::pricesPanPadding);
 	_pageIndicator->resizeToWidth(width());
@@ -501,6 +516,18 @@ void PricesListWidget::updateControlsGeometry()
 	_coinHeader->moveToLeft(0, headerTop);
 	_priceHeader->moveToLeft(_coinHeader->x() + _coinHeader->width(), headerTop);
 	_24hHeader->moveToLeft(_priceHeader->x() + _priceHeader->width(), headerTop);
+}
+
+void PricesListWidget::updatePagesCount()
+{
+	int pricesCount = BettergramService::instance()->cryptoPriceList()->count();
+
+	_numberOfRowsInOnePage = qMax(1,
+								  static_cast<int>(std::floor(getTableContentHeight() / st::pricesPanTableRowHeight)));
+
+	int pagesCount = qMax(1, static_cast<int>(std::ceil(pricesCount / _numberOfRowsInOnePage)));
+
+	_pageIndicator->setPagesCount(pagesCount);
 }
 
 void PricesListWidget::updateLastUpdateLabel()
@@ -609,6 +636,11 @@ void PricesListWidget::onCryptoPriceValuesUpdated()
 {
 	updateLastUpdateLabel();
 	updateMarketCap();
+	update();
+}
+
+void PricesListWidget::onCurrentPageChanged()
+{
 	update();
 }
 
