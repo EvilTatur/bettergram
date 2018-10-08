@@ -17,6 +17,11 @@ public:
 	const QUrl &link() const;
 	void setLink(const QUrl &link);
 
+	const QDateTime &lastDownloadTime() const;
+
+	/// Call this method only when you load data from persistent storage
+	void setLastDownloadTime(QDateTime lastDownloadTime);
+
 	bool isNeedToDownload() const;
 
 	void downloadIfNeeded();
@@ -26,6 +31,7 @@ public slots:
 
 signals:
 	void linkChanged();
+	void downloaded();
 
 protected:
 	virtual bool customIsNeedToDownload() const = 0;
@@ -38,6 +44,7 @@ protected:
 
 private:
 	QUrl _link;
+	QDateTime _lastDownloadTime;
 	bool _isDownloading = false;
 
 	void downloadLater();

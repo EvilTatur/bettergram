@@ -8,6 +8,9 @@
 
 namespace Bettergram {
 
+// Fetch icons again if they are too old (3 days by default)
+const qint64 CryptoPrice::_ageLimitForIconsInSeconds = 3 * 24 * 60 * 60;
+
 CryptoPrice::CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
 						 const QString &name,
@@ -276,7 +279,12 @@ void CryptoPrice::resetValues()
 
 void CryptoPrice::downloadIconIfNeeded()
 {
-	_icon->downloadIfNeeded();
+	if (_icon->lastDownloadTime().isValid()
+			&& qAbs(_icon->lastDownloadTime().secsTo(QDateTime::currentDateTime())) > _ageLimitForIconsInSeconds) {
+		_icon->forceDownload();
+	} else {
+		_icon->downloadIfNeeded();
+	}
 }
 
 void CryptoPrice::forceDownloadIcon()
@@ -288,6 +296,7 @@ void CryptoPrice::save(QSettings &settings) const
 {
 	settings.setValue("link", url().toString());
 	settings.setValue("iconLink", iconUrl().toString());
+	settings.setValue("iconLastDownloadTime", _icon->lastDownloadTime());
 	settings.setValue("name", name());
 	settings.setValue("code", shortName());
 	settings.setValue("rank", rank());
@@ -354,6 +363,8 @@ QSharedPointer<CryptoPrice> CryptoPrice::load(const QSettings &settings)
 		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
+	QDateTime iconLastDownloadTime = settings.value("iconLastDownloadTime").toDateTime();
+
 	int rank = settings.value("rank").toInt();
 	double price = settings.value("price").toDouble();
 	double changeFor24Hours = settings.value("changeForDay").toDouble();
@@ -381,12 +392,12 @@ QSharedPointer<CryptoPrice> CryptoPrice::load(const QSettings &settings)
 															minuteDirection,
 															false));
 
-	cryptoPrice->loadIcon();
+	cryptoPrice->loadIcon(iconLastDownloadTime);
 
 	return cryptoPrice;
 }
 
-void CryptoPrice::loadIcon()
+void CryptoPrice::loadIcon(const QDateTime &lastDownloadTime)
 {
 	if (_name.isEmpty() && _shortName.isEmpty()) {
 		return;
@@ -419,6 +430,7 @@ void CryptoPrice::loadIcon()
 	}
 
 	_icon->setImage(icon);
+	_icon->setLastDownloadTime(lastDownloadTime);
 }
 
 CryptoPrice::Direction CryptoPrice::countDirection(double value)

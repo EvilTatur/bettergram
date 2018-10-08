@@ -41,6 +41,16 @@ void AbstractRemoteFile::setLink(const QUrl &link)
 	}
 }
 
+const QDateTime &AbstractRemoteFile::lastDownloadTime() const
+{
+	return _lastDownloadTime;
+}
+
+void AbstractRemoteFile::setLastDownloadTime(QDateTime lastDownloadTime)
+{
+	_lastDownloadTime = lastDownloadTime;
+}
+
 bool AbstractRemoteFile::isNeedToDownload() const
 {
 	return customIsNeedToDownload();
@@ -83,6 +93,8 @@ void AbstractRemoteFile::download()
 
 		if(reply->error() == QNetworkReply::NoError) {
 			dataDownloaded(reply->readAll());
+			_lastDownloadTime = QDateTime::currentDateTime();
+			emit downloaded();
 		} else {
 			LOG(("Can not download file at %1. %2 (%3)")
 				.arg(_link.toString())

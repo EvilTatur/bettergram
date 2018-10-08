@@ -92,6 +92,9 @@ signals:
 protected:
 
 private:
+	/// Fetch icons again if they are too old (3 days by default)
+	static const qint64 _ageLimitForIconsInSeconds;
+
 	/// Site address of the information about the cryptocurrency. For example: https://www.livecoinwatch.com/price/Bitcoin-BTC
 	QUrl _url;
 
@@ -130,7 +133,7 @@ private:
 
 	QString iconFilePath() const;
 
-	void loadIcon();
+	void loadIcon(const QDateTime &lastDownloadTime);
 	void saveIcon() const;
 };
 
