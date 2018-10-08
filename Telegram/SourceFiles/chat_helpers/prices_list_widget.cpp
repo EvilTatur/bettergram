@@ -521,15 +521,15 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 
 		if (i == favoriteButtonHovered) {
 			if (price->isFavorite()) {
-				favoriteIcon = &st::pricesPanTableFavoriteEnabledIconOver;
+				favoriteIcon = &st::pricesPanFavoriteEnabledIconOver;
 			} else {
-				favoriteIcon = &st::pricesPanTableFavoriteDisabledIconOver;
+				favoriteIcon = &st::pricesPanFavoriteDisabledIconOver;
 			}
 		} else {
 			if (price->isFavorite()) {
-				favoriteIcon = &st::pricesPanTableFavoriteEnabledIcon;
+				favoriteIcon = &st::pricesPanFavoriteEnabledIcon;
 			} else {
-				favoriteIcon = &st::pricesPanTableFavoriteDisabledIcon;
+				favoriteIcon = &st::pricesPanFavoriteDisabledIcon;
 			}
 		}
 

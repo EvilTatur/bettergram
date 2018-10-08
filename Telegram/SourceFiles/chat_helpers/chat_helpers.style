@@ -238,12 +238,6 @@ pricesPanFavoriteDisabledIconOver: icon {{ "price_favorite_disabled", windowBgAc
 pricesPanFavoriteEnabledIcon: icon {{ "price_favorite_enabled", dialogsMenuIconFg }};
 pricesPanFavoriteEnabledIconOver: icon {{ "price_favorite_enabled", windowBgActive }};
 
-pricesPanTableFavoriteDisabledIcon: icon {{ "price_table_favorite_disabled", dialogsMenuIconFg }};
-pricesPanTableFavoriteDisabledIconOver: icon {{ "price_table_favorite_disabled", windowBgActive }};
-
-pricesPanTableFavoriteEnabledIcon: icon {{ "price_table_favorite_enabled", dialogsMenuIconFg }};
-pricesPanTableFavoriteEnabledIconOver: icon {{ "price_table_favorite_enabled", windowBgActive }};
-
 // Favorite button at the PricesListWidget
 pricesPanFavoriteButton: IconButton {
         width: 24px;
