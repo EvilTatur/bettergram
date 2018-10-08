@@ -330,6 +330,11 @@ QSettings BettergramService::bettergramSettings() const
 	return settings(QStringLiteral("bettergram"));
 }
 
+QSettings BettergramService::pricesSettings() const
+{
+	return settings(QStringLiteral("prices"));
+}
+
 QSettings BettergramService::pricesCacheSettings() const
 {
 	return QSettings(pricesCacheDirPath() + QStringLiteral("prices.ini"), QSettings::IniFormat);

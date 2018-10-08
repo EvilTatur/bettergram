@@ -643,7 +643,10 @@ void CryptoPriceList::mergeCryptoPriceList(const QList<CryptoPrice> &priceList)
 		if (existedPrice) {
 			existedPrice->updateData(price);
 		} else {
-			addPrivate(QSharedPointer(new CryptoPrice(price, this)));
+			QSharedPointer<CryptoPrice> newPrice(new CryptoPrice(price, this));
+			newPrice->loadIsFavorite();
+
+			addPrivate(newPrice);
 		}
 	}
 

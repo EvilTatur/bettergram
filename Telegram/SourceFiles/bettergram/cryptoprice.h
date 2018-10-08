@@ -67,6 +67,10 @@ public:
 
 	Direction dayDirection() const;
 
+	bool isFavorite() const;
+	void setIsFavorite(bool isFavorite);
+	void loadIsFavorite();
+
 	bool isEmpty() const;
 
 	void updateData(const CryptoPrice &price);
@@ -88,6 +92,8 @@ signals:
 
 	void minuteDirectionChanged();
 	void dayDirectionChanged();
+
+	void isFavoriteChanged();
 
 protected:
 
@@ -121,16 +127,20 @@ private:
 	Direction _minuteDirection = Direction::None;
 	Direction _dayDirection = Direction::None;
 
+	bool _isFavorite = false;
+
 	void setUrl(const QUrl &url);
 	void setIcon(const QSharedPointer<RemoteImage> &icon);
 	void setIconUrl(const QUrl &iconUrl);
 	void setName(const QString &name);
 	void setShortName(const QString &shortName);
 	void setDayDirection(Direction dayDirection);
+	void setIsFavorite(bool isFavorite, bool isNeedToSaveToSettings);
 
 	void updateCurrentPriceString();
 	void updateChangeFor24HoursString();
 
+	QString nameAndShortName() const;
 	QString iconFilePath() const;
 
 	void loadIcon(const QDateTime &lastDownloadTime);

@@ -74,7 +74,8 @@ CryptoPrice::CryptoPrice(const CryptoPrice &price, QObject *parent) :
 	_changeFor24Hours(price._changeFor24Hours),
 	_changeFor24HoursString(price._changeFor24HoursString),
 	_minuteDirection(price._minuteDirection),
-	_dayDirection(price._dayDirection)
+	_dayDirection(price._dayDirection),
+	_isFavorite(price._isFavorite)
 {
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
@@ -89,6 +90,7 @@ CryptoPrice &CryptoPrice::operator=(const CryptoPrice &price)
 	setCurrentPrice(price._currentPrice);
 	setChangeFor24Hours(price._changeFor24Hours);
 	setMinuteDirection(price._minuteDirection);
+	setIsFavorite(price._isFavorite, false);
 
 	return *this;
 }
@@ -257,6 +259,50 @@ void CryptoPrice::setDayDirection(Direction dayDirection)
 	}
 }
 
+bool CryptoPrice::isFavorite() const
+{
+	return _isFavorite;
+}
+
+void CryptoPrice::setIsFavorite(bool isFavorite)
+{
+	setIsFavorite(isFavorite, true);
+}
+
+void CryptoPrice::setIsFavorite(bool isFavorite, bool isNeedToSaveToSettings)
+{
+	if (_isFavorite != isFavorite) {
+		_isFavorite = isFavorite;
+
+		if (isNeedToSaveToSettings) {
+			QSettings settings = BettergramService::instance()->pricesSettings();
+
+			settings.beginGroup(QStringLiteral("favorites"));
+
+			if (_isFavorite) {
+				settings.setValue(nameAndShortName(), true);
+			} else {
+				settings.remove(nameAndShortName());
+			}
+
+			settings.endGroup();
+		}
+
+		emit isFavoriteChanged();
+	}
+}
+
+void CryptoPrice::loadIsFavorite()
+{
+	QSettings settings = BettergramService::instance()->pricesSettings();
+
+	settings.beginGroup(QStringLiteral("favorites"));
+
+	setIsFavorite(settings.value(nameAndShortName(), false).toBool());
+
+	settings.endGroup();
+}
+
 bool CryptoPrice::isEmpty() const
 {
 	return !_url.isValid() || !_icon->link().isValid() || _name.isEmpty() || _shortName.isEmpty();
@@ -307,12 +353,15 @@ void CryptoPrice::save(QSettings &settings) const
 	saveIcon();
 }
 
+QString CryptoPrice::nameAndShortName() const
+{
+	return _name + QStringLiteral("_") + _shortName;
+}
+
 QString CryptoPrice::iconFilePath() const
 {
 	return BettergramService::instance()->pricesIconsCacheDirPath()
-			+ _name
-			+ QStringLiteral("_")
-			+ _shortName
+			+ nameAndShortName()
 			+ QStringLiteral(".png");
 }
 
@@ -392,6 +441,7 @@ QSharedPointer<CryptoPrice> CryptoPrice::load(const QSettings &settings)
 															minuteDirection,
 															false));
 
+	cryptoPrice->loadIsFavorite();
 	cryptoPrice->loadIcon(iconLastDownloadTime);
 
 	return cryptoPrice;
