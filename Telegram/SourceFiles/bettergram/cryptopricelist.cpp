@@ -255,6 +255,19 @@ const QString &CryptoPriceList::orderString()
 	return getOrderString(_sortOrder);
 }
 
+const QString &CryptoPriceList::filterText() const
+{
+	return _filterText;
+}
+
+void CryptoPriceList::setFilterText(const QString &filterText)
+{
+	if (_filterText != filterText) {
+		_filterText = filterText;
+		emit filterTextChanged();
+	}
+}
+
 bool CryptoPriceList::areNamesFetched() const
 {
 	return _areNamesFetched;

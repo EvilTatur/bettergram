@@ -2,17 +2,19 @@
 #include "table_column_header_widget.h"
 #include "bettergram_numeric_page_indicator_widget.h"
 
-#include "bettergram/bettergramservice.h"
-#include "bettergram/cryptopricelist.h"
-#include "bettergram/cryptoprice.h"
+#include <bettergram/bettergramservice.h>
+#include <bettergram/cryptopricelist.h>
+#include <bettergram/cryptoprice.h>
 
-#include "ui/widgets/buttons.h"
-#include "ui/widgets/labels.h"
-#include "lang/lang_keys.h"
-#include "styles/style_window.h"
-#include "core/click_handler_types.h"
-#include "styles/style_chat_helpers.h"
-#include "styles/style_widgets.h"
+#include <ui/widgets/buttons.h>
+#include <ui/widgets/labels.h>
+#include <ui/widgets/input_fields.h>
+#include <lang/lang_keys.h>
+#include <styles/style_window.h>
+#include <styles/style_dialogs.h>
+#include <core/click_handler_types.h>
+#include <styles/style_chat_helpers.h>
+#include <styles/style_widgets.h>
 
 #include <QMouseEvent>
 
@@ -82,6 +84,11 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	_btcDominanceValue = new Ui::FlatLabel(this, st::pricesPanMarketCapValueLabel);
 	_btcDominanceValue->setRichText(textcmdLink(1, BettergramService::instance()->cryptoPriceList()->btcDominanceString()));
 	_btcDominanceValue->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
+
+	_filterTextEdit = new Ui::FlatInput(this, st::dialogsFilter, langFactory(lng_dlg_filter));
+
+	connect(_filterTextEdit, &Ui::FlatInput::changed,
+			this, &PricesListWidget::onFilterTextEditChanged);
 
 	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
@@ -514,9 +521,18 @@ void PricesListWidget::updateControlsGeometry()
 
 	updateMarketCap();
 	updateBtcDominance();
+
+	_filterTextEdit->moveToLeft(st::pricesPanPadding,
+								_marketCapValue->y() + _marketCapValue->height() + st::pricesPanPadding / 2);
+
+	_filterTextEdit->resize(width() - getMargins().left() - getMargins().right(),
+							_filterTextEdit->height());
+
 	updatePagesCount();
 
-	_pageIndicator->moveToLeft(0, _marketCapValue->y() + _marketCapValue->height() + st::pricesPanPadding);
+	_pageIndicator->moveToLeft(0,
+							   _filterTextEdit->y() + _filterTextEdit->height() + st::pricesPanPadding);
+
 	_pageIndicator->resizeToWidth(width());
 
 	int columnCoinWidth = width() - st::pricesPanColumnPriceWidth - st::pricesPanColumn24hWidth;
@@ -705,6 +721,11 @@ void PricesListWidget::onCurrentPageChanged()
 {
 	getCryptoPriceValues();
 	update();
+}
+
+void PricesListWidget::onFilterTextEditChanged()
+{
+	BettergramService::instance()->cryptoPriceList()->setFilterText(_filterTextEdit->getLastText());
 }
 
 } // namespace ChatHelpers

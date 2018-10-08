@@ -53,6 +53,9 @@ public:
 	SortOrder sortOrder() const;
 	void setSortOrder(const SortOrder &sortOrder);
 
+	const QString &filterText() const;
+	void setFilterText(const QString &filterText);
+
 	const QString &sortString();
 	const QString &orderString();
 
@@ -75,6 +78,8 @@ signals:
 	void btcDominanceChanged();
 	void freqChanged();
 	void sortOrderChanged();
+	void filterTextChanged();
+
 	void namesUpdated();
 	void valuesUpdated(const QUrl &url, const QList<QSharedPointer<CryptoPrice>> &prices);
 
@@ -99,6 +104,7 @@ private:
 	QString _lastUpdateString;
 
 	SortOrder _sortOrder = SortOrder::Rank;
+	QString _filterText;
 
 	bool _areNamesFetched = false;
 

@@ -12,6 +12,7 @@ class Controller;
 
 namespace Ui {
 class FlatLabel;
+class FlatInput;
 class IconButton;
 } // namespace Ui
 
@@ -78,6 +79,7 @@ private:
 	Ui::FlatLabel *_marketCapValue = nullptr;
 	Ui::FlatLabel *_btcDominance = nullptr;
 	Ui::FlatLabel *_btcDominanceValue = nullptr;
+	Ui::FlatInput *_filterTextEdit = nullptr;
 	BettergramNumericPageIndicatorWidget *_pageIndicator = nullptr;
 	TableColumnHeaderWidget *_coinHeader = nullptr;
 	TableColumnHeaderWidget *_priceHeader = nullptr;
@@ -127,6 +129,7 @@ private slots:
 	void onCryptoPriceSortOrderChanged();
 
 	void onCurrentPageChanged();
+	void onFilterTextEditChanged();
 };
 
 } // namespace ChatHelpers
