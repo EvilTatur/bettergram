@@ -269,6 +269,11 @@ void CryptoPrice::setIsFavorite(bool isFavorite)
 	setIsFavorite(isFavorite, true);
 }
 
+void CryptoPrice::toggleIsFavorite()
+{
+	setIsFavorite(!_isFavorite);
+}
+
 void CryptoPrice::setIsFavorite(bool isFavorite, bool isNeedToSaveToSettings)
 {
 	if (_isFavorite != isFavorite) {

@@ -365,6 +365,15 @@ void PricesListWidget::countSelectedRow(const QPoint &point)
 	setSelectedRow(-1);
 }
 
+bool PricesListWidget::isInFavoritesColumn(const QPoint &point)
+{
+	return QRect(_coinHeader->x() + _coinHeader->contentsMargins().left(),
+				 getTableContentTop(),
+				 st::pricesPanTableFavoriteImageSize,
+				 getTableContentHeight())
+			.contains(point);
+}
+
 TabbedSelector::InnerFooter* PricesListWidget::getFooter() const
 {
 	return _footer;
@@ -379,12 +388,13 @@ int PricesListWidget::countDesiredHeight(int newWidth)
 
 void PricesListWidget::mousePressEvent(QMouseEvent *e)
 {
-	QPointF point = e->localPos();
+	countSelectedRow(e->pos());
 
-	countSelectedRow(QPoint(static_cast<int>(qRound(point.x())),
-							static_cast<int>(qRound(point.y()))));
-
-	_pressedRow = _selectedRow;
+	if (isInFavoritesColumn(e->pos())) {
+		_pressedFavoriteIcon = _selectedRow;
+	} else {
+		_pressedRow = _selectedRow;
+	}
 }
 
 void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
@@ -401,11 +411,34 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 			BettergramService::openUrl(url);
 		}
 	}
+
+	if (_pressedFavoriteIcon >= 0 && _pressedFavoriteIcon < _pricesAtCurrentPage.count() && _pressedFavoriteIcon == _selectedRow) {
+		_pricesAtCurrentPage.at(_pressedFavoriteIcon)->toggleIsFavorite();
+
+		if (BettergramService::instance()->cryptoPriceList()->isShowOnlyFavorites()) {
+			//TODO: bettergram: remove the current row from the data model
+			update();
+		} else {
+			update(getRowRectangle(_selectedRow));
+		}
+	}
 }
 
 void PricesListWidget::mouseMoveEvent(QMouseEvent *e)
 {
 	countSelectedRow(e->pos());
+
+	if (isInFavoritesColumn(e->pos())) {
+		if (!_isHoveredFavoriteIcon) {
+			_isHoveredFavoriteIcon = true;
+			update(getRowRectangle(_selectedRow));
+		}
+	} else {
+		if (_isHoveredFavoriteIcon) {
+			_isHoveredFavoriteIcon = false;
+			update(getRowRectangle(_selectedRow));
+		}
+	}
 }
 
 void PricesListWidget::enterEventHook(QEvent *e)
@@ -419,6 +452,7 @@ void PricesListWidget::leaveEventHook(QEvent *e)
 	Q_UNUSED(e);
 
 	setSelectedRow(-1);
+	_isHoveredFavoriteIcon = false;
 }
 
 void PricesListWidget::paintEvent(QPaintEvent *event) {
@@ -460,9 +494,20 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 			+ st::pricesPanTableImageSize
 			+ st::pricesPanTablePadding;
 
+	int favoriteButtonHovered = -1;
+
 	// Draw rows
 
 	if (_selectedRow != -1 && _selectedRow < _pricesAtCurrentPage.count()) {
+		QRect favoriteRect(columnCoinLeft,
+						   top + _selectedRow * st::pricesPanTableRowHeight,
+						   st::pricesPanTableFavoriteImageSize,
+						   st::pricesPanTableRowHeight);
+
+		if (favoriteRect.contains(mapFromGlobal(QCursor::pos()))) {
+			favoriteButtonHovered = _selectedRow;
+		}
+
 		QRect rowRectangle(0, getRowTop(_selectedRow), width(), st::pricesPanTableRowHeight);
 		App::roundRect(painter, rowRectangle, st::pricesPanHover, StickerHoverCorners);
 	}
@@ -474,10 +519,18 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 
 		const style::icon *favoriteIcon = nullptr;
 
-		if (price->isFavorite()) {
-			favoriteIcon = &st::pricesPanTableFavoriteEnabledIcon;
+		if (i == favoriteButtonHovered) {
+			if (price->isFavorite()) {
+				favoriteIcon = &st::pricesPanTableFavoriteEnabledIconOver;
+			} else {
+				favoriteIcon = &st::pricesPanTableFavoriteDisabledIconOver;
+			}
 		} else {
-			favoriteIcon = &st::pricesPanTableFavoriteDisabledIcon;
+			if (price->isFavorite()) {
+				favoriteIcon = &st::pricesPanTableFavoriteEnabledIcon;
+			} else {
+				favoriteIcon = &st::pricesPanTableFavoriteDisabledIcon;
+			}
 		}
 
 		QRect favoriteRect(columnCoinLeft,

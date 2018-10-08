@@ -69,6 +69,7 @@ public:
 
 	bool isFavorite() const;
 	void setIsFavorite(bool isFavorite);
+	void toggleIsFavorite();
 	void loadIsFavorite();
 
 	bool isEmpty() const;

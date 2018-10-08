@@ -65,6 +65,9 @@ private:
 	int _timerId = 0;
 	int _selectedRow = -1;
 	int _pressedRow = -1;
+	int _pressedFavoriteIcon = -1;
+
+	bool _isHoveredFavoriteIcon = false;
 
 	/// Number of rows (crypto prices) at one page.
 	/// It is dynamically changed value because we keep one page for one screen, without scrolling,
@@ -109,6 +112,7 @@ private:
 	QRect getRowRectangle(int row) const;
 
 	void countSelectedRow(const QPoint &point);
+	bool isInFavoritesColumn(const QPoint &point);
 
 	void updateControlsGeometry();
 	void updatePagesCount();
