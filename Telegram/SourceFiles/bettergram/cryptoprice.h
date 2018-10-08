@@ -120,6 +120,7 @@ private:
 
 	void setUrl(const QUrl &url);
 	void setIcon(const QSharedPointer<RemoteImage> &icon);
+	void setIconUrl(const QUrl &iconUrl);
 	void setName(const QString &name);
 	void setShortName(const QString &shortName);
 	void setDayDirection(Direction dayDirection);

@@ -100,6 +100,11 @@ void CryptoPrice::setUrl(const QUrl &url)
 	_url = url;
 }
 
+const QPixmap &CryptoPrice::icon() const
+{
+	return _icon->image();
+}
+
 void CryptoPrice::setIcon(const QSharedPointer<RemoteImage> &icon)
 {
 	_icon = icon;
@@ -110,9 +115,22 @@ const QUrl &CryptoPrice::iconUrl() const
 	return _icon->link();
 }
 
-const QPixmap &CryptoPrice::icon() const
+void CryptoPrice::setIconUrl(const QUrl &iconUrl)
 {
-	return _icon->image();
+	if (_icon->link() != iconUrl) {
+		_icon->setLink(iconUrl);
+
+		QString filePath = iconFilePath();
+
+		if (QFile::exists(filePath)) {
+			if (!QFile::remove(filePath)) {
+				LOG(("Unable to remove icon for crypto price %1 (%2) at the file path %3")
+					.arg(_name)
+					.arg(_shortName)
+					.arg(filePath));
+			}
+		}
+	}
 }
 
 const QString &CryptoPrice::name() const
@@ -243,6 +261,8 @@ bool CryptoPrice::isEmpty() const
 
 void CryptoPrice::updateData(const CryptoPrice &price)
 {
+	setUrl(price.url());
+	setIconUrl(price.iconUrl());
 	setCurrentPrice(price.currentPrice());
 	setChangeFor24Hours(price.changeFor24Hours());
 	setMinuteDirection(price.minuteDirection());
