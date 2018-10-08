@@ -14,6 +14,7 @@ namespace Ui {
 class FlatLabel;
 class FlatInput;
 class IconButton;
+class CrossButton;
 } // namespace Ui
 
 namespace ChatHelpers {
@@ -80,6 +81,7 @@ private:
 	Ui::FlatLabel *_btcDominance = nullptr;
 	Ui::FlatLabel *_btcDominanceValue = nullptr;
 	Ui::FlatInput *_filterTextEdit = nullptr;
+	Ui::CrossButton *_cancelFilterButton = nullptr;
 	BettergramNumericPageIndicatorWidget *_pageIndicator = nullptr;
 	TableColumnHeaderWidget *_coinHeader = nullptr;
 	TableColumnHeaderWidget *_priceHeader = nullptr;
@@ -130,6 +132,7 @@ private slots:
 
 	void onCurrentPageChanged();
 	void onFilterTextEditChanged();
+	void onCancelFilter();
 };
 
 } // namespace ChatHelpers

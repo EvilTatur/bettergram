@@ -90,6 +90,9 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(_filterTextEdit, &Ui::FlatInput::changed,
 			this, &PricesListWidget::onFilterTextEditChanged);
 
+	_cancelFilterButton = new Ui::CrossButton(this, st::dialogsCancelSearch);
+	_cancelFilterButton->setClickedCallback([this] { onCancelFilter(); });
+
 	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
 	connect(_pageIndicator, &BettergramNumericPageIndicatorWidget::currentPageChanged,
@@ -528,6 +531,12 @@ void PricesListWidget::updateControlsGeometry()
 	_filterTextEdit->resize(width() - getMargins().left() - getMargins().right(),
 							_filterTextEdit->height());
 
+	_cancelFilterButton->moveToLeft(_filterTextEdit->x()
+									+ _filterTextEdit->width()
+									- _cancelFilterButton->width()
+									- st::pricesPanPadding,
+									_filterTextEdit->y());
+
 	updatePagesCount();
 
 	_pageIndicator->moveToLeft(0,
@@ -725,7 +734,16 @@ void PricesListWidget::onCurrentPageChanged()
 
 void PricesListWidget::onFilterTextEditChanged()
 {
+	_cancelFilterButton->toggle(!_filterTextEdit->text().isEmpty(), anim::type::normal);
+
 	BettergramService::instance()->cryptoPriceList()->setFilterText(_filterTextEdit->getLastText());
+}
+
+void PricesListWidget::onCancelFilter()
+{
+	_filterTextEdit->clear();
+	_filterTextEdit->updatePlaceholder();
+	_cancelFilterButton->toggle(false, anim::type::normal);
 }
 
 } // namespace ChatHelpers
