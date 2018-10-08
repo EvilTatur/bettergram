@@ -39,6 +39,9 @@ const int BettergramService::_checkForUpdatesPeriod = 10 * 60 * 60 * 1000;
 // We update crypto price names every 3 days
 const int BettergramService::_updateCryptoPriceNamesPeriod = 3 * 24 * 60 * 60 * 1000;
 
+// We save crypto prices every 2 hours
+const int BettergramService::_saveCryptoPricesPeriod = 2 * 60 * 60 * 1000;
+
 BettergramService *BettergramService::init()
 {
 	return instance();
@@ -144,6 +147,7 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	getCryptoPriceNames();
 
 	_updateCryptoPriceNamesTimerId = startTimer(_updateCryptoPriceNamesPeriod, Qt::VeryCoarseTimer);
+	_saveCryptoPricesTimerId = startTimer(_saveCryptoPricesPeriod, Qt::VeryCoarseTimer);
 
 	connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { _cryptoPriceList->save(); });
 
@@ -777,6 +781,8 @@ void BettergramService::timerEvent(QTimerEvent *timerEvent)
 		checkForNewUpdates();
 	} else if (timerEvent->timerId() == _updateCryptoPriceNamesTimerId) {
 		getCryptoPriceNames();
+	} else if (timerEvent->timerId() == _saveCryptoPricesTimerId) {
+		_cryptoPriceList->save();
 	}
 }
 

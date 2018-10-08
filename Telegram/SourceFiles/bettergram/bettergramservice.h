@@ -102,6 +102,7 @@ private:
 	static const int _checkForFirstUpdatesDelay;
 	static const int _checkForUpdatesPeriod;
 	static const int _updateCryptoPriceNamesPeriod;
+	static const int _saveCryptoPricesPeriod;
 
 	bool _isSettingsPorted = false;
 	bool _isPaid = false;
@@ -114,6 +115,7 @@ private:
 	AdItem *_currentAd = nullptr;
 	int _checkForUpdatesTimerId = 0;
 	int _updateCryptoPriceNamesTimerId = 0;
+	int _saveCryptoPricesTimerId = 0;
 	bool _isWindowActive = true;
 	std::function<void()> _isWindowActiveHandler = nullptr;
 
