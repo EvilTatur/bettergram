@@ -1,6 +1,9 @@
 #include "text_helper.h"
 
-void TextHelper::drawElidedText(QPainter &painter, const QRect &rect, const QString &text)
+void TextHelper::drawElidedText(QPainter &painter,
+								const QRect &rect,
+								const QString &text,
+								int flags)
 {
 	QFontMetrics fontMetrics = painter.fontMetrics();
 
@@ -26,7 +29,17 @@ void TextHelper::drawElidedText(QPainter &painter, const QRect &rect, const QStr
 		} else {
 			QString lastLine = text.mid(line.textStart());
 			QString elidedLastLine = fontMetrics.elidedText(lastLine, Qt::ElideRight, rect.width());
-			painter.drawText(QPoint(rect.left(), y + fontMetrics.ascent()), elidedLastLine);
+
+			if (flags) {
+				painter.drawText(rect.left(),
+								 rect.top(),
+								 rect.width(),
+								 rect.height(),
+								 flags,
+								 elidedLastLine);
+			} else {
+				painter.drawText(QPoint(rect.left(), y + fontMetrics.ascent()), elidedLastLine);
+			}
 			line = textLayout.createLine();
 
 			break;

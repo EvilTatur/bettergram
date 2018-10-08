@@ -9,5 +9,8 @@ class TextHelper
 public:
 	TextHelper() = delete;
 
-	static void drawElidedText(QPainter &painter, const QRect &rect, const QString &text);
+	static void drawElidedText(QPainter &painter,
+							   const QRect &rect,
+							   const QString &text,
+							   int flags = 0);
 };

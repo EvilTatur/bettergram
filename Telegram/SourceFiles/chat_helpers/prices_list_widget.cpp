@@ -9,6 +9,7 @@
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/input_fields.h>
+#include <ui/text/text_helper.h>
 #include <lang/lang_keys.h>
 #include <styles/style_window.h>
 #include <styles/style_dialogs.h>
@@ -435,6 +436,7 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 	int columnCoinWidth = _coinHeader->width()
 			- _coinHeader->contentsMargins().left()
 			- _coinHeader->contentsMargins().right()
+			- st::pricesPanTableFavoriteImageSize
 			- st::pricesPanTableImageSize
 			- st::pricesPanTablePadding;
 
@@ -450,9 +452,15 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 	int columnPriceLeft = _priceHeader->x() + _priceHeader->contentsMargins().left();
 	int column24hLeft = _24hHeader->x() + _24hHeader->contentsMargins().left();
 
-	// Draw rows
+	int columnCoinIconLeft = columnCoinLeft
+			+ st::pricesPanTableFavoriteImageSize
+			+ st::pricesPanTablePadding / 2;
 
-	int columnCoinTextLeft = columnCoinLeft + st::pricesPanTableImageSize + st::pricesPanTablePadding;
+	int columnCoinTextLeft = columnCoinIconLeft
+			+ st::pricesPanTableImageSize
+			+ st::pricesPanTablePadding;
+
+	// Draw rows
 
 	if (_selectedRow != -1 && _selectedRow < _pricesAtCurrentPage.count()) {
 		QRect rowRectangle(0, getRowTop(_selectedRow), width(), st::pricesPanTableRowHeight);
@@ -464,8 +472,23 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 	for (int i = 0; i < _pricesAtCurrentPage.count(); ++i) {
 		const QSharedPointer<CryptoPrice> &price = _pricesAtCurrentPage.at(i);
 
+		const style::icon *favoriteIcon = nullptr;
+
+		if (price->isFavorite()) {
+			favoriteIcon = &st::pricesPanTableFavoriteEnabledIcon;
+		} else {
+			favoriteIcon = &st::pricesPanTableFavoriteDisabledIcon;
+		}
+
+		QRect favoriteRect(columnCoinLeft,
+						   top + (st::pricesPanTableRowHeight - st::pricesPanTableFavoriteImageSize) / 2,
+						   st::pricesPanTableFavoriteImageSize,
+						   st::pricesPanTableFavoriteImageSize);
+
+		favoriteIcon->paintInCenter(painter, favoriteRect);
+
 		if (!price->icon().isNull()) {
-			QRect targetRect(columnCoinLeft,
+			QRect targetRect(columnCoinIconLeft,
 							 top + (st::pricesPanTableRowHeight - st::pricesPanTableImageSize) / 2,
 							 st::pricesPanTableImageSize,
 							 st::pricesPanTableImageSize);
@@ -475,13 +498,24 @@ void PricesListWidget::paintEvent(QPaintEvent *event) {
 
 		painter.setPen(st::pricesPanTableCryptoNameFg);
 
-		painter.drawText(columnCoinTextLeft, top, columnCoinWidth, st::pricesPanTableRowHeight / 2,
-						 Qt::AlignLeft | Qt::AlignBottom, price->name());
+		QRect nameRect(columnCoinTextLeft,
+					   top,
+					   columnCoinWidth,
+					   st::pricesPanTableRowHeight / 2);
+
+		TextHelper::drawElidedText(painter,
+								   nameRect,
+								   price->name(),
+								   Qt::AlignLeft | Qt::AlignBottom);
 
 		painter.setPen(st::pricesPanTableCryptoShortNameFg);
 
-		painter.drawText(columnCoinTextLeft, top + st::pricesPanTableRowHeight / 2, columnCoinWidth, st::pricesPanTableRowHeight / 2,
-						 Qt::AlignLeft | Qt::AlignTop, price->shortName());
+		painter.drawText(columnCoinTextLeft,
+						 top + st::pricesPanTableRowHeight / 2,
+						 columnCoinWidth,
+						 st::pricesPanTableRowHeight / 2,
+						 Qt::AlignLeft | Qt::AlignTop,
+						 price->shortName());
 
 		switch (price->minuteDirection()) {
 		case(CryptoPrice::Direction::Up): {
@@ -536,10 +570,12 @@ void PricesListWidget::updateControlsGeometry()
 	updateMarketCap();
 	updateBtcDominance();
 
-	_favoriteButton->moveToLeft(width() - st::pricesPanPadding / 2 - _favoriteButton->width(),
+	_filterTextEdit->moveToLeft(st::pricesPanPadding,
 								_marketCapValue->y() + _marketCapValue->height() + st::pricesPanPadding / 2);
 
-	_filterTextEdit->moveToLeft(st::pricesPanPadding, _favoriteButton->y());
+	_favoriteButton->moveToLeft(width() - _favoriteButton->width(),
+								_filterTextEdit->y()
+								+ (_filterTextEdit->height() - _favoriteButton->height()) / 2);
 
 	_filterTextEdit->resize(_favoriteButton->x() - st::pricesPanPadding - getMargins().left(),
 							_filterTextEdit->height());
@@ -560,7 +596,7 @@ void PricesListWidget::updateControlsGeometry()
 	int columnCoinWidth = width() - st::pricesPanColumnPriceWidth - st::pricesPanColumn24hWidth;
 
 	_coinHeader->resize(columnCoinWidth, st::pricesPanTableHeaderHeight);
-	_coinHeader->setContentsMargins(st::pricesPanTablePadding, 0, st::pricesPanTablePadding, 0);
+	_coinHeader->setContentsMargins(st::pricesPanTablePadding, 0, 0, 0);
 
 	_priceHeader->resize(st::pricesPanColumnPriceWidth, st::pricesPanTableHeaderHeight);
 	_priceHeader->setContentsMargins(0, 0, st::pricesPanTablePadding, 0);

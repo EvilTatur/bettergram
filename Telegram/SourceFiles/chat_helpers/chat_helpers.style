@@ -172,8 +172,9 @@ pricesPanTablePadding: 6px;
 pricesPanTableHeaderHeight: 50px;
 pricesPanTableRowHeight: 50px;
 pricesPanTableImageSize: 24px;
-pricesPanColumnPriceWidth: 85px;
-pricesPanColumn24hWidth: 70px;
+pricesPanTableFavoriteImageSize: 24px;
+pricesPanColumnPriceWidth: 80px;
+pricesPanColumn24hWidth: 60px;
 pricesPanHover: windowBgOver; // background of selected row in prices panel
 
 // Last update label at the PricesWidget
@@ -237,10 +238,16 @@ pricesPanFavoriteDisabledIconOver: icon {{ "price_favorite_disabled", windowBgAc
 pricesPanFavoriteEnabledIcon: icon {{ "price_favorite_enabled", dialogsMenuIconFg }};
 pricesPanFavoriteEnabledIconOver: icon {{ "price_favorite_enabled", windowBgActive }};
 
+pricesPanTableFavoriteDisabledIcon: icon {{ "price_table_favorite_disabled", dialogsMenuIconFg }};
+pricesPanTableFavoriteDisabledIconOver: icon {{ "price_table_favorite_disabled", windowBgActive }};
+
+pricesPanTableFavoriteEnabledIcon: icon {{ "price_table_favorite_enabled", dialogsMenuIconFg }};
+pricesPanTableFavoriteEnabledIconOver: icon {{ "price_table_favorite_enabled", windowBgActive }};
+
 // Favorite button at the PricesListWidget
 pricesPanFavoriteButton: IconButton {
-        width: 32px;
-        height: 32px;
+        width: 24px;
+        height: 24px;
 
         icon: pricesPanFavoriteDisabledIcon;
         iconOver: pricesPanFavoriteDisabledIconOver;
