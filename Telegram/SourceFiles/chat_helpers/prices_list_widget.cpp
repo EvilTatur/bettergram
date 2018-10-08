@@ -90,6 +90,9 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(_filterTextEdit, &Ui::FlatInput::changed,
 			this, &PricesListWidget::onFilterTextEditChanged);
 
+	connect(_filterTextEdit, &Ui::FlatInput::cancelled,
+			this, &PricesListWidget::onCancelFilter);
+
 	_cancelFilterButton = new Ui::CrossButton(this, st::dialogsCancelSearch);
 	_cancelFilterButton->setClickedCallback([this] { onCancelFilter(); });
 
