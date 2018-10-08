@@ -72,6 +72,9 @@ public:
 	void updateData(const CryptoPrice &price);
 	void resetValues();
 
+	void downloadIconIfNeeded();
+	void forceDownloadIcon();
+
 	void save(QSettings &settings) const;
 
 public slots:

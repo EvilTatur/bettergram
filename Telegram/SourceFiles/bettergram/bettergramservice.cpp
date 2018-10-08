@@ -332,7 +332,7 @@ QSettings BettergramService::bettergramSettings() const
 
 QSettings BettergramService::pricesCacheSettings() const
 {
-	return QSettings(pricesCacheDirPath() + QStringLiteral("prices.ini"));
+	return QSettings(pricesCacheDirPath() + QStringLiteral("prices.ini"), QSettings::IniFormat);
 }
 
 void BettergramService::getIsPaid()

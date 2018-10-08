@@ -20,6 +20,7 @@ public:
 	bool isNeedToDownload() const;
 
 	void downloadIfNeeded();
+	void forceDownload();
 
 public slots:
 

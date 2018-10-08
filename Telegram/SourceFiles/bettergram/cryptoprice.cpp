@@ -254,6 +254,16 @@ void CryptoPrice::resetValues()
 	setChangeFor24Hours(std::numeric_limits<double>::quiet_NaN());
 }
 
+void CryptoPrice::downloadIconIfNeeded()
+{
+	_icon->downloadIfNeeded();
+}
+
+void CryptoPrice::forceDownloadIcon()
+{
+	_icon->forceDownload();
+}
+
 void CryptoPrice::save(QSettings &settings) const
 {
 	settings.setValue("link", url().toString());

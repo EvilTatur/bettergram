@@ -53,6 +53,11 @@ void AbstractRemoteFile::downloadIfNeeded()
 	}
 }
 
+void AbstractRemoteFile::forceDownload()
+{
+	download();
+}
+
 void AbstractRemoteFile::download()
 {
 	if (!_link.isValid()) {

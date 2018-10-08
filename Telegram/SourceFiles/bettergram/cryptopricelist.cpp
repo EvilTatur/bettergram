@@ -438,6 +438,10 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 	sort();
 	sort(prices, _sortOrder);
 
+	for (const QSharedPointer<CryptoPrice> &price : prices) {
+		price->downloadIconIfNeeded();
+	}
+
 	emit valuesUpdated(url, prices);
 }
 
