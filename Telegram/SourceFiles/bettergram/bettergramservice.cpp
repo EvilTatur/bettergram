@@ -300,6 +300,21 @@ QString BettergramService::settingsDirPath() const
 	return cWorkingDir() + QStringLiteral("tdata/bettergram/");
 }
 
+QString BettergramService::cacheDirPath() const
+{
+	return settingsDirPath() + QStringLiteral("cache/");
+}
+
+QString BettergramService::pricesCacheDirPath() const
+{
+	return cacheDirPath() + QStringLiteral("prices/");
+}
+
+QString BettergramService::pricesIconsCacheDirPath() const
+{
+	return pricesCacheDirPath() + QStringLiteral("icons/");
+}
+
 QString BettergramService::settingsPath(const QString &name) const
 {
 	return settingsDirPath() + name + QStringLiteral(".ini");
@@ -315,9 +330,9 @@ QSettings BettergramService::bettergramSettings() const
 	return settings(QStringLiteral("bettergram"));
 }
 
-QSettings BettergramService::pricesSettings() const
+QSettings BettergramService::pricesCacheSettings() const
 {
-	return settings(QStringLiteral("prices"));
+	return QSettings(pricesCacheDirPath() + QStringLiteral("prices.ini"));
 }
 
 void BettergramService::getIsPaid()

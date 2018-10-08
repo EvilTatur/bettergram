@@ -1,5 +1,6 @@
 #include "cryptoprice.h"
 #include "remoteimage.h"
+#include "bettergramservice.h"
 
 #include <styles/style_chat_helpers.h>
 
@@ -263,6 +264,38 @@ void CryptoPrice::save(QSettings &settings) const
 	settings.setValue("price", currentPrice());
 	settings.setValue("changeForDay", changeFor24Hours());
 	settings.setValue("minuteDirection", static_cast<int>(minuteDirection()));
+
+	saveIcon();
+}
+
+QString CryptoPrice::iconFilePath() const
+{
+	return BettergramService::instance()->pricesIconsCacheDirPath()
+			+ _name
+			+ QStringLiteral("_")
+			+ _shortName
+			+ QStringLiteral(".png");
+}
+
+void CryptoPrice::saveIcon() const
+{
+	if ((_name.isEmpty() && _shortName.isEmpty()) || _icon->isNull()) {
+		return;
+	}
+
+	if (!QDir().mkpath(BettergramService::instance()->pricesIconsCacheDirPath())) {
+		LOG(("Unable to create directories at the path %1")
+			.arg(BettergramService::instance()->pricesIconsCacheDirPath()));
+	}
+
+	QString fileName = iconFilePath();
+
+	if (!_icon->image().save(fileName)) {
+		LOG(("Unable to save icon for crypto price %1 (%2) to the file %3")
+			.arg(_name)
+			.arg(_shortName)
+			.arg(fileName));
+	}
 }
 
 QSharedPointer<CryptoPrice> CryptoPrice::load(const QSettings &settings)
@@ -308,15 +341,54 @@ QSharedPointer<CryptoPrice> CryptoPrice::load(const QSettings &settings)
 		minuteDirection = Direction::None;
 	}
 
-	return QSharedPointer<CryptoPrice>(new CryptoPrice(url,
-													   iconUrl,
-													   name,
-													   shortName,
-													   rank,
-													   price,
-													   changeFor24Hours,
-													   minuteDirection,
-													   false));
+	QSharedPointer<CryptoPrice> cryptoPrice(new CryptoPrice(url,
+															iconUrl,
+															name,
+															shortName,
+															rank,
+															price,
+															changeFor24Hours,
+															minuteDirection,
+															false));
+
+	cryptoPrice->loadIcon();
+
+	return cryptoPrice;
+}
+
+void CryptoPrice::loadIcon()
+{
+	if (_name.isEmpty() && _shortName.isEmpty()) {
+		return;
+	}
+
+	QString fileName = iconFilePath();
+
+	if (!QFile::exists(fileName)) {
+		return;
+	}
+
+	QPixmap icon;
+
+	if (!icon.load(fileName)) {
+		LOG(("Unable to load icon for crypto price %1 (%2) from the file %3")
+			.arg(_name)
+			.arg(_shortName)
+			.arg(fileName));
+
+		return;
+	}
+
+	if (icon.isNull()) {
+		LOG(("Loaded icon for crypto price %1 (%2) from the file %3 is broken")
+			.arg(_name)
+			.arg(_shortName)
+			.arg(fileName));
+
+		return;
+	}
+
+	_icon->setImage(icon);
 }
 
 CryptoPrice::Direction CryptoPrice::countDirection(double value)

@@ -57,11 +57,14 @@ public:
 	base::Observable<void> &billingPlanObservable();
 
 	QString settingsDirPath() const;
+	QString cacheDirPath() const;
+	QString pricesCacheDirPath() const;
+	QString pricesIconsCacheDirPath() const;
 	QString settingsPath(const QString &name) const;
-	QSettings settings(const QString &name) const;
 
+	QSettings settings(const QString &name) const;
 	QSettings bettergramSettings() const;
-	QSettings pricesSettings() const;
+	QSettings pricesCacheSettings() const;
 
 	/// Port settings files from the first Bettergram version.
 	/// At the first version of the Bettergram we save settings at the QSettings() instance,

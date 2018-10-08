@@ -34,6 +34,7 @@ public:
 	void setScaledSize(int scaledWidth, int scaledHeight);
 
 	const QPixmap &image() const;
+	void setImage(const QPixmap &image);
 
 	bool isNull() const;
 
@@ -55,8 +56,6 @@ private:
 	int _scaledHeight = 0;
 
 	QPixmap _image;
-
-	void setImage(const QPixmap &image);
 };
 
 } // namespace Bettergram

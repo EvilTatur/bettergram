@@ -123,6 +123,11 @@ private:
 
 	void updateCurrentPriceString();
 	void updateChangeFor24HoursString();
+
+	QString iconFilePath() const;
+
+	void loadIcon();
+	void saveIcon() const;
 };
 
 } // namespace Bettergram

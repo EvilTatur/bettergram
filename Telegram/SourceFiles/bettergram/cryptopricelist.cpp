@@ -522,7 +522,7 @@ void CryptoPriceList::fillMissedPrices(QList<QSharedPointer<CryptoPrice>> &price
 
 void CryptoPriceList::save() const
 {
-	QSettings settings = BettergramService::instance()->pricesSettings();
+	QSettings settings = BettergramService::instance()->pricesCacheSettings();
 
 	settings.beginGroup("metadata");
 
@@ -552,7 +552,7 @@ void CryptoPriceList::save() const
 
 void CryptoPriceList::load()
 {
-	QSettings settings = BettergramService::instance()->pricesSettings();
+	QSettings settings = BettergramService::instance()->pricesCacheSettings();
 
 	settings.beginGroup("metadata");
 
