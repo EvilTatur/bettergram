@@ -88,13 +88,16 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	_filterTextEdit = new Ui::FlatInput(this, st::dialogsFilter, langFactory(lng_dlg_filter));
 
 	connect(_filterTextEdit, &Ui::FlatInput::changed,
-			this, &PricesListWidget::onFilterTextEditChanged);
+			this, &PricesListWidget::onFilterTextChanged);
 
 	connect(_filterTextEdit, &Ui::FlatInput::cancelled,
 			this, &PricesListWidget::onCancelFilter);
 
 	_cancelFilterButton = new Ui::CrossButton(this, st::dialogsCancelSearch);
 	_cancelFilterButton->setClickedCallback([this] { onCancelFilter(); });
+
+	_favoriteButton = new Ui::IconButton(this, st::pricesPanFavoriteButton);
+	_favoriteButton->setClickedCallback([this] { onFavoriteButtonClicked(); });
 
 	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
@@ -136,7 +139,12 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(priceList, &CryptoPriceList::sortOrderChanged,
 			this, &PricesListWidget::onCryptoPriceSortOrderChanged);
 
+	connect(priceList, &CryptoPriceList::isShowOnlyFavoritesChanged,
+			this, &PricesListWidget::onIsShowOnlyFavoritesChanged);
+
 	setMouseTracking(true);
+
+	onIsShowOnlyFavoritesChanged();
 }
 
 void PricesListWidget::getCryptoPriceValues()
@@ -528,10 +536,12 @@ void PricesListWidget::updateControlsGeometry()
 	updateMarketCap();
 	updateBtcDominance();
 
-	_filterTextEdit->moveToLeft(st::pricesPanPadding,
+	_favoriteButton->moveToLeft(width() - st::pricesPanPadding / 2 - _favoriteButton->width(),
 								_marketCapValue->y() + _marketCapValue->height() + st::pricesPanPadding / 2);
 
-	_filterTextEdit->resize(width() - getMargins().left() - getMargins().right(),
+	_filterTextEdit->moveToLeft(st::pricesPanPadding, _favoriteButton->y());
+
+	_filterTextEdit->resize(_favoriteButton->x() - st::pricesPanPadding - getMargins().left(),
 							_filterTextEdit->height());
 
 	_cancelFilterButton->moveToLeft(_filterTextEdit->x()
@@ -735,7 +745,7 @@ void PricesListWidget::onCurrentPageChanged()
 	update();
 }
 
-void PricesListWidget::onFilterTextEditChanged()
+void PricesListWidget::onFilterTextChanged()
 {
 	_cancelFilterButton->toggle(!_filterTextEdit->text().isEmpty(), anim::type::normal);
 
@@ -747,6 +757,21 @@ void PricesListWidget::onCancelFilter()
 	_filterTextEdit->clear();
 	_filterTextEdit->updatePlaceholder();
 	_cancelFilterButton->toggle(false, anim::type::normal);
+}
+
+void PricesListWidget::onFavoriteButtonClicked()
+{
+	BettergramService::instance()->cryptoPriceList()->toggleIsShowOnlyFavorites();
+}
+
+void PricesListWidget::onIsShowOnlyFavoritesChanged()
+{
+	if (BettergramService::instance()->cryptoPriceList()->isShowOnlyFavorites()) {
+		_favoriteButton->setIconOverride(&st::pricesPanFavoriteEnabledIcon,
+										 &st::pricesPanFavoriteEnabledIconOver);
+	} else {
+		_favoriteButton->setIconOverride(nullptr, nullptr);
+	}
 }
 
 } // namespace ChatHelpers

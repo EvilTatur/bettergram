@@ -56,6 +56,10 @@ public:
 	const QString &filterText() const;
 	void setFilterText(const QString &filterText);
 
+	bool isShowOnlyFavorites() const;
+	void setIsShowOnlyFavorites(bool isShowOnlyFavorites);
+	void toggleIsShowOnlyFavorites();
+
 	const QString &sortString();
 	const QString &orderString();
 
@@ -79,6 +83,7 @@ signals:
 	void freqChanged();
 	void sortOrderChanged();
 	void filterTextChanged();
+	void isShowOnlyFavoritesChanged();
 
 	void namesUpdated();
 	void valuesUpdated(const QUrl &url, const QList<QSharedPointer<CryptoPrice>> &prices);
@@ -105,6 +110,7 @@ private:
 
 	SortOrder _sortOrder = SortOrder::Rank;
 	QString _filterText;
+	bool _isShowOnlyFavorites = false;
 
 	bool _areNamesFetched = false;
 

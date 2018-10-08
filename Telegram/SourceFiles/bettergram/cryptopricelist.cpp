@@ -268,6 +268,24 @@ void CryptoPriceList::setFilterText(const QString &filterText)
 	}
 }
 
+bool CryptoPriceList::isShowOnlyFavorites() const
+{
+	return _isShowOnlyFavorites;
+}
+
+void CryptoPriceList::setIsShowOnlyFavorites(bool isShowOnlyFavorites)
+{
+	if (_isShowOnlyFavorites != isShowOnlyFavorites) {
+		_isShowOnlyFavorites = isShowOnlyFavorites;
+		emit isShowOnlyFavoritesChanged();
+	}
+}
+
+void CryptoPriceList::toggleIsShowOnlyFavorites()
+{
+	setIsShowOnlyFavorites(!_isShowOnlyFavorites);
+}
+
 bool CryptoPriceList::areNamesFetched() const
 {
 	return _areNamesFetched;

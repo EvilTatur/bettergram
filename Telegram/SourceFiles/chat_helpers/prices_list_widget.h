@@ -82,6 +82,7 @@ private:
 	Ui::FlatLabel *_btcDominanceValue = nullptr;
 	Ui::FlatInput *_filterTextEdit = nullptr;
 	Ui::CrossButton *_cancelFilterButton = nullptr;
+	Ui::IconButton *_favoriteButton = nullptr;
 	BettergramNumericPageIndicatorWidget *_pageIndicator = nullptr;
 	TableColumnHeaderWidget *_coinHeader = nullptr;
 	TableColumnHeaderWidget *_priceHeader = nullptr;
@@ -131,8 +132,10 @@ private slots:
 	void onCryptoPriceSortOrderChanged();
 
 	void onCurrentPageChanged();
-	void onFilterTextEditChanged();
+	void onFilterTextChanged();
 	void onCancelFilter();
+	void onFavoriteButtonClicked();
+	void onIsShowOnlyFavoritesChanged();
 };
 
 } // namespace ChatHelpers

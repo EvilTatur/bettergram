@@ -231,6 +231,21 @@ pricesPanMarketCapValueLabel: FlatLabel(defaultFlatLabel) {
         }
 }
 
+pricesPanFavoriteDisabledIcon: icon {{ "price_favorite_disabled", dialogsMenuIconFg }};
+pricesPanFavoriteDisabledIconOver: icon {{ "price_favorite_disabled", windowBgActive }};
+
+pricesPanFavoriteEnabledIcon: icon {{ "price_favorite_enabled", dialogsMenuIconFg }};
+pricesPanFavoriteEnabledIconOver: icon {{ "price_favorite_enabled", windowBgActive }};
+
+// Favorite button at the PricesListWidget
+pricesPanFavoriteButton: IconButton {
+        width: 32px;
+        height: 32px;
+
+        icon: pricesPanFavoriteDisabledIcon;
+        iconOver: pricesPanFavoriteDisabledIconOver;
+}
+
 newsPanPadding: pricesPanPadding;
 newsPanHeader: pricesPanHeader;
 newsPanRowHeight: 70px;
