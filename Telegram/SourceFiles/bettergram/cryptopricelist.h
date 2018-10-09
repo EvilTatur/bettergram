@@ -44,11 +44,10 @@ public:
 	QDateTime lastUpdate() const;
 	QString lastUpdateString() const;
 
-	const_iterator begin() const;
-	const_iterator end() const;
-
 	QSharedPointer<CryptoPrice> at(int index) const;
 	int count() const;
+
+	QList<QSharedPointer<CryptoPrice>> favoriteList() const;
 
 	SortOrder sortOrder() const;
 	void setSortOrder(const SortOrder &sortOrder);
@@ -95,6 +94,7 @@ private:
 	static const int _defaultFreq;
 
 	QList<QSharedPointer<CryptoPrice>> _list;
+	QList<QSharedPointer<CryptoPrice>> _favoriteList;
 
 	double _marketCap = std::numeric_limits<double>::quiet_NaN();
 	QString _marketCapString;
@@ -146,7 +146,7 @@ private:
 	static bool sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
 							  const QSharedPointer<CryptoPrice> &price2);
 
-	static void sort(QList<QSharedPointer<CryptoPrice>> &list, SortOrder sortOrder);
+	void sort(QList<QSharedPointer<CryptoPrice>> &list, bool isFavoriteList);
 
 	void setFreq(int freq);
 	void setLastUpdate(const QDateTime &lastUpdate);
@@ -155,11 +155,14 @@ private:
 	void updateMarketCapString();
 	void updateBtcDominanceString();
 
+	void updateFavoriteList();
+	void sortFavoriteList();
+
 	void addPrivate(const QSharedPointer<CryptoPrice> &price);
 
+	QSharedPointer<CryptoPrice> find(const CryptoPrice *pricePointer);
 	QSharedPointer<CryptoPrice> findByName(const QString &name, const QString &shortName);
 	QSharedPointer<CryptoPrice> findByShortName(const QString &shortName);
-	void sort();
 
 	QList<QSharedPointer<CryptoPrice>> parsePriceListValues(const QJsonArray &priceListJson);
 
@@ -184,6 +187,7 @@ private:
 
 private slots:
 	void onIconChanged();
+	void onIsFavoriteToggled();
 };
 
 } // namespace Bettergram

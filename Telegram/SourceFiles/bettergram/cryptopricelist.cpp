@@ -162,6 +162,26 @@ void CryptoPriceList::updateBtcDominanceString()
 	}
 }
 
+void CryptoPriceList::updateFavoriteList()
+{
+	if (_isShowOnlyFavorites) {
+		_favoriteList.clear();
+
+		for (const QSharedPointer<CryptoPrice> &price : _list) {
+			if (price->isFavorite()) {
+				_favoriteList.push_back(price);
+			}
+		}
+	} else {
+		_favoriteList.clear();
+	}
+}
+
+void CryptoPriceList::sortFavoriteList()
+{
+	sort(_favoriteList, true);
+}
+
 int CryptoPriceList::freq() const
 {
 	return _freq;
@@ -200,34 +220,42 @@ void CryptoPriceList::setLastUpdate(const QDateTime &lastUpdate)
 
 void CryptoPriceList::addPrivate(const QSharedPointer<CryptoPrice> &price)
 {
-	connect(price.data(), &CryptoPrice::iconChanged, this, &CryptoPriceList::onIconChanged);
+	connect(price.data(), &CryptoPrice::iconChanged,
+			this, &CryptoPriceList::onIconChanged);
+
+	connect(price.data(), &CryptoPrice::isFavoriteToggled,
+			this, &CryptoPriceList::onIsFavoriteToggled);
 
 	_list.push_back(price);
 }
 
-CryptoPriceList::const_iterator CryptoPriceList::begin() const
-{
-	return _list.begin();
-}
-
-CryptoPriceList::const_iterator CryptoPriceList::end() const
-{
-	return _list.end();
-}
-
 QSharedPointer<CryptoPrice> CryptoPriceList::at(int index) const
 {
-	if (index < 0 || index >= _list.size()) {
+	if (index < 0 || index >= count()) {
 		LOG(("Index is out of bounds"));
 		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
-	return _list.at(index);
+	if (_isShowOnlyFavorites) {
+		return _favoriteList.at(index);
+	} else {
+		return _list.at(index);
+	}
+
 }
 
 int CryptoPriceList::count() const
 {
-	return _list.count();
+	if (_isShowOnlyFavorites) {
+		return _favoriteList.count();
+	} else {
+		return _list.count();
+	}
+}
+
+QList<QSharedPointer<CryptoPrice> > CryptoPriceList::favoriteList() const
+{
+	return _favoriteList;
 }
 
 CryptoPriceList::SortOrder CryptoPriceList::sortOrder() const
@@ -240,7 +268,8 @@ void CryptoPriceList::setSortOrder(const SortOrder &sortOrder)
 	if (_sortOrder != sortOrder) {
 		_sortOrder = sortOrder;
 
-		sort();
+		sort(_list, false);
+		sort(_favoriteList, true);
 		emit sortOrderChanged();
 	}
 }
@@ -277,6 +306,9 @@ void CryptoPriceList::setIsShowOnlyFavorites(bool isShowOnlyFavorites)
 {
 	if (_isShowOnlyFavorites != isShowOnlyFavorites) {
 		_isShowOnlyFavorites = isShowOnlyFavorites;
+
+		updateFavoriteList();
+
 		emit isShowOnlyFavoritesChanged();
 	}
 }
@@ -294,10 +326,10 @@ bool CryptoPriceList::areNamesFetched() const
 QStringList CryptoPriceList::getShortNames(int startIndex, int count) const
 {
 	QStringList result;
-	int end = std::min(startIndex + count, _list.size());
+	int end = std::min(startIndex + count, this->count());
 
 	for (int i = startIndex; i < end; ++i) {
-		result.push_back(_list.at(i)->shortName());
+		result.push_back(at(i)->shortName());
 	}
 
 	return result;
@@ -391,6 +423,7 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 	}
 
 	mergeCryptoPriceList(priceList);
+	updateFavoriteList();
 
 	if (!_list.isEmpty() && isAdded) {
 		setAreNamesFetched(true);
@@ -466,8 +499,9 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 
 	updateData(marketCap, btcDominance, freq);
 
-	sort();
-	sort(prices, _sortOrder);
+	sort(_list, false);
+	sort(_favoriteList, true);
+	sort(prices, _isShowOnlyFavorites);
 
 	for (const QSharedPointer<CryptoPrice> &price : prices) {
 		price->downloadIconIfNeeded();
@@ -533,7 +567,10 @@ QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const Q
 		price->setChangeFor24Hours(changeFor24Hours);
 		price->setMinuteDirection(CryptoPrice::countDirection(changeForMinute));
 
-		prices.push_back(price);
+		if ((_isShowOnlyFavorites && price->isFavorite()) || !_isShowOnlyFavorites) {
+			prices.push_back(price);
+		}
+
 		i++;
 	}
 
@@ -613,6 +650,8 @@ void CryptoPriceList::load()
 
 	settings.endArray();
 	settings.endGroup();
+
+	updateFavoriteList();
 }
 
 void CryptoPriceList::updateData(double marketCap, double btcDominance, int freq)
@@ -650,7 +689,18 @@ void CryptoPriceList::mergeCryptoPriceList(const QList<CryptoPrice> &priceList)
 		}
 	}
 
-	sort();
+	sort(_list, false);
+}
+
+QSharedPointer<CryptoPrice> CryptoPriceList::find(const CryptoPrice *pricePointer)
+{
+	for (const QSharedPointer<CryptoPrice> &price : _list) {
+		if (price.data() == pricePointer) {
+			return price;
+		}
+	}
+
+	return QSharedPointer<CryptoPrice>(nullptr);
 }
 
 QSharedPointer<CryptoPrice> CryptoPriceList::findByName(const QString &name, const QString &shortName)
@@ -770,11 +820,13 @@ bool CryptoPriceList::sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
 	return price2->changeFor24Hours() < price1->changeFor24Hours();
 }
 
-void CryptoPriceList::sort(QList<QSharedPointer<CryptoPrice>> &list, SortOrder sortOrder)
+void CryptoPriceList::sort(QList<QSharedPointer<CryptoPrice>> &list, bool isFavoriteList)
 {
-	switch (sortOrder) {
+	switch (_sortOrder) {
 	case SortOrder::Rank:
-		// We should not sort by rank locally
+		if (isFavoriteList) {
+			std::sort(list.begin(), list.end(), &CryptoPriceList::sortByRankAsc);
+		}
 		break;
 	case SortOrder::NameAscending:
 		std::sort(list.begin(), list.end(), &CryptoPriceList::sortByNameAsc);
@@ -783,25 +835,28 @@ void CryptoPriceList::sort(QList<QSharedPointer<CryptoPrice>> &list, SortOrder s
 		std::sort(list.begin(), list.end(), &CryptoPriceList::sortByNameDesc);
 		break;
 	case SortOrder::PriceAscending:
-		// We should not sort by price locally
+		if (isFavoriteList) {
+			std::sort(list.begin(), list.end(), &CryptoPriceList::sortByPriceAsc);
+		}
 		break;
 	case SortOrder::PriceDescending:
-		// We should not sort by price locally
+		if (isFavoriteList) {
+			std::sort(list.begin(), list.end(), &CryptoPriceList::sortByPriceDesc);
+		}
 		break;
 	case SortOrder::ChangeFor24hAscending:
-		// We should not sort by change for 24 hours locally
+		if (isFavoriteList) {
+			std::sort(list.begin(), list.end(), &CryptoPriceList::sortBy24hAsc);
+		}
 		break;
 	case SortOrder::ChangeFor24hDescending:
-		// We should not sort by change for 24 hours locally
+		if (isFavoriteList) {
+			std::sort(list.begin(), list.end(), &CryptoPriceList::sortBy24hDesc);
+		}
 		break;
 	default:
 		break;
 	}
-}
-
-void CryptoPriceList::sort()
-{
-	sort(_list, _sortOrder);
 }
 
 void CryptoPriceList::createTestData()
@@ -844,6 +899,25 @@ void CryptoPriceList::addTestData(const QUrl &url,
 void CryptoPriceList::onIconChanged()
 {
 	emit valuesUpdated(QUrl(), QList<QSharedPointer<CryptoPrice>>());
+}
+
+void CryptoPriceList::onIsFavoriteToggled()
+{
+	const CryptoPrice *pricePointer = qobject_cast<const CryptoPrice*>(sender());
+
+	if (!pricePointer) {
+		return;
+	}
+
+	QSharedPointer<CryptoPrice> price = find(pricePointer);
+
+	if (price.isNull()) {
+		return;
+	}
+
+	if (!price->isFavorite()) {
+		_favoriteList.removeAll(price);
+	}
 }
 
 void CryptoPriceList::clear()

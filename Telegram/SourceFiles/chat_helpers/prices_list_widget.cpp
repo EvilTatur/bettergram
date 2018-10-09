@@ -153,6 +153,13 @@ void PricesListWidget::getCryptoPriceValues()
 	BettergramService *service = BettergramService::instance();
 	CryptoPriceList *priceList = BettergramService::instance()->cryptoPriceList();
 
+	if (priceList->isShowOnlyFavorites()) {
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(getCurrentShortNames());
+
+		return;
+	}
+
 	switch (priceList->sortOrder()) {
 	case(CryptoPriceList::SortOrder::Rank):
 		_urlForFetchingCurrentPage =
@@ -405,18 +412,24 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 
 	countSelectedRow(e->pos());
 
-	if (_pressedRow >= 0 && _pressedRow < _pricesAtCurrentPage.count() && _pressedRow == _selectedRow) {
+	if (_pressedRow >= 0
+			&& _pressedRow < _pricesAtCurrentPage.count()
+			&& _pressedRow == _selectedRow) {
 		QUrl url = _pricesAtCurrentPage.at(_pressedRow)->url();
+
 		if (!url.isEmpty()) {
 			BettergramService::openUrl(url);
 		}
 	}
 
-	if (_pressedFavoriteIcon >= 0 && _pressedFavoriteIcon < _pricesAtCurrentPage.count() && _pressedFavoriteIcon == _selectedRow) {
+	if (_pressedFavoriteIcon >= 0
+			&& _pressedFavoriteIcon < _pricesAtCurrentPage.count()
+			&& _pressedFavoriteIcon == _selectedRow) {
 		_pricesAtCurrentPage.at(_pressedFavoriteIcon)->toggleIsFavorite();
 
 		if (BettergramService::instance()->cryptoPriceList()->isShowOnlyFavorites()) {
-			//TODO: bettergram: remove the current row from the data model
+			updatePagesCount();
+			getCryptoPriceValues();
 			update();
 		} else {
 			update(getRowRectangle(_selectedRow));
@@ -861,6 +874,11 @@ void PricesListWidget::onIsShowOnlyFavoritesChanged()
 	} else {
 		_favoriteButton->setIconOverride(nullptr, nullptr);
 	}
+
+	updatePagesCount();
+	getCryptoPriceValues();
+
+	_pageIndicator->setCurrentPage(0);
 }
 
 } // namespace ChatHelpers

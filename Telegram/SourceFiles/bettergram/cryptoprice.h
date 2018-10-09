@@ -68,7 +68,6 @@ public:
 	Direction dayDirection() const;
 
 	bool isFavorite() const;
-	void setIsFavorite(bool isFavorite);
 	void toggleIsFavorite();
 	void loadIsFavorite();
 
@@ -95,6 +94,9 @@ signals:
 	void dayDirectionChanged();
 
 	void isFavoriteChanged();
+
+	/// We emit this signal only when external class calls toggleIsFavorite() method
+	void isFavoriteToggled();
 
 protected:
 
@@ -136,6 +138,7 @@ private:
 	void setName(const QString &name);
 	void setShortName(const QString &shortName);
 	void setDayDirection(Direction dayDirection);
+	void setIsFavorite(bool isFavorite);
 	void setIsFavorite(bool isFavorite, bool isNeedToSaveToSettings);
 
 	void updateCurrentPriceString();
