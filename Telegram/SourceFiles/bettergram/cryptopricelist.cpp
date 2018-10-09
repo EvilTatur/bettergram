@@ -971,7 +971,10 @@ void CryptoPriceList::onIsFavoriteToggled()
 		return;
 	}
 
-	if (!price->isFavorite()) {
+	if (price->isFavorite()) {
+		_favoriteList.push_back(price);
+		sortFavoriteList();
+	} else {
 		_favoriteList.removeAll(price);
 	}
 }
