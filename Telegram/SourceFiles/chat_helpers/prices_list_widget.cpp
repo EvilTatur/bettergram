@@ -399,8 +399,10 @@ void PricesListWidget::mousePressEvent(QMouseEvent *e)
 
 	if (isInFavoritesColumn(e->pos())) {
 		_pressedFavoriteIcon = _selectedRow;
+		_pressedRow = -1;
 	} else {
 		_pressedRow = _selectedRow;
+		_pressedFavoriteIcon = -1;
 	}
 }
 
@@ -411,16 +413,6 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 	}
 
 	countSelectedRow(e->pos());
-
-	if (_pressedRow >= 0
-			&& _pressedRow < _pricesAtCurrentPage.count()
-			&& _pressedRow == _selectedRow) {
-		QUrl url = _pricesAtCurrentPage.at(_pressedRow)->url();
-
-		if (!url.isEmpty()) {
-			BettergramService::openUrl(url);
-		}
-	}
 
 	if (_pressedFavoriteIcon >= 0
 			&& _pressedFavoriteIcon < _pricesAtCurrentPage.count()
@@ -433,6 +425,18 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 			update();
 		} else {
 			update(getRowRectangle(_selectedRow));
+		}
+
+		return;
+	}
+
+	if (_pressedRow >= 0
+			&& _pressedRow < _pricesAtCurrentPage.count()
+			&& _pressedRow == _selectedRow) {
+		QUrl url = _pricesAtCurrentPage.at(_pressedRow)->url();
+
+		if (!url.isEmpty()) {
+			BettergramService::openUrl(url);
 		}
 	}
 }
