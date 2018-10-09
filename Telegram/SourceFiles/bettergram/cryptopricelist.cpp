@@ -606,6 +606,7 @@ void CryptoPriceList::save() const
 	settings.setValue("marketCap", marketCap());
 	settings.setValue("btcDominance", btcDominance());
 	settings.setValue("lastUpdate", lastUpdate());
+	settings.setValue("isShowOnlyFavorites", isShowOnlyFavorites());
 
 	if (freq() == _defaultFreq) {
 		settings.remove("freq");
@@ -637,6 +638,7 @@ void CryptoPriceList::load()
 	setBtcDominance(settings.value("btcDominance").toDouble());
 	setFreq(qAbs(settings.value("freq").toInt()));
 	setLastUpdate(settings.value("lastUpdate").toDateTime());
+	setIsShowOnlyFavorites(settings.value("isShowOnlyFavorites", false).toBool());
 
 	settings.endGroup();
 
