@@ -751,6 +751,18 @@ bool CryptoPriceList::containsShortName(const QList<QSharedPointer<CryptoPrice> 
 bool CryptoPriceList::sortByRankAsc(const QSharedPointer<CryptoPrice> &price1,
 									const QSharedPointer<CryptoPrice> &price2)
 {
+	if (price1->rank() == 0 && price2->rank() == 0) {
+		return sortByNameAsc(price1, price2);
+	}
+
+	if (price1->rank() == 0) {
+		return false;
+	}
+
+	if (price2->rank() == 0) {
+		return true;
+	}
+
 	if (price1->rank() == price2->rank()) {
 		return sortByNameAsc(price1, price2);
 	}
@@ -761,6 +773,18 @@ bool CryptoPriceList::sortByRankAsc(const QSharedPointer<CryptoPrice> &price1,
 bool CryptoPriceList::sortByRankDesc(const QSharedPointer<CryptoPrice> &price1,
 									 const QSharedPointer<CryptoPrice> &price2)
 {
+	if (price1->rank() == 0 && price2->rank() == 0) {
+		return sortByNameAsc(price1, price2);
+	}
+
+	if (price1->rank() == 0) {
+		return false;
+	}
+
+	if (price2->rank() == 0) {
+		return true;
+	}
+
 	if (price1->rank() == price2->rank()) {
 		return sortByNameAsc(price1, price2);
 	}
@@ -783,41 +807,73 @@ bool CryptoPriceList::sortByNameDesc(const QSharedPointer<CryptoPrice> &price1,
 bool CryptoPriceList::sortByPriceAsc(const QSharedPointer<CryptoPrice> &price1,
 									 const QSharedPointer<CryptoPrice> &price2)
 {
-	if (price1->currentPrice() == price2->currentPrice()) {
-		return sortByNameAsc(price1, price2);
-	}
-
-	return price1->currentPrice() < price2->currentPrice();
+	return sortByDoubleAsc(price1, price2, price1->currentPrice(), price2->currentPrice());
 }
 
 bool CryptoPriceList::sortByPriceDesc(const QSharedPointer<CryptoPrice> &price1,
 									  const QSharedPointer<CryptoPrice> &price2)
 {
-	if (price1->currentPrice() == price2->currentPrice()) {
-		return sortByNameAsc(price1, price2);
-	}
-
-	return price2->currentPrice() < price1->currentPrice();
+	return sortByDoubleDesc(price1, price2, price1->currentPrice(), price2->currentPrice());
 }
 
 bool CryptoPriceList::sortBy24hAsc(const QSharedPointer<CryptoPrice> &price1,
 								   const QSharedPointer<CryptoPrice> &price2)
 {
-	if (price1->changeFor24Hours() == price2->changeFor24Hours()) {
-		return sortByNameAsc(price1, price2);
-	}
-
-	return price1->changeFor24Hours() < price2->changeFor24Hours();
+	return sortByDoubleAsc(price1, price2, price1->changeFor24Hours(), price2->changeFor24Hours());
 }
 
 bool CryptoPriceList::sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
 									const QSharedPointer<CryptoPrice> &price2)
 {
-	if (price1->changeFor24Hours() == price2->changeFor24Hours()) {
+	return sortByDoubleDesc(price1, price2, price1->changeFor24Hours(), price2->changeFor24Hours());
+}
+
+bool CryptoPriceList::sortByDoubleAsc(const QSharedPointer<CryptoPrice> &price1,
+									  const QSharedPointer<CryptoPrice> &price2,
+									  double value1,
+									  double value2)
+{
+	if (std::isnan(value1) && std::isnan(value2)) {
 		return sortByNameAsc(price1, price2);
 	}
 
-	return price2->changeFor24Hours() < price1->changeFor24Hours();
+	if (std::isnan(value1)) {
+		return false;
+	}
+
+	if (std::isnan(value2)) {
+		return true;
+	}
+
+	if (value1 == value2) {
+		return sortByNameAsc(price1, price2);
+	}
+
+	return value1 < value2;
+}
+
+bool CryptoPriceList::sortByDoubleDesc(const QSharedPointer<CryptoPrice> &price1,
+									   const QSharedPointer<CryptoPrice> &price2,
+									   double value1,
+									   double value2)
+{
+	if (std::isnan(value1) && std::isnan(value2)) {
+		return sortByNameAsc(price1, price2);
+	}
+
+	if (std::isnan(value1)) {
+		return false;
+	}
+
+	if (std::isnan(value2)) {
+		return true;
+	}
+
+	if (value1 == value2) {
+		return sortByNameAsc(price1, price2);
+	}
+
+	return value2 < value1;
 }
 
 void CryptoPriceList::sort(QList<QSharedPointer<CryptoPrice>> &list, bool isFavoriteList)

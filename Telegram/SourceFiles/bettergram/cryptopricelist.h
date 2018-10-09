@@ -146,6 +146,16 @@ private:
 	static bool sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
 							  const QSharedPointer<CryptoPrice> &price2);
 
+	static bool sortByDoubleAsc(const QSharedPointer<CryptoPrice> &price1,
+								const QSharedPointer<CryptoPrice> &price2,
+								double value1,
+								double value2);
+
+	static bool sortByDoubleDesc(const QSharedPointer<CryptoPrice> &price1,
+								 const QSharedPointer<CryptoPrice> &price2,
+								 double value1,
+								 double value2);
+
 	void sort(QList<QSharedPointer<CryptoPrice>> &list, bool isFavoriteList);
 
 	void setFreq(int freq);
