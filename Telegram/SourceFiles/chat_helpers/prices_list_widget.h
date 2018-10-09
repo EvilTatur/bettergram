@@ -86,6 +86,7 @@ private:
 	Ui::FlatInput *_filterTextEdit = nullptr;
 	Ui::CrossButton *_cancelFilterButton = nullptr;
 	Ui::IconButton *_favoriteButton = nullptr;
+	Ui::FlatLabel *_yourFavoriteListIsEmpty = nullptr;
 	BettergramNumericPageIndicatorWidget *_pageIndicator = nullptr;
 	TableColumnHeaderWidget *_coinHeader = nullptr;
 	TableColumnHeaderWidget *_priceHeader = nullptr;

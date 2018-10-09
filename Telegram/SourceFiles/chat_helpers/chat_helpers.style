@@ -247,6 +247,17 @@ pricesPanFavoriteButton: IconButton {
         iconOver: pricesPanFavoriteDisabledIconOver;
 }
 
+// This label is shown when user wants to see only favorite coins, but this is empty list
+pricesPanYourFavoriteListIsEmptyLabel: FlatLabel(defaultFlatLabel) {
+        align: align(center);
+        textFg: windowSubTextFg;
+        style: TextStyle(defaultTextStyle) {
+        }
+        palette: TextPalette(defaultTextPalette) {
+                linkFg: windowSubTextFg;
+        }
+}
+
 newsPanPadding: pricesPanPadding;
 newsPanHeader: pricesPanHeader;
 newsPanRowHeight: 70px;

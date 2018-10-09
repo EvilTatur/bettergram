@@ -983,6 +983,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "lng_prices_header_coin" = "Coin";
 "lng_prices_header_price" = "Price";
 "lng_prices_header_24h" = "24h";
+"lng_prices_your_favorite_list_is_empty" = "Your favorite list is empty";
 
 "lng_news_footer" = "Visit the Site";
 "lng_news_last_update" = "%1";

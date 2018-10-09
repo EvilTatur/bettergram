@@ -100,6 +100,10 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	_favoriteButton = new Ui::IconButton(this, st::pricesPanFavoriteButton);
 	_favoriteButton->setClickedCallback([this] { onFavoriteButtonClicked(); });
 
+	_yourFavoriteListIsEmpty = new Ui::FlatLabel(this, st::pricesPanYourFavoriteListIsEmptyLabel);
+	_yourFavoriteListIsEmpty->setRichText(lang(lng_prices_your_favorite_list_is_empty));
+	_yourFavoriteListIsEmpty->setVisible(false);
+
 	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
 	connect(_pageIndicator, &BettergramNumericPageIndicatorWidget::currentPageChanged,
@@ -679,6 +683,11 @@ void PricesListWidget::updateControlsGeometry()
 	_coinHeader->moveToLeft(0, headerTop);
 	_priceHeader->moveToLeft(_coinHeader->x() + _coinHeader->width(), headerTop);
 	_24hHeader->moveToLeft(_priceHeader->x() + _priceHeader->width(), headerTop);
+
+	_yourFavoriteListIsEmpty->moveToLeft(st::pricesPanPadding,
+										 getTableContentTop() + st::pricesPanPadding);
+
+	_yourFavoriteListIsEmpty->resizeToWidth(width());
 }
 
 void PricesListWidget::updatePagesCount()
@@ -837,6 +846,11 @@ void PricesListWidget::onCryptoPriceValuesUpdated(const QUrl &url,
 	updateMarketCap();
 	updateBtcDominance();
 	update();
+
+	CryptoPriceList *cryptoPriceList = BettergramService::instance()->cryptoPriceList();
+
+	_yourFavoriteListIsEmpty->setVisible(cryptoPriceList->isShowOnlyFavorites()
+										 && cryptoPriceList->favoriteList().isEmpty());
 }
 
 void PricesListWidget::onCryptoPriceSortOrderChanged()
@@ -872,7 +886,9 @@ void PricesListWidget::onFavoriteButtonClicked()
 
 void PricesListWidget::onIsShowOnlyFavoritesChanged()
 {
-	if (BettergramService::instance()->cryptoPriceList()->isShowOnlyFavorites()) {
+	CryptoPriceList *cryptoPriceList = BettergramService::instance()->cryptoPriceList();
+
+	if (cryptoPriceList->isShowOnlyFavorites()) {
 		_favoriteButton->setIconOverride(&st::pricesPanFavoriteEnabledIcon,
 										 &st::pricesPanFavoriteEnabledIconOver);
 	} else {
@@ -883,6 +899,9 @@ void PricesListWidget::onIsShowOnlyFavoritesChanged()
 	getCryptoPriceValues();
 
 	_pageIndicator->setCurrentPage(0);
+
+	_yourFavoriteListIsEmpty->setVisible(cryptoPriceList->isShowOnlyFavorites()
+										 && cryptoPriceList->favoriteList().isEmpty());
 }
 
 } // namespace ChatHelpers
