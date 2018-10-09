@@ -510,6 +510,11 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 	emit valuesUpdated(url, prices);
 }
 
+void CryptoPriceList::emptyValues()
+{
+	emit valuesUpdated(QUrl(), QList<QSharedPointer<CryptoPrice>>());
+}
+
 QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const QJsonArray &priceListJson)
 {
 	QList<QSharedPointer<CryptoPrice>> prices;

@@ -68,6 +68,7 @@ public:
 
 	void parseNames(const QByteArray &byteArray);
 	void parseValues(const QByteArray &byteArray, const QUrl &url, const QStringList &shortNames);
+	void emptyValues();
 
 	void save() const;
 	void load();

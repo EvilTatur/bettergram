@@ -380,6 +380,7 @@ void BettergramService::getCryptoPriceNames()
 QUrl BettergramService::getCryptoPriceValues(int offset, int count)
 {
 	if (offset < 0 || offset >= _cryptoPriceList->count() || count <= 0) {
+		QTimer::singleShot(0, _cryptoPriceList, [this] { _cryptoPriceList->emptyValues(); });
 		return QUrl();
 	}
 
@@ -397,6 +398,7 @@ QUrl BettergramService::getCryptoPriceValues(int offset, int count)
 QUrl BettergramService::getCryptoPriceValues(const QStringList &shortNames)
 {
 	if (shortNames.isEmpty()) {
+		QTimer::singleShot(0, _cryptoPriceList, [this] { _cryptoPriceList->emptyValues(); });
 		return QUrl();
 	}
 
