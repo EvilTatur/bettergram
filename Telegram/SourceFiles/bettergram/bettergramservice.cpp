@@ -404,7 +404,7 @@ QUrl BettergramService::getCryptoPriceValues(const QStringList &shortNames)
 
 	//TODO: bettergram: remove 'limit=1' as soon as the server side will be fixed
 
-	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?limit=1&favorites=%1")
+	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?limit=0&favorites=%1")
 			 .arg(shortNames.join(QStringLiteral(","))));
 
 	getCryptoPriceValues(url, shortNames);

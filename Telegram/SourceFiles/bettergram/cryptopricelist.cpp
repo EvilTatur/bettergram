@@ -16,7 +16,7 @@ const QString &CryptoPriceList::getSortString(SortOrder sortOrder)
 	static const QString rank = QStringLiteral("rank");
 	static const QString name = QStringLiteral("name");
 	static const QString price = QStringLiteral("price");
-	static const QString delta = QStringLiteral("delta");
+	static const QString delta = QStringLiteral("delta.day");
 
 	switch (sortOrder) {
 	case(SortOrder::Rank):
