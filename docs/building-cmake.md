@@ -138,7 +138,7 @@ Go to ***BuildPath*** and run
     git checkout v5.6.2
     cd qtimageformats && git checkout v5.6.2 && cd ..
     cd qtbase && git checkout v5.6.2 && cd ..
-    cd qtbase && git apply ../../../tdesktop/Telegram/Patches/qtbase_5_6_2.diff && cd ..
+    cd qtbase && git apply ../../../bettergram/Telegram/Patches/qtbase_5_6_2.diff && cd ..
     cd qtbase/src/plugins/platforminputcontexts
     git clone https://github.com/telegramdesktop/fcitx.git
     git clone https://github.com/telegramdesktop/hime.git
@@ -153,7 +153,7 @@ Go to ***BuildPath*** and run
     git clone https://chromium.googlesource.com/external/gyp
     cd gyp
     git checkout 702ac58e47
-    git apply ../../tdesktop/Telegram/Patches/gyp.diff
+    git apply ../../bettergram/Telegram/Patches/gyp.diff
     cd ..
 
     git clone https://chromium.googlesource.com/breakpad/breakpad
@@ -175,19 +175,19 @@ Go to ***BuildPath*** and run
 
 ### Building the project
 
-Go to ***BuildPath*/tdesktop/Telegram** and run
+Go to ***BuildPath*/bettergram/Telegram** and run
 
     gyp/refresh.sh
 
-To make Debug version go to ***BuildPath*/tdesktop/out/Debug** and run
+To make Debug version go to ***BuildPath*/bettergram/out/Debug** and run
 
     make $MAKE_THREADS_CNT
 
-To make Release version go to ***BuildPath*/tdesktop/out/Release** and run
+To make Release version go to ***BuildPath*/bettergram/out/Release** and run
 
     make $MAKE_THREADS_CNT
 
-You can debug your builds from Qt Creator, just open **CMakeLists.txt** from ***BuildPath*/tdesktop/out/Debug** and launch with debug.
+You can debug your builds from Qt Creator, just open **CMakeLists.txt** from ***BuildPath*/bettergram/out/Debug** and launch with debug.
 
 Or you can work with [Visual Studio Code](https://code.visualstudio.com/). See at the instructions:
 
