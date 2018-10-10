@@ -2,7 +2,9 @@
 
 This is the complete source code and the build instructions for the official desktop client for the [Bettergram][bettergram] messenger, based on the [Telegram API][telegram_api] and the [MTProto][telegram_proto] secure protocol.
 
-[![Preview of Bettergram][preview_image]][preview_image_url]
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=olGflYVZPkI
+" target="_blank"><img src="http://img.youtube.com/vi/olGflYVZPkI/0.jpg" 
+alt="Bettergram Explained In 60 Seconds" width="240" height="180" border="10" /></a>
 
 The source code is published under GPLv3 with OpenSSL exception, the license is available [here][license].
 
