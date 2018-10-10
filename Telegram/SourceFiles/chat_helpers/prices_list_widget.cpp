@@ -309,7 +309,7 @@ int PricesListWidget::getTableContentTop() const
 
 int PricesListWidget::getTableContentHeight() const
 {
-	return parentWidget() ? parentWidget()->height() - getTableContentTop() : 0;
+	return height() - getTableContentTop();
 }
 
 int PricesListWidget::getRowTop(int row) const
@@ -394,7 +394,7 @@ int PricesListWidget::countDesiredHeight(int newWidth)
 {
 	Q_UNUSED(newWidth);
 
-	return getTableBottom();
+	return 0;
 }
 
 void PricesListWidget::mousePressEvent(QMouseEvent *e)
