@@ -84,26 +84,26 @@ int ResourceGroupList::count() const
 	return _list.count();
 }
 
-void ResourceGroupList::parseFile(const QString &filePath)
+bool ResourceGroupList::parseFile(const QString &filePath)
 {
 	QFile file(filePath);
 
 	if (!file.open(QIODevice::ReadOnly)) {
 		LOG(("Unable to open file '%1' with resource group list").arg(filePath));
-		return;
+		return false;
 	}
 
-	parse(file.readAll());
+	return parse(file.readAll());
 }
 
-void ResourceGroupList::parse(const QByteArray &byteArray)
+bool ResourceGroupList::parse(const QByteArray &byteArray)
 {
 	// Update only if it has been changed
 	QByteArray hash = QCryptographicHash::hash(byteArray, QCryptographicHash::Sha256);
 
 	if (hash == _lastSourceHash) {
 		setLastUpdate(QDateTime::currentDateTime());
-		return;
+		return false;
 	}
 
 	QJsonParseError parseError;
@@ -115,31 +115,38 @@ void ResourceGroupList::parse(const QByteArray &byteArray)
 			.arg(parseError.error)
 			.arg(QString::fromUtf8(byteArray)));
 
-		return;
+		return false;
 	}
 
 	QJsonObject json = doc.object();
 
 	if (json.isEmpty()) {
 		LOG(("Can not get resource group list. Data is emtpy or wrong"));
-		return;
+		return false;
 	}
 
-	parse(json);
+	if (!parse(json)) {
+		return false;
+	}
+
+	save(byteArray);
+
 	_lastSourceHash = hash;
+
+	return true;
 }
 
-void ResourceGroupList::parse(const QJsonObject &json)
+bool ResourceGroupList::parse(const QJsonObject &json)
 {
 	if (json.isEmpty()) {
-		return;
+		return false;
 	}
 
 	QJsonArray groupsJson;
 
 	if (json.contains("resources")) {
 		if (!json.value("success").toBool()) {
-			return;
+			return false;
 		}
 
 		groupsJson = json.value("resources").toObject().value("groups").toArray();
@@ -165,6 +172,28 @@ void ResourceGroupList::parse(const QJsonObject &json)
 
 	setLastUpdate(QDateTime::currentDateTime());
 	emit updated();
+
+	return true;
+}
+
+void ResourceGroupList::save(const QByteArray &byteArray)
+{
+	const QString filePath = BettergramService::instance()->resourcesCachePath();
+
+	QFile file(filePath);
+
+	if (!file.open(QIODevice::WriteOnly)) {
+		LOG(("Unable to open file '%1' for writing").arg(filePath));
+		return;
+	}
+
+	int count = file.write(byteArray);
+
+	if (count != byteArray.size()) {
+		LOG(("Unable to write all data to file '%1'").arg(filePath));
+	}
+
+	file.close();
 }
 
 } // namespace Bettergrams

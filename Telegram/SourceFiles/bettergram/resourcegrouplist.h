@@ -33,8 +33,8 @@ public:
 	bool isEmpty() const;
 	int count() const;
 
-	void parseFile(const QString &filePath);
-	void parse(const QByteArray &byteArray);
+	bool parseFile(const QString &filePath);
+	bool parse(const QByteArray &byteArray);
 
 public slots:
 
@@ -63,7 +63,8 @@ private:
 
 	void setLastUpdate(const QDateTime &lastUpdate);
 
-	void parse(const QJsonObject &json);
+	bool parse(const QJsonObject &json);
+	void save(const QByteArray &byteArray);
 };
 
 } // namespace Bettergram

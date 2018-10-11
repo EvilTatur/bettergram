@@ -60,6 +60,7 @@ public:
 	QString cacheDirPath() const;
 	QString pricesCacheDirPath() const;
 	QString pricesIconsCacheDirPath() const;
+	QString resourcesCachePath() const;
 	QString settingsPath(const QString &name) const;
 
 	QSettings settings(const QString &name) const;

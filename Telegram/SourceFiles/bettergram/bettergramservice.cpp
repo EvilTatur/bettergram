@@ -148,7 +148,14 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	getRssFeedsContent();
 	getVideoFeedsContent();
 
-	_resourceGroupList->parseFile(":/bettergram/default-resources.json");
+	if (QFile::exists(resourcesCachePath())) {
+		if (!_resourceGroupList->parseFile(resourcesCachePath())) {
+			_resourceGroupList->parseFile(":/bettergram/default-resources.json");
+		}
+	} else {
+		_resourceGroupList->parseFile(":/bettergram/default-resources.json");
+	}
+
 	getResourceGroupList();
 
 	_cryptoPriceList->load();
@@ -325,6 +332,11 @@ QString BettergramService::pricesCacheDirPath() const
 QString BettergramService::pricesIconsCacheDirPath() const
 {
 	return pricesCacheDirPath() + QStringLiteral("icons/");
+}
+
+QString BettergramService::resourcesCachePath() const
+{
+	return cacheDirPath() + QStringLiteral("resources.json");
 }
 
 QString BettergramService::settingsPath(const QString &name) const
