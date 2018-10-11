@@ -15,5 +15,13 @@
 		"vector": "cpp",
 		"string_view": "cpp",
 		"gsl_util": "cpp"
+	},
+	"[dockerfile]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
+	"[shellscript]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
 	}
 }
