@@ -137,7 +137,13 @@ void ResourceGroupList::parse(const QJsonObject &json)
 
 	_list.clear();
 
-	QJsonArray groupsJson = json.value("groups").toArray();
+	QJsonArray groupsJson;
+
+	if (json.contains("resources")) {
+		groupsJson = json.value("resources").toObject().value("groups").toArray();
+	} else {
+		groupsJson = json.value("groups").toArray();
+	}
 
 	for (const QJsonValue value : groupsJson) {
 		if (!value.isObject()) {

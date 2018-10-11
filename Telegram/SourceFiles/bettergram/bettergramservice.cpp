@@ -529,8 +529,6 @@ void BettergramService::getRssFeeds(RssChannelList *rssChannelList,
 
 void BettergramService::getResourceGroupList()
 {
-	//TODO: bettergram: We should get resources from server when it will be ready on server side
-#if 0
 	QUrl url("https://api.bettergram.io/v1/resources");
 
 	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
@@ -558,7 +556,6 @@ void BettergramService::getResourceGroupList()
 
 	connect(reply, &QNetworkReply::sslErrors,
 			this, &BettergramService::onGetResourceGroupListSslFailed);
-#endif
 }
 
 void BettergramService::onGetCryptoPriceNamesFinished()
