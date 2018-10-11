@@ -52,7 +52,6 @@ USER_ID=$EUID
 
 sudo bash -c "rm -rf release \
   && docker build -t bettergram/ubuntu:16.04 . \
-  && docker run -v `realpath ../../../../../TelegramPrivate`:/opt/bettergram/TelegramPrivate -v release:/opt/bettergram/release -ti bettergram/ubuntu:16.04 udpate_and_rebuild_bettergram.sh \
-  && "
+  && docker run -v `realpath ../../../../../TelegramPrivate`:/opt/bettergram/TelegramPrivate -v release:/opt/bettergram/release -ti bettergram/ubuntu:16.04 udpate_and_rebuild_bettergram.sh"
 
-check_result "Libraries directory is created" "Unable to create Libraries directory"
+check_result "The release build is created and you can find the results at the 'release' directory" "Unable to create release build"
