@@ -4,6 +4,7 @@
 /Deploy/
 /ThirdParty/
 /Telegram/build/target
+/Telegram/build/linux/ubuntu 16.04/release
 /Telegram/GeneratedFiles/
 /Telegram/SourceFiles/art/grid.png
 /Telegram/SourceFiles/art/grid_125x.png
