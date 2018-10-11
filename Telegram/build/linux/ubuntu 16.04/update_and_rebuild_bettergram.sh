@@ -58,7 +58,7 @@ rm -rf out/Release \
   && Telegram/gyp/refresh.sh \
   && cd out/Release \
   && make $MAKE_THREADS_CNT \
-  && strip -s Bettergram
+  && strip Bettergram
 
 check_result "Bettergram application is rebuilt" "Unable to rebuild Bettergram application"
 
