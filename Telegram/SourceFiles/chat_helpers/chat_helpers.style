@@ -174,7 +174,7 @@ pricesPanTableRowHeight: 50px;
 pricesPanTableImageSize: 24px;
 pricesPanTableFavoriteImageSize: 24px;
 pricesPanColumnPriceWidth: 80px;
-pricesPanColumn24hWidth: 60px;
+pricesPanColumn24hWidth: 70px;
 pricesPanHover: windowBgOver; // background of selected row in prices panel
 
 // Last update label at the PricesWidget

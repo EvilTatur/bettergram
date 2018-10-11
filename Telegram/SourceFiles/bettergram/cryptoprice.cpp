@@ -195,10 +195,18 @@ void CryptoPrice::updateCurrentPriceString()
 {
 	if (std::isnan(_currentPrice)) {
 		_currentPriceString = QStringLiteral("N/A");
-	} else if (_currentPrice < 1.0) {
-		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 4);
-	} else {
+	} else if (qAbs(_currentPrice) >= 1000000000.0) {
+		_currentPriceString = QStringLiteral("$%1 M").arg(_currentPrice / 1000000.0, 0, 'f', 0);
+	} else if (qAbs(_currentPrice) >= 1000000.0) {
+		_currentPriceString = QStringLiteral("$%1 K").arg(_currentPrice / 1000.0, 0, 'f', 0);
+	} else if (qAbs(_currentPrice) >= 1000.0) {
+		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 0);
+	} else if (qAbs(_currentPrice) >= 100.0) {
+		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 1);
+	} else if (qAbs(_currentPrice) >= 1.0) {
 		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 2);
+	} else {
+		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 4);
 	}
 }
 
@@ -227,6 +235,14 @@ void CryptoPrice::updateChangeFor24HoursString()
 {
 	if (std::isnan(_changeFor24Hours)) {
 		_changeFor24HoursString = QStringLiteral("N/A");
+	} else if (qAbs(_changeFor24Hours) >= 1000000000.0) {
+		_changeFor24HoursString = QStringLiteral("%1 M%").arg(_changeFor24Hours / 1000000.0, 0, 'f', 0);
+	} else if (qAbs(_changeFor24Hours) >= 1000000.0) {
+		_changeFor24HoursString = QStringLiteral("%1 K%").arg(_changeFor24Hours / 1000.0, 0, 'f', 0);
+	} else if (qAbs(_changeFor24Hours) >= 1000.0) {
+		_changeFor24HoursString = QStringLiteral("%1%").arg(_changeFor24Hours, 0, 'f', 0);
+	} else if (qAbs(_changeFor24Hours) >= 100.0) {
+		_changeFor24HoursString = QStringLiteral("%1%").arg(_changeFor24Hours, 0, 'f', 1);
 	} else {
 		_changeFor24HoursString = QStringLiteral("%1%").arg(_changeFor24Hours, 0, 'f', 2);
 	}
