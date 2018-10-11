@@ -80,12 +80,6 @@ public:
 	QUrl getCryptoPriceValues(int offset, int count);
 	QUrl getCryptoPriceValues(const QStringList &shortNames);
 
-	/// Download and parse all RSS feeds
-	void getRssChannelList();
-
-	/// Download and parse all Video feeds
-	void getVideoChannelList();
-
 	/// Download and parse resource group list
 	void getResourceGroupList();
 
@@ -102,11 +96,14 @@ protected:
 private:
 	static BettergramService *_instance;
 	static const QString _defaultLastUpdateString;
+
 	static const int _networkTimeout;
 	static const int _checkForFirstUpdatesDelay;
 	static const int _checkForUpdatesPeriod;
 	static const int _updateCryptoPriceNamesPeriod;
 	static const int _saveCryptoPricesPeriod;
+	static const int _updateRssChannelListPeriod;
+	static const int _updateVideoChannelListPeriod;
 
 	bool _isSettingsPorted = false;
 	bool _isPaid = false;
@@ -120,6 +117,8 @@ private:
 	int _checkForUpdatesTimerId = 0;
 	int _updateCryptoPriceNamesTimerId = 0;
 	int _saveCryptoPricesTimerId = 0;
+	int _updateRssChannelListTimerId = 0;
+	int _updateVideoChannelListTimerId = 0;
 	bool _isWindowActive = true;
 	std::function<void()> _isWindowActiveHandler = nullptr;
 
@@ -147,11 +146,23 @@ private:
 
 	void getCryptoPriceValues(const QUrl &url, const QStringList &shortNames);
 
+	/// Download and parse RSS channel list from Bettergram servers
+	void getRssChannelList();
+
+	/// Download and parse Video channel list from Bettergram servers
+	void getVideoChannelList();
+
+	/// Download and parse all RSS feeds
+	void getRssFeedsContent();
+
+	/// Download and parse all Video feeds
+	void getVideoFeedsContent();
+
 	void getRssFeeds(RssChannelList *rssChannelList, const QSharedPointer<RssChannel> &channel);
 
 private slots:
-	void onUpdateRssChannelList();
-	void onUpdateVideoChannelList();
+	void onUpdateRssFeedsContent();
+	void onUpdateVideoFeedsContent();
 
 	void onGetCryptoPriceNamesFinished();
 	void onGetCryptoPriceNamesSslFailed(QList<QSslError> errors);
@@ -163,6 +174,12 @@ private slots:
 
 	void onGetResourceGroupListFinished();
 	void onGetResourceGroupListSslFailed(QList<QSslError> errors);
+
+	void onGetRssChannelListFinished();
+	void onGetRssChannelListSslFailed(QList<QSslError> errors);
+
+	void onGetVideoChannelListFinished();
+	void onGetVideoChannelListSslFailed(QList<QSslError> errors);
 };
 
 } // namespace Bettergram

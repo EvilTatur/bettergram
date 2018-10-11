@@ -135,15 +135,19 @@ void ResourceGroupList::parse(const QJsonObject &json)
 		return;
 	}
 
-	_list.clear();
-
 	QJsonArray groupsJson;
 
 	if (json.contains("resources")) {
+		if (!json.value("success").toBool()) {
+			return;
+		}
+
 		groupsJson = json.value("resources").toObject().value("groups").toArray();
 	} else {
 		groupsJson = json.value("groups").toArray();
 	}
+
+	_list.clear();
 
 	for (const QJsonValue value : groupsJson) {
 		if (!value.isObject()) {

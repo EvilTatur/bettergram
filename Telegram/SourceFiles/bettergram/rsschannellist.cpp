@@ -4,6 +4,9 @@
 #include <bettergram/bettergramservice.h>
 #include <logs.h>
 
+#include <QCryptographicHash>
+#include <QJsonDocument>
+
 namespace Bettergram {
 
 const int RssChannelList::_defaultFreq = 60;
@@ -117,11 +120,26 @@ void RssChannelList::add(const QUrl &channelLink)
 		return;
 	}
 
+	if (contains(channelLink)) {
+		return;
+	}
+
 	QSharedPointer<RssChannel> channel(new RssChannel(channelLink,
 													  _imageWidth,
 													  _imageHeight,
 													  nullptr));
 	add(channel);
+}
+
+bool RssChannelList::contains(const QUrl &channelLink)
+{
+	for (const QSharedPointer<RssChannel> &channel : _list) {
+		if (channel->feedLink() == channelLink) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void RssChannelList::add(QSharedPointer<RssChannel> &channel)
@@ -169,7 +187,7 @@ QList<QSharedPointer<RssItem>> RssChannelList::getAllUnreadItems() const
 	return result;
 }
 
-void RssChannelList::parse()
+void RssChannelList::parseFeeds()
 {
 	for (const QSharedPointer<RssChannel> &channel : _list) {
 		if (channel->isFetching()) {
@@ -198,6 +216,64 @@ void RssChannelList::parse()
 	if (isAtLeastOneUpdated) {
 		setLastUpdate(QDateTime::currentDateTime());
 	}
+}
+
+void RssChannelList::parseChannelList(const QByteArray &channelList)
+{
+	// Update only if it has been changed
+	QByteArray hash = QCryptographicHash::hash(channelList, QCryptographicHash::Sha256);
+
+	if (hash == _lastSourceHash) {
+		return;
+	}
+
+	QJsonParseError parseError;
+	QJsonDocument doc = QJsonDocument::fromJson(channelList, &parseError);
+
+	if (!doc.isObject()) {
+		LOG(("Can not get rss channel list. Data is wrong. %1 (%2). Data: %3")
+			.arg(parseError.errorString())
+			.arg(parseError.error)
+			.arg(QString::fromUtf8(channelList)));
+
+		return;
+	}
+
+	QJsonObject json = doc.object();
+
+	if (json.isEmpty()) {
+		LOG(("Can not get rss channel list. Data is emtpy or wrong"));
+		return;
+	}
+
+	parseChannelList(json);
+	_lastSourceHash = hash;
+}
+
+void RssChannelList::parseChannelList(const QJsonObject &json)
+{
+	if (json.isEmpty()) {
+		return;
+	}
+
+	if (!json.value("success").toBool()) {
+		return;
+	}
+
+	_list.clear();
+
+	QJsonArray channelsJson = json.value(_name).toArray();
+
+	for (const QJsonValue value : channelsJson) {
+		if (!value.isString()) {
+			LOG(("Unable to get channel address for %1").arg(_name));
+			continue;
+		}
+
+		add(value.toString());
+	}
+
+	emit updated();
 }
 
 void RssChannelList::save()

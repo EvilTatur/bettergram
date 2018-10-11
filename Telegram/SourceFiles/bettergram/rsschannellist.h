@@ -39,6 +39,7 @@ public:
 	int countAllUnreadItems() const;
 
 	void add(const QUrl &channelLink);
+	bool contains(const QUrl &channelLink);
 
 	void markAsRead();
 
@@ -46,7 +47,8 @@ public:
 	QList<QSharedPointer<RssItem>> getAllUnreadItems() const;
 
 	void load();
-	void parse();
+	void parseFeeds();
+	void parseChannelList(const QByteArray &channelList);
 
 public slots:
 
@@ -78,9 +80,12 @@ private:
 
 	QDateTime _lastUpdate;
 	QString _lastUpdateString;
+	QByteArray _lastSourceHash;
 
 	void setLastUpdate(const QDateTime &lastUpdate);
 	void add(QSharedPointer<RssChannel> &channel);
+
+	void parseChannelList(const QJsonObject &json);
 
 	void save();
 

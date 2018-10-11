@@ -42,6 +42,12 @@ const int BettergramService::_updateCryptoPriceNamesPeriod = 3 * 24 * 60 * 60 * 
 // We save crypto prices every 2 hours
 const int BettergramService::_saveCryptoPricesPeriod = 2 * 60 * 60 * 1000;
 
+// We update rss channel list every 2 hours
+const int BettergramService::_updateRssChannelListPeriod = 2 * 60 * 60 * 1000;
+
+// We update video channel list every 2 hours
+const int BettergramService::_updateVideoChannelListPeriod = 2 * 60 * 60 * 1000;
+
 BettergramService *BettergramService::init()
 {
 	return instance();
@@ -131,13 +137,16 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	}
 
 	connect(_rssChannelList, &RssChannelList::update,
-			this, &BettergramService::onUpdateRssChannelList);
+			this, &BettergramService::onUpdateRssFeedsContent);
 
 	connect(_videoChannelList, &RssChannelList::update,
-			this, &BettergramService::onUpdateVideoChannelList);
+			this, &BettergramService::onUpdateVideoFeedsContent);
 
 	getRssChannelList();
 	getVideoChannelList();
+
+	getRssFeedsContent();
+	getVideoFeedsContent();
 
 	_resourceGroupList->parseFile(":/bettergram/default-resources.json");
 	getResourceGroupList();
@@ -148,6 +157,9 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 
 	_updateCryptoPriceNamesTimerId = startTimer(_updateCryptoPriceNamesPeriod, Qt::VeryCoarseTimer);
 	_saveCryptoPricesTimerId = startTimer(_saveCryptoPricesPeriod, Qt::VeryCoarseTimer);
+
+	_updateRssChannelListTimerId = startTimer(_updateRssChannelListPeriod, Qt::VeryCoarseTimer);
+	_updateVideoChannelListTimerId = startTimer(_updateVideoChannelListPeriod, Qt::VeryCoarseTimer);
 
 	connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { _cryptoPriceList->save(); });
 
@@ -456,7 +468,7 @@ void BettergramService::getCryptoPriceValues(const QUrl &url, const QStringList 
 			this, &BettergramService::onGetCryptoPriceValuesSslFailed);
 }
 
-void BettergramService::getRssChannelList()
+void BettergramService::getRssFeedsContent()
 {
 	for (const QSharedPointer<RssChannel> &channel : *_rssChannelList) {
 		if (channel->isMayFetchNewData()) {
@@ -465,7 +477,7 @@ void BettergramService::getRssChannelList()
 	}
 }
 
-void BettergramService::getVideoChannelList()
+void BettergramService::getVideoFeedsContent()
 {
 	for (const QSharedPointer<RssChannel> &channel : *_videoChannelList) {
 		if (channel->isMayFetchNewData()) {
@@ -498,7 +510,7 @@ void BettergramService::getRssFeeds(RssChannelList *rssChannelList,
 			channel->fetchingFailed();
 		}
 
-		rssChannelList->parse();
+		rssChannelList->parseFeeds();
 	});
 
 	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
@@ -525,6 +537,68 @@ void BettergramService::getRssFeeds(RssChannelList *rssChannelList,
 			LOG(("%1").arg(error.errorString()));
 		}
 	});
+}
+
+void BettergramService::getRssChannelList()
+{
+	QUrl url("https://api.bettergram.io/v1/news");
+
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
+	QNetworkRequest request;
+	request.setUrl(url);
+
+	QNetworkReply *reply = networkManager->get(request);
+
+	connect(reply, &QNetworkReply::finished,
+			this, &BettergramService::onGetRssChannelListFinished);
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get RSS channel list due timeout"));
+	});
+
+	connect(reply, &QNetworkReply::sslErrors,
+			this, &BettergramService::onGetRssChannelListSslFailed);
+}
+
+void BettergramService::getVideoChannelList()
+{
+	QUrl url("https://api.bettergram.io/v1/videos");
+
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
+	QNetworkRequest request;
+	request.setUrl(url);
+
+	QNetworkReply *reply = networkManager->get(request);
+
+	connect(reply, &QNetworkReply::finished,
+			this, &BettergramService::onGetVideoChannelListFinished);
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get video channel list due timeout"));
+	});
+
+	connect(reply, &QNetworkReply::sslErrors,
+			this, &BettergramService::onGetVideoChannelListSslFailed);
 }
 
 void BettergramService::getResourceGroupList()
@@ -599,6 +673,48 @@ void BettergramService::onGetResourceGroupListFinished()
 }
 
 void BettergramService::onGetResourceGroupListSslFailed(QList<QSslError> errors)
+{
+	for(const QSslError &error : errors) {
+		LOG(("%1").arg(error.errorString()));
+	}
+}
+
+void BettergramService::onGetRssChannelListFinished()
+{
+	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+	if(reply->error() == QNetworkReply::NoError) {
+		_rssChannelList->parseChannelList(reply->readAll());
+		getRssFeedsContent();
+	} else {
+		LOG(("Can not get rss channel list. %1 (%2)")
+			.arg(reply->errorString())
+			.arg(reply->error()));
+	}
+}
+
+void BettergramService::onGetRssChannelListSslFailed(QList<QSslError> errors)
+{
+	for(const QSslError &error : errors) {
+		LOG(("%1").arg(error.errorString()));
+	}
+}
+
+void BettergramService::onGetVideoChannelListFinished()
+{
+	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+	if(reply->error() == QNetworkReply::NoError) {
+		_videoChannelList->parseChannelList(reply->readAll());
+		getVideoFeedsContent();
+	} else {
+		LOG(("Can not get video channel list. %1 (%2)")
+			.arg(reply->errorString())
+			.arg(reply->error()));
+	}
+}
+
+void BettergramService::onGetVideoChannelListSslFailed(QList<QSslError> errors)
 {
 	for(const QSslError &error : errors) {
 		LOG(("%1").arg(error.errorString()));
@@ -768,14 +884,14 @@ void BettergramService::onGetNextAdSslFailed(QList<QSslError> errors)
 	}
 }
 
-void BettergramService::onUpdateRssChannelList()
+void BettergramService::onUpdateRssFeedsContent()
 {
-	getRssChannelList();
+	getRssFeedsContent();
 }
 
-void BettergramService::onUpdateVideoChannelList()
+void BettergramService::onUpdateVideoFeedsContent()
 {
-	getVideoChannelList();
+	getVideoFeedsContent();
 }
 
 void BettergramService::checkForNewUpdates()
@@ -802,6 +918,10 @@ void BettergramService::timerEvent(QTimerEvent *timerEvent)
 		getCryptoPriceNames();
 	} else if (timerEvent->timerId() == _saveCryptoPricesTimerId) {
 		_cryptoPriceList->save();
+	} else if (timerEvent->timerId() == _updateRssChannelListTimerId) {
+		getRssChannelList();
+	} else if (timerEvent->timerId() == _updateVideoChannelListTimerId) {
+		getVideoChannelList();
 	}
 }
 
