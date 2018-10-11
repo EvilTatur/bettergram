@@ -48,10 +48,13 @@ echo ""
 echo "IMPORTANT: Please note that if the Bettergram GitHub repository is changed dramatically or if patches are changed then you should remove old docker image before start this script by using the following command: $ sudo docker image rm bettergram/ubuntu:16.04"
 echo ""
 
-USER_ID=$EUID
+USER_NAME=`id -un`
+USER_GROUP=`id -gn`
 
 sudo bash -c "rm -rf release \
+  && mkdir release \
   && docker build -t bettergram/ubuntu:16.04 . \
-  && docker run -v `realpath ../../../../../TelegramPrivate`:/opt/bettergram/TelegramPrivate -v release:/opt/bettergram/release -ti bettergram/ubuntu:16.04 udpate_and_rebuild_bettergram.sh"
+  && docker run -v '`realpath ../../../../../TelegramPrivate`':/opt/bettergram/TelegramPrivate -v '`realpath ./release`':/opt/bettergram/release -ti bettergram/ubuntu:16.04 update_and_rebuild_bettergram.sh \
+  && chown -R $USER_NAME:$USER_GROUP ./release"
 
 check_result "The release build is created and you can find the results at the 'release' directory" "Unable to create release build"

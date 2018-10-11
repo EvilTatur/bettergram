@@ -67,10 +67,13 @@ echo "Trying to create bettergram-linux.zip archive..."
 echo ""
 
 cd ../.. \
-  && cp out/Release/Bettergram ../release/ \
-  && cp docs/legal/* ../release/ \
-  && cd .. \
-  && zip -j bettergram-linux.zip release/*
+  && rm -rf ../release/unpacked \
+  && mkdir ../release/unpacked \
+  && cp out/Release/Bettergram ../release/unpacked/ \
+  && cp docs/legal/* ../release/unpacked/ \
+  && cd ../release \
+  && zip -j bettergram-linux.zip ./unpacked/* \
+  && cd ..
 
 check_result "bettergram-linux.zip archive is created" "Unable to create bettergram-linux.zip archive"
 
