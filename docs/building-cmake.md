@@ -199,3 +199,8 @@ To build the project from Visual Studio Code you should do the following command
 
 1. `Tasks->Run Task...` and `gyp refresh`
 2. `Tasks->Run Task...` and `make debug`or `make release`
+
+### Building the project with Docker
+
+You can also use `Docker` in order to build the project for Linux.
+To do that fetch the new code from this repository, open `Telegram/build/linux/ubuntu 16.04/` directory at your terminal and run the `build_release_with_docker.sh` script. After success you will see `bettergram-linux.zip` arcive into the `Telegram/build/linux/ubuntu 16.04/release` directory.
