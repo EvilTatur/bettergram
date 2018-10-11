@@ -106,7 +106,8 @@ apt-get install -y \
   xutils-dev \
   bison \
   python-xcbgen \
-  libbsd-dev
+  libbsd-dev \
+  zip
 
 check_result "Bettergram dependencies are installed from Ubuntu repositories" "Unable to install Bettergram dependencies from Ubuntu repositories"
 
