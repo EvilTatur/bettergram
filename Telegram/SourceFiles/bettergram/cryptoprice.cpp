@@ -37,8 +37,8 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 const QString &name,
 						 const QString &shortName,
 						 int rank,
-						 double currentPrice,
-						 double changeFor24Hours,
+						 const std::optional<double> &currentPrice,
+						 const std::optional<double> &changeFor24Hours,
 						 Direction minuteDirection,
 						 bool isNeedDownloadIcon,
 						 QObject *parent) :
@@ -171,7 +171,7 @@ void CryptoPrice::setRank(int rank)
 	}
 }
 
-double CryptoPrice::currentPrice() const
+std::optional<double> CryptoPrice::currentPrice() const
 {
 	return _currentPrice;
 }
@@ -181,7 +181,7 @@ QString CryptoPrice::currentPriceString() const
 	return _currentPriceString;
 }
 
-void CryptoPrice::setCurrentPrice(double currentPrice)
+void CryptoPrice::setCurrentPrice(const std::optional<double> &currentPrice)
 {
 	if (_currentPrice != currentPrice) {
 		_currentPrice = currentPrice;
@@ -193,24 +193,24 @@ void CryptoPrice::setCurrentPrice(double currentPrice)
 
 void CryptoPrice::updateCurrentPriceString()
 {
-	if (std::isnan(_currentPrice)) {
+	if (!_currentPrice) {
 		_currentPriceString = QStringLiteral("N/A");
-	} else if (qAbs(_currentPrice) >= 1000000000.0) {
-		_currentPriceString = QStringLiteral("$%1 M").arg(_currentPrice / 1000000.0, 0, 'f', 0);
-	} else if (qAbs(_currentPrice) >= 1000000.0) {
-		_currentPriceString = QStringLiteral("$%1 K").arg(_currentPrice / 1000.0, 0, 'f', 0);
-	} else if (qAbs(_currentPrice) >= 1000.0) {
-		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 0);
-	} else if (qAbs(_currentPrice) >= 100.0) {
-		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 1);
-	} else if (qAbs(_currentPrice) >= 1.0) {
-		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 2);
+	} else if (qAbs(*_currentPrice) >= 1000000000.0) {
+		_currentPriceString = QStringLiteral("$%1 M").arg(*_currentPrice / 1000000.0, 0, 'f', 0);
+	} else if (qAbs(*_currentPrice) >= 1000000.0) {
+		_currentPriceString = QStringLiteral("$%1 K").arg(*_currentPrice / 1000.0, 0, 'f', 0);
+	} else if (qAbs(*_currentPrice) >= 1000.0) {
+		_currentPriceString = QStringLiteral("$%1").arg(*_currentPrice, 0, 'f', 0);
+	} else if (qAbs(*_currentPrice) >= 100.0) {
+		_currentPriceString = QStringLiteral("$%1").arg(*_currentPrice, 0, 'f', 1);
+	} else if (qAbs(*_currentPrice) >= 1.0) {
+		_currentPriceString = QStringLiteral("$%1").arg(*_currentPrice, 0, 'f', 2);
 	} else {
-		_currentPriceString = QStringLiteral("$%1").arg(_currentPrice, 0, 'f', 4);
+		_currentPriceString = QStringLiteral("$%1").arg(*_currentPrice, 0, 'f', 4);
 	}
 }
 
-double CryptoPrice::changeFor24Hours() const
+std::optional<double> CryptoPrice::changeFor24Hours() const
 {
 	return _changeFor24Hours;
 }
@@ -220,7 +220,7 @@ QString CryptoPrice::changeFor24HoursString() const
 	return _changeFor24HoursString;
 }
 
-void CryptoPrice::setChangeFor24Hours(double changeFor24Hours)
+void CryptoPrice::setChangeFor24Hours(const std::optional<double> &changeFor24Hours)
 {
 	if (_changeFor24Hours != changeFor24Hours) {
 		_changeFor24Hours = changeFor24Hours;
@@ -233,18 +233,18 @@ void CryptoPrice::setChangeFor24Hours(double changeFor24Hours)
 
 void CryptoPrice::updateChangeFor24HoursString()
 {
-	if (std::isnan(_changeFor24Hours)) {
+	if (!_changeFor24Hours) {
 		_changeFor24HoursString = QStringLiteral("N/A");
-	} else if (qAbs(_changeFor24Hours) >= 1000000000.0) {
-		_changeFor24HoursString = QStringLiteral("%1 M%").arg(_changeFor24Hours / 1000000.0, 0, 'f', 0);
-	} else if (qAbs(_changeFor24Hours) >= 1000000.0) {
-		_changeFor24HoursString = QStringLiteral("%1 K%").arg(_changeFor24Hours / 1000.0, 0, 'f', 0);
-	} else if (qAbs(_changeFor24Hours) >= 1000.0) {
-		_changeFor24HoursString = QStringLiteral("%1%").arg(_changeFor24Hours, 0, 'f', 0);
-	} else if (qAbs(_changeFor24Hours) >= 100.0) {
-		_changeFor24HoursString = QStringLiteral("%1%").arg(_changeFor24Hours, 0, 'f', 1);
+	} else if (qAbs(*_changeFor24Hours) >= 1000000000.0) {
+		_changeFor24HoursString = QStringLiteral("%1 M%").arg(*_changeFor24Hours / 1000000.0, 0, 'f', 0);
+	} else if (qAbs(*_changeFor24Hours) >= 1000000.0) {
+		_changeFor24HoursString = QStringLiteral("%1 K%").arg(*_changeFor24Hours / 1000.0, 0, 'f', 0);
+	} else if (qAbs(*_changeFor24Hours) >= 1000.0) {
+		_changeFor24HoursString = QStringLiteral("%1%").arg(*_changeFor24Hours, 0, 'f', 0);
+	} else if (qAbs(*_changeFor24Hours) >= 100.0) {
+		_changeFor24HoursString = QStringLiteral("%1%").arg(*_changeFor24Hours, 0, 'f', 1);
 	} else {
-		_changeFor24HoursString = QStringLiteral("%1%").arg(_changeFor24Hours, 0, 'f', 2);
+		_changeFor24HoursString = QStringLiteral("%1%").arg(*_changeFor24Hours, 0, 'f', 2);
 	}
 
 }
@@ -341,8 +341,8 @@ void CryptoPrice::updateData(const CryptoPrice &price)
 
 void CryptoPrice::resetValues()
 {
-	setCurrentPrice(std::numeric_limits<double>::quiet_NaN());
-	setChangeFor24Hours(std::numeric_limits<double>::quiet_NaN());
+	setCurrentPrice(std::nullopt);
+	setChangeFor24Hours(std::nullopt);
 }
 
 void CryptoPrice::downloadIconIfNeeded()
@@ -368,8 +368,19 @@ void CryptoPrice::save(QSettings &settings) const
 	settings.setValue("name", name());
 	settings.setValue("code", shortName());
 	settings.setValue("rank", rank());
-	settings.setValue("price", currentPrice());
-	settings.setValue("changeForDay", changeFor24Hours());
+
+	if (currentPrice()) {
+		settings.setValue("price", *currentPrice());
+	} else {
+		settings.remove("price");
+	}
+
+	if (changeFor24Hours()) {
+		settings.setValue("changeForDay", *changeFor24Hours());
+	} else {
+		settings.remove("changeForDay");
+	}
+
 	settings.setValue("minuteDirection", static_cast<int>(minuteDirection()));
 
 	saveIcon();
@@ -437,8 +448,18 @@ QSharedPointer<CryptoPrice> CryptoPrice::load(const QSettings &settings)
 	QDateTime iconLastDownloadTime = settings.value("iconLastDownloadTime").toDateTime();
 
 	int rank = settings.value("rank").toInt();
-	double price = settings.value("price").toDouble();
-	double changeFor24Hours = settings.value("changeForDay").toDouble();
+
+	std::optional<double> price = std::nullopt;
+
+	if (settings.contains("price")) {
+		price = settings.value("price").toDouble();
+	}
+
+	std::optional<double> changeFor24Hours = std::nullopt;
+
+	if (settings.contains("changeForDay")) {
+		changeFor24Hours = settings.value("changeForDay").toDouble();
+	}
 
 	Direction minuteDirection = Direction::None;
 
@@ -505,13 +526,13 @@ void CryptoPrice::loadIcon(const QDateTime &lastDownloadTime)
 	_icon->setLastDownloadTime(lastDownloadTime);
 }
 
-CryptoPrice::Direction CryptoPrice::countDirection(double value)
+CryptoPrice::Direction CryptoPrice::countDirection(const std::optional<double> &value)
 {
-	if (std::isnan(value)) {
+	if (!value) {
 		return Direction::None;
-	} else if (value > 0.0) {
+	} else if (*value > 0.0) {
 		return Direction::Up;
-	} else if (value < 0.0) {
+	} else if (*value < 0.0) {
 		return Direction::Down;
 	} else {
 		return Direction::None;

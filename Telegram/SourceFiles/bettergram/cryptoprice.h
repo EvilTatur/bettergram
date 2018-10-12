@@ -21,7 +21,7 @@ public:
 	};
 
 	static QSharedPointer<CryptoPrice> load(const QSettings &settings);
-	static Direction countDirection(double value);
+	static Direction countDirection(const std::optional<double> &value);
 
 	explicit CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
@@ -35,8 +35,8 @@ public:
 						 const QString &name,
 						 const QString &shortName,
 						 int rank,
-						 double currentPrice,
-						 double changeFor24Hours,
+						 const std::optional<double> &currentPrice,
+						 const std::optional<double> &changeFor24Hours,
 						 Direction minuteDirection,
 						 bool isNeedDownloadIcon,
 						 QObject *parent = nullptr);
@@ -54,13 +54,13 @@ public:
 	int rank() const;
 	void setRank(int rank);
 
-	double currentPrice() const;
+	std::optional<double> currentPrice() const;
 	QString currentPriceString() const;
-	void setCurrentPrice(double currentPrice);
+	void setCurrentPrice(const std::optional<double> &currentPrice);
 
-	double changeFor24Hours() const;
+	std::optional<double> changeFor24Hours() const;
 	QString changeFor24HoursString() const;
-	void setChangeFor24Hours(double changeFor24Hours);
+	void setChangeFor24Hours(const std::optional<double> &changeFor24Hours);
 
 	Direction minuteDirection() const;
 	void setMinuteDirection(Direction minuteDirection);
@@ -120,11 +120,11 @@ private:
 	int _rank = 0;
 
 	/// Current price of the cryptocurrency. For example: $7935.96
-	double _currentPrice = std::numeric_limits<double>::quiet_NaN();
+	std::optional<double> _currentPrice = std::nullopt;
 	QString _currentPriceString;
 
 	/// Price change of the cryptocurrency for the latest 24 hours. For example: -3.22%
-	double _changeFor24Hours = std::numeric_limits<double>::quiet_NaN();
+	std::optional<double> _changeFor24Hours = std::nullopt;
 	QString _changeFor24HoursString;
 
 	Direction _minuteDirection = Direction::None;

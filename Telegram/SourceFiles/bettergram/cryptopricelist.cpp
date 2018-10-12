@@ -74,7 +74,7 @@ CryptoPriceList::CryptoPriceList(QObject *parent) :
 	updateBtcDominanceString();
 }
 
-double CryptoPriceList::marketCap() const
+std::optional<double> CryptoPriceList::marketCap() const
 {
 	return _marketCap;
 }
@@ -84,7 +84,7 @@ const QString &CryptoPriceList::marketCapString() const
 	return _marketCapString;
 }
 
-void CryptoPriceList::setMarketCap(double marketCap)
+void CryptoPriceList::setMarketCap(const std::optional<double> &marketCap)
 {
 	if (_marketCap != marketCap) {
 		_marketCap = marketCap;
@@ -96,12 +96,12 @@ void CryptoPriceList::setMarketCap(double marketCap)
 
 void CryptoPriceList::updateMarketCapString()
 {
-	if (std::isnan(_marketCap)) {
+	if (!_marketCap) {
 		_marketCapString = QStringLiteral("N/A");
 		return;
 	}
 
-	qint64 value = qAbs(qRound64(_marketCap));
+	qint64 value = qAbs(qRound64(*_marketCap));
 
 	if (!value) {
 		_marketCapString = "0";
@@ -128,7 +128,7 @@ void CryptoPriceList::updateMarketCapString()
 	_marketCapString.prepend(QStringLiteral("$"));
 }
 
-double CryptoPriceList::btcDominance() const
+std::optional<double> CryptoPriceList::btcDominance() const
 {
 	return _btcDominance;
 }
@@ -138,7 +138,7 @@ const QString &CryptoPriceList::btcDominanceString() const
 	return _btcDominanceString;
 }
 
-void CryptoPriceList::setBtcDominance(double btcDominance)
+void CryptoPriceList::setBtcDominance(const std::optional<double> &btcDominance)
 {
 	if (_btcDominance != btcDominance) {
 		_btcDominance = btcDominance;
@@ -150,15 +150,15 @@ void CryptoPriceList::setBtcDominance(double btcDominance)
 
 void CryptoPriceList::updateBtcDominanceString()
 {
-	if (std::isnan(_btcDominance)) {
+	if (!_btcDominance) {
 		_btcDominanceString = QStringLiteral("N/A");
 		return;
 	}
 
-	if (qAbs(_btcDominance) < 1.0) {
-		_btcDominanceString = QStringLiteral("%1%").arg(_btcDominance, 0, 'f', 4);
+	if (qAbs(*_btcDominance) < 1.0) {
+		_btcDominanceString = QStringLiteral("%1%").arg(*_btcDominance, 0, 'f', 4);
 	} else {
-		_btcDominanceString = QStringLiteral("%1%").arg(_btcDominance, 0, 'f', 2);
+		_btcDominanceString = QStringLiteral("%1%").arg(*_btcDominance, 0, 'f', 2);
 	}
 }
 
@@ -544,20 +544,16 @@ QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const Q
 		int rank = priceJson.contains("rank") ? priceJson.value("rank").toInt() : i;
 		double currentPrice = priceJson.value("price").toDouble();
 
-		double changeFor24Hours = 0.0;
+		std::optional<double> changeFor24Hours = std::nullopt;
 
 		if (deltaJson.contains("day") && deltaJson.value("day").isDouble()) {
 			changeFor24Hours = (deltaJson.value("day").toDouble() - 1) * 100;
-		} else {
-			changeFor24Hours = std::numeric_limits<double>::quiet_NaN();
 		}
 
-		double changeForMinute = 0.0;
+		std::optional<double> changeForMinute = std::nullopt;
 
 		if (deltaJson.contains("day") && deltaJson.value("minute").isDouble()) {
 			changeForMinute = (deltaJson.value("minute").toDouble() - 1) * 100;
-		} else {
-			changeForMinute = std::numeric_limits<double>::quiet_NaN();
 		}
 
 		QSharedPointer<CryptoPrice> price = findByShortName(shortName);
@@ -603,8 +599,18 @@ void CryptoPriceList::save() const
 
 	settings.beginGroup("metadata");
 
-	settings.setValue("marketCap", marketCap());
-	settings.setValue("btcDominance", btcDominance());
+	if (marketCap()) {
+		settings.setValue("marketCap", *marketCap());
+	} else {
+		settings.remove("marketCap");
+	}
+
+	if (btcDominance()) {
+		settings.setValue("btcDominance", *btcDominance());
+	} else {
+		settings.remove("btcDominance");
+	}
+
 	settings.setValue("lastUpdate", lastUpdate());
 	settings.setValue("isShowOnlyFavorites", isShowOnlyFavorites());
 
@@ -634,8 +640,18 @@ void CryptoPriceList::load()
 
 	settings.beginGroup("metadata");
 
-	setMarketCap(settings.value("marketCap").toDouble());
-	setBtcDominance(settings.value("btcDominance").toDouble());
+	if (settings.contains("marketCap")) {
+		setMarketCap(settings.value("marketCap").toDouble());
+	} else {
+		setMarketCap(std::nullopt);
+	}
+
+	if (settings.contains("btcDominance")) {
+		setBtcDominance(settings.value("btcDominance").toDouble());
+	} else {
+		setBtcDominance(std::nullopt);
+	}
+
 	setFreq(qAbs(settings.value("freq").toInt()));
 	setLastUpdate(settings.value("lastUpdate").toDateTime());
 	setIsShowOnlyFavorites(settings.value("isShowOnlyFavorites", false).toBool());
@@ -837,50 +853,50 @@ bool CryptoPriceList::sortBy24hDesc(const QSharedPointer<CryptoPrice> &price1,
 
 bool CryptoPriceList::sortByDoubleAsc(const QSharedPointer<CryptoPrice> &price1,
 									  const QSharedPointer<CryptoPrice> &price2,
-									  double value1,
-									  double value2)
+									  const std::optional<double> &value1,
+									  const std::optional<double> &value2)
 {
-	if (std::isnan(value1) && std::isnan(value2)) {
+	if (!value1 && !value2) {
 		return sortByNameAsc(price1, price2);
 	}
 
-	if (std::isnan(value1)) {
+	if (!value1) {
 		return false;
 	}
 
-	if (std::isnan(value2)) {
+	if (!value2) {
 		return true;
 	}
 
-	if (value1 == value2) {
+	if (*value1 == *value2) {
 		return sortByNameAsc(price1, price2);
 	}
 
-	return value1 < value2;
+	return *value1 < *value2;
 }
 
 bool CryptoPriceList::sortByDoubleDesc(const QSharedPointer<CryptoPrice> &price1,
 									   const QSharedPointer<CryptoPrice> &price2,
-									   double value1,
-									   double value2)
+									   const std::optional<double> &value1,
+									   const std::optional<double> &value2)
 {
-	if (std::isnan(value1) && std::isnan(value2)) {
+	if (!value1 && !value2) {
 		return sortByNameAsc(price1, price2);
 	}
 
-	if (std::isnan(value1)) {
+	if (!value1) {
 		return false;
 	}
 
-	if (std::isnan(value2)) {
+	if (!value2) {
 		return true;
 	}
 
-	if (value1 == value2) {
+	if (*value1 == *value2) {
 		return sortByNameAsc(price1, price2);
 	}
 
-	return value2 < value1;
+	return *value2 < *value1;
 }
 
 void CryptoPriceList::sort(QList<QSharedPointer<CryptoPrice>> &list, bool isFavoriteList)

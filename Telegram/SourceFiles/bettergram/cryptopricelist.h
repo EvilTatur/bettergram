@@ -31,13 +31,13 @@ public:
 
 	explicit CryptoPriceList(QObject *parent = nullptr);
 
-	double marketCap() const;
+	std::optional<double> marketCap() const;
 	const QString &marketCapString() const;
-	void setMarketCap(double marketCap);
+	void setMarketCap(const std::optional<double> &marketCap);
 
-	double btcDominance() const;
+	std::optional<double> btcDominance() const;
 	const QString &btcDominanceString() const;
-	void setBtcDominance(double btcDominance);
+	void setBtcDominance(const std::optional<double> &btcDominance);
 
 	int freq() const;
 
@@ -97,10 +97,10 @@ private:
 	QList<QSharedPointer<CryptoPrice>> _list;
 	QList<QSharedPointer<CryptoPrice>> _favoriteList;
 
-	double _marketCap = std::numeric_limits<double>::quiet_NaN();
+	std::optional<double> _marketCap = std::nullopt;
 	QString _marketCapString;
 
-	double _btcDominance = std::numeric_limits<double>::quiet_NaN();
+	std::optional<double> _btcDominance = std::nullopt;
 	QString _btcDominanceString;
 
 	/// Frequency of updates in seconds
@@ -149,13 +149,13 @@ private:
 
 	static bool sortByDoubleAsc(const QSharedPointer<CryptoPrice> &price1,
 								const QSharedPointer<CryptoPrice> &price2,
-								double value1,
-								double value2);
+								const std::optional<double> &value1,
+								const std::optional<double> &value2);
 
 	static bool sortByDoubleDesc(const QSharedPointer<CryptoPrice> &price1,
 								 const QSharedPointer<CryptoPrice> &price2,
-								 double value1,
-								 double value2);
+								 const std::optional<double> &value1,
+								 const std::optional<double> &value2);
 
 	void sort(QList<QSharedPointer<CryptoPrice>> &list, bool isFavoriteList);
 
