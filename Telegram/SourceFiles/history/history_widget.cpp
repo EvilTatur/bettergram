@@ -3949,14 +3949,10 @@ void HistoryWidget::onModerateKeyActivate(int index, bool *outHandled) {
 
 void HistoryWidget::pushBettergramTabsToThirdSection(
 	const Window::SectionShow &params) {
-	if (!_history || !_bettergramTabbedPanel) {
+	if (!_bettergramTabbedPanel) {
 		return;
 	}
-	else if (!_canSendMessages) {
-		Auth().settings().setTabbedReplacedWithInfo(true);
-		controller()->showPeerInfo(_peer, params.withThirdColumn());
-		return;
-	}
+
 	Auth().settings().setTabbedReplacedWithInfo(false);
 
 	_bettergramTabsToggle->setColorOverrides(
