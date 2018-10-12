@@ -1845,4 +1845,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "lng_mac_menu_new_channel" = "New Channel";
 "lng_mac_menu_show" = "Show Bettergram";
 
+"lng_bettergram_api_deprecated" = "The version of the Bettergram is too old. Please update the application";
+
 // Keys finished

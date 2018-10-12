@@ -101,12 +101,27 @@ private:
 	static const QString _defaultLastUpdateString;
 
 	static const int _networkTimeout;
+
+	/// We check for new updates in 2 minutes after application startup
 	static const int _checkForFirstUpdatesDelay;
+
+	/// We check for new updates every 10 hours
 	static const int _checkForUpdatesPeriod;
+
+	/// We update crypto price names every 3 days
 	static const int _updateCryptoPriceNamesPeriod;
+
+	/// We save crypto prices every 2 hours
 	static const int _saveCryptoPricesPeriod;
+
+	/// We update rss channel list every 2 hours
 	static const int _updateRssChannelListPeriod;
+
+	/// We update video channel list every 2 hours
 	static const int _updateVideoChannelListPeriod;
+
+	/// We display deprecated API messages no more than once per 2 hours
+	static const int _deprecatedApiMessagePeriod;
 
 	bool _isSettingsPorted = false;
 	bool _isPaid = false;
@@ -124,6 +139,9 @@ private:
 	int _updateVideoChannelListTimerId = 0;
 	bool _isWindowActive = true;
 	std::function<void()> _isWindowActiveHandler = nullptr;
+
+	QDateTime _lastTimeOfShowingDeprecatedApiMessage = QDateTime();
+	bool _isDeprecatedApiMessageShown = false;
 
 	static void checkForNewUpdates();
 
@@ -162,6 +180,12 @@ private:
 	void getVideoFeedsContent();
 
 	void getRssFeeds(RssChannelList *rssChannelList, const QSharedPointer<RssChannel> &channel);
+
+	/// Check response for 410 (Gone) HTTP status.
+	/// If the reply has this status we show message box that the user should update the application.
+	/// @return true if the reply has 410 (Gone) HTTP status or when reply is null, false otherwise
+	bool isApiDeprecated(const QNetworkReply *reply);
+	void showDeprecatedApiMessage();
 
 private slots:
 	void onUpdateRssFeedsContent();

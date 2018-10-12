@@ -14,6 +14,7 @@
 #include <lang/lang_keys.h>
 #include <styles/style_chat_helpers.h>
 #include <platform/platform_specific.h>
+#include <boxes/confirm_box.h>
 
 #include <QCoreApplication>
 #include <QTimer>
@@ -48,6 +49,9 @@ const int BettergramService::_updateRssChannelListPeriod = 2 * 60 * 60 * 1000;
 
 // We update video channel list every 2 hours
 const int BettergramService::_updateVideoChannelListPeriod = 2 * 60 * 60 * 1000;
+
+// We display deprecated API messages no more than once per 2 hours
+const int BettergramService::_deprecatedApiMessagePeriod = 2 * 60 * 60 * 1000;
 
 BettergramService *BettergramService::init()
 {
@@ -460,6 +464,10 @@ void BettergramService::getCryptoPriceValues(const QUrl &url, const QStringList 
 			this, [this, url, shortNames] {
 		QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 
+		if (isApiDeprecated(reply)) {
+			return;
+		}
+
 		if(reply->error() == QNetworkReply::NoError) {
 			_cryptoPriceList->parseValues(reply->readAll(), url, shortNames);
 		} else {
@@ -654,6 +662,10 @@ void BettergramService::onGetCryptoPriceNamesFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 
+	if (isApiDeprecated(reply)) {
+		return;
+	}
+
 	if(reply->error() == QNetworkReply::NoError) {
 		_cryptoPriceList->parseNames(reply->readAll());
 	} else {
@@ -681,6 +693,10 @@ void BettergramService::onGetResourceGroupListFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 
+	if (isApiDeprecated(reply)) {
+		return;
+	}
+
 	if(reply->error() == QNetworkReply::NoError) {
 		_resourceGroupList->parse(reply->readAll());
 	} else {
@@ -700,6 +716,10 @@ void BettergramService::onGetResourceGroupListSslFailed(QList<QSslError> errors)
 void BettergramService::onGetRssChannelListFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+	if (isApiDeprecated(reply)) {
+		return;
+	}
 
 	if(reply->error() == QNetworkReply::NoError) {
 		_rssChannelList->parseChannelList(reply->readAll());
@@ -721,6 +741,10 @@ void BettergramService::onGetRssChannelListSslFailed(QList<QSslError> errors)
 void BettergramService::onGetVideoChannelListFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+	if (isApiDeprecated(reply)) {
+		return;
+	}
 
 	if(reply->error() == QNetworkReply::NoError) {
 		_videoChannelList->parseChannelList(reply->readAll());
@@ -879,6 +903,10 @@ void BettergramService::onGetNextAdFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 
+	if (isApiDeprecated(reply)) {
+		return;
+	}
+
 	if(reply->error() == QNetworkReply::NoError) {
 		if (parseNextAd(reply->readAll())) {
 			getNextAdLater();
@@ -926,6 +954,63 @@ void BettergramService::checkForNewUpdates()
 
 	cSetLastUpdateCheck(0);
 	checker.start();
+}
+
+bool BettergramService::isApiDeprecated(const QNetworkReply *reply)
+{
+	if (!reply) {
+		LOG(("Unable to check for deprecated API because reply is null"));
+
+		// The reply does not contain 410 (Gone) HTTP status,
+		// but we can not continue without valid reply object
+		return true;
+	}
+
+	QVariant statusCodeVariant = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+
+	if (!statusCodeVariant.isValid()) {
+		if (reply->error() == QNetworkReply::ContentGoneError) {
+			showDeprecatedApiMessage();
+			return true;
+		}
+
+		LOG(("Unable to get HTTP status code. Url: %1").arg(reply->url().toString()));
+		return false;
+	}
+
+	bool okInt = false;
+	int statusCode = statusCodeVariant.toInt(&okInt);
+
+	if (!okInt) {
+		return false;
+	}
+
+	if (statusCode == 410) {
+		showDeprecatedApiMessage();
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void BettergramService::showDeprecatedApiMessage()
+{
+	const QDateTime now = QDateTime::currentDateTime();
+
+	if (_isDeprecatedApiMessageShown
+			|| (_lastTimeOfShowingDeprecatedApiMessage.isValid()
+			&& (qAbs(_lastTimeOfShowingDeprecatedApiMessage.msecsTo(now)) < _deprecatedApiMessagePeriod))) {
+		return;
+	}
+
+	_lastTimeOfShowingDeprecatedApiMessage = now;
+	_isDeprecatedApiMessageShown = true;
+
+	Ui::show(Box<InformBox>(lang(lng_bettergram_api_deprecated),
+							[this] {
+		_lastTimeOfShowingDeprecatedApiMessage = QDateTime::currentDateTime();
+		_isDeprecatedApiMessageShown = false;
+	}));
 }
 
 void BettergramService::timerEvent(QTimerEvent *timerEvent)
