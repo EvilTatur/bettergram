@@ -199,7 +199,7 @@ public:
 	void leaveToChildEvent(QEvent *e, QWidget *child) override;
 	void dragEnterEvent(QDragEnterEvent *e) override;
 	void dragLeaveEvent(QDragLeaveEvent *e) override;
-    void dropEvent(QDropEvent *e) override;
+	void dropEvent(QDropEvent *e) override;
 
 	bool isItemCompletelyHidden(HistoryItem *item) const;
 	void updateTopBarSelection();
@@ -357,6 +357,8 @@ public:
 	bool cmd_search();
 	bool cmd_next_chat();
 	bool cmd_previous_chat();
+
+	bool isBettergramTabsShowed() const;
 
 	~HistoryWidget();
 
@@ -835,6 +837,7 @@ private:
 	bool _inClickable = false;
 	int _recordingSamples = 0;
 	int _recordCancelWidth;
+	bool _isBettergramTabsShown = false;
 
 	rpl::lifetime _uploaderSubscriptions;
 

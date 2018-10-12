@@ -135,9 +135,25 @@ void MainMenu::refreshMenu() {
 	action->setCheckable(true);
 	action->setChecked(Window::Theme::IsNightMode());
 
-	_menu->addAction(lang(lng_menu_open_bettergram_tabs), [] {
-		Bettergram::BettergramService::showBettergramTabs();
-	}, &st::mainMenuOpenBettergramTabs, &st::mainMenuOpenBettergramTabsOver);
+	if (Bettergram::BettergramService::isBettergramTabsShowed()) {
+		QAction *action = new QAction(lang(lng_menu_close_bettergram_tabs), _menu);
+
+		connect(action, &QAction::triggered, action, [action] {
+			Bettergram::BettergramService::toggleBettergramTabs();
+
+			if (Bettergram::BettergramService::isBettergramTabsShowed()) {
+				action->setText(lang(lng_menu_close_bettergram_tabs));
+			} else {
+				action->setText(lang(lng_menu_open_bettergram_tabs));
+			}
+		}, Qt::QueuedConnection);
+
+		_menu->addAction(action, &st::mainMenuOpenBettergramTabs, &st::mainMenuOpenBettergramTabsOver);
+	} else {
+		_menu->addAction(lang(lng_menu_open_bettergram_tabs), [] {
+			Bettergram::BettergramService::toggleBettergramTabs();
+		}, &st::mainMenuOpenBettergramTabs, &st::mainMenuOpenBettergramTabsOver);
+	}
 
 	_menu->finishAnimating();
 

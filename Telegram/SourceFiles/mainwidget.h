@@ -324,6 +324,8 @@ public:
 
 	void markAsRead(Dialogs::EntryTypes type);
 
+	bool isBettergramTabsShowed() const;
+
 	~MainWidget();
 
 signals:

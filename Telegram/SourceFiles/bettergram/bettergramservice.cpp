@@ -6,6 +6,7 @@
 #include "resourcegrouplist.h"
 #include "aditem.h"
 
+#include <mainwidget.h>
 #include <messenger.h>
 #include <settings.h>
 #include <core/update_checker.h>
@@ -101,11 +102,16 @@ void BettergramService::openUrl(const QUrl &url)
 	UrlClickHandler::Open(urlString);
 }
 
-void BettergramService::showBettergramTabs()
+bool BettergramService::isBettergramTabsShowed()
+{
+	return App::main() && App::main()->isBettergramTabsShowed();
+}
+
+void BettergramService::toggleBettergramTabs()
 {
 	Q_ASSERT(_instance);
 
-	emit _instance->needToShowBettergramTabs();
+	emit _instance->needToToggleBettergramTabs();
 }
 
 Bettergram::BettergramService::BettergramService(QObject *parent) :

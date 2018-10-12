@@ -586,7 +586,7 @@ HistoryWidget::HistoryWidget(
 	{
 		using namespace Bettergram;
 
-		connect(BettergramService::instance(), &BettergramService::needToShowBettergramTabs,
+		connect(BettergramService::instance(), &BettergramService::needToToggleBettergramTabs,
 				this, &HistoryWidget::toggleBettergramTabsMode);
 	}
 
@@ -3958,10 +3958,14 @@ void HistoryWidget::pushBettergramTabsToThirdSection(
 		return;
 	}
 	Auth().settings().setTabbedReplacedWithInfo(false);
+
 	_bettergramTabsToggle->setColorOverrides(
 		&st::historyAttachBettergramActive,
 		&st::historyRecordVoiceFgActive,
 		&st::historyRecordVoiceRippleBgActive);
+
+	_isBettergramTabsShown = true;
+
 	auto destroyingPanel = std::move(_bettergramTabbedPanel);
 	auto memento = ChatHelpers::BettergramTabbedMemento(
 		destroyingPanel->takeSelector(),
@@ -3998,6 +4002,10 @@ void HistoryWidget::pushTabbedSelectorToThirdSection(
 	controller()->resizeForThirdSection();
 	controller()->showSection(std::move(memento), params.withThirdColumn());
 	destroyingPanel.destroy();
+}
+
+bool HistoryWidget::isBettergramTabsShowed() const {
+	return _isBettergramTabsShown;
 }
 
 void HistoryWidget::toggleBettergramTabsMode() {
@@ -4043,6 +4051,7 @@ void HistoryWidget::returnBettergramTabbedSelector(
 	_bettergramTabbedPanel->hide();
 	_bettergramTabsToggle->installEventFilter(_bettergramTabbedPanel);
 	_bettergramTabsToggle->setColorOverrides(nullptr, nullptr, nullptr);
+	_isBettergramTabsShown = false;
 	moveFieldControls();
 }
 

@@ -859,6 +859,11 @@ void MainWidget::markAsRead(Dialogs::EntryTypes type)
 	_dialogs->markAsRead(type);
 }
 
+bool MainWidget::isBettergramTabsShowed() const
+{
+	return _history && _history->isBettergramTabsShowed();
+}
+
 void MainWidget::noHider(HistoryHider *destroyed) {
 	if (_hider == destroyed) {
 		_hider = nullptr;
