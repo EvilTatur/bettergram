@@ -63,11 +63,13 @@ public:
 	const QString &orderString();
 
 	bool areNamesFetched() const;
+	bool mayFetchStats() const;
 
 	QStringList getShortNames(int startIndex, int count) const;
 
 	void parseNames(const QByteArray &byteArray);
 	void parseValues(const QByteArray &byteArray, const QUrl &url, const QStringList &shortNames);
+	void parseStats(const QByteArray &byteArray);
 	void emptyValues();
 
 	void save() const;
@@ -87,6 +89,7 @@ signals:
 
 	void namesUpdated();
 	void valuesUpdated(const QUrl &url, const QList<QSharedPointer<CryptoPrice>> &prices);
+	void statsUpdated();
 
 protected:
 
@@ -111,6 +114,8 @@ private:
 
 	QDateTime _lastUpdate;
 	QString _lastUpdateString;
+
+	QDateTime _statsLastUpdate;
 
 	SortOrder _sortOrder = SortOrder::Rank;
 	QString _filterText;
@@ -187,7 +192,6 @@ private:
 	void fillMissedPrices(QList<QSharedPointer<CryptoPrice>> &prices,
 						  const QStringList &shortNames);
 
-	void updateData(double marketCap, double btcDominance, int freq);
 	void mergeCryptoPriceList(const QList<CryptoPrice> &priceList);
 
 	void clear();

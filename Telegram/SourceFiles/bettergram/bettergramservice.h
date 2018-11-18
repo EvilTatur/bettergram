@@ -168,6 +168,11 @@ private:
 
 	void getCryptoPriceValues(const QUrl &url, const QStringList &shortNames);
 
+	/// Download and parse crypto price stats ('cap' and 'btcDominance').
+	/// We should call this method at each startup
+	/// and in each minute or two when the crypto price bar is visible
+	void getCryptoPriceStats();
+
 	/// Download and parse RSS channel list from Bettergram servers
 	void getRssChannelList();
 
@@ -196,6 +201,7 @@ private slots:
 	void onGetCryptoPriceNamesSslFailed(QList<QSslError> errors);
 
 	void onGetCryptoPriceValuesSslFailed(QList<QSslError> errors);
+	void onGetCryptoPriceStatsSslFailed(QList<QSslError> errors);
 
 	void onGetNextAdFinished();
 	void onGetNextAdSslFailed(QList<QSslError> errors);

@@ -462,16 +462,17 @@ void BettergramService::getCryptoPriceValues(const QUrl &url, const QStringList 
 
 	QNetworkReply *reply = networkManager->get(request);
 
-	connect(reply, &QNetworkReply::finished,
-			this, [this, url, shortNames] {
-		QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-
+	connect(reply, &QNetworkReply::finished, this, [this, url, shortNames, reply] {
 		if (isApiDeprecated(reply)) {
 			return;
 		}
 
 		if(reply->error() == QNetworkReply::NoError) {
 			_cryptoPriceList->parseValues(reply->readAll(), url, shortNames);
+
+			if (_cryptoPriceList->mayFetchStats()) {
+				getCryptoPriceStats();
+			}
 		} else {
 			LOG(("Can not get crypto price values. %1 (%2)")
 				.arg(reply->errorString())
@@ -494,6 +495,46 @@ void BettergramService::getCryptoPriceValues(const QUrl &url, const QStringList 
 
 	connect(reply, &QNetworkReply::sslErrors,
 			this, &BettergramService::onGetCryptoPriceValuesSslFailed);
+}
+
+void BettergramService::getCryptoPriceStats()
+{
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
+	QNetworkRequest request;
+	request.setUrl(QStringLiteral("https://%1.livecoinwatch.com/stats").arg(_pricesUrlPrefix));
+
+	QNetworkReply *reply = networkManager->get(request);
+
+	connect(reply, &QNetworkReply::finished, this, [this, reply] {
+		if (isApiDeprecated(reply)) {
+			return;
+		}
+
+		if(reply->error() == QNetworkReply::NoError) {
+			_cryptoPriceList->parseStats(reply->readAll());
+		} else {
+			LOG(("Can not get crypto price stats. %1 (%2)")
+				.arg(reply->errorString())
+				.arg(reply->error()));
+		}
+	});
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get crypto price stats due timeout"));
+	});
+
+	connect(reply, &QNetworkReply::sslErrors,
+			this, &BettergramService::onGetCryptoPriceStatsSslFailed);
 }
 
 void BettergramService::getRssFeedsContent()
@@ -685,6 +726,13 @@ void BettergramService::onGetCryptoPriceNamesSslFailed(QList<QSslError> errors)
 }
 
 void BettergramService::onGetCryptoPriceValuesSslFailed(QList<QSslError> errors)
+{
+	for(const QSslError &error : errors) {
+		LOG(("%1").arg(error.errorString()));
+	}
+}
+
+void BettergramService::onGetCryptoPriceStatsSslFailed(QList<QSslError> errors)
 {
 	for(const QSslError &error : errors) {
 		LOG(("%1").arg(error.errorString()));

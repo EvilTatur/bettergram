@@ -141,6 +141,9 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(priceList, &CryptoPriceList::valuesUpdated,
 			this, &PricesListWidget::onCryptoPriceValuesUpdated);
 
+	connect(priceList, &CryptoPriceList::statsUpdated,
+			this, &PricesListWidget::onCryptoPriceStatsUpdated);
+
 	connect(priceList, &CryptoPriceList::sortOrderChanged,
 			this, &PricesListWidget::onCryptoPriceSortOrderChanged);
 
@@ -845,14 +848,18 @@ void PricesListWidget::onCryptoPriceValuesUpdated(const QUrl &url,
 	updatePagesCount();
 
 	updateLastUpdateLabel();
-	updateMarketCap();
-	updateBtcDominance();
 	update();
 
 	CryptoPriceList *cryptoPriceList = BettergramService::instance()->cryptoPriceList();
 
 	_yourFavoriteListIsEmpty->setVisible(cryptoPriceList->isShowOnlyFavorites()
 										 && cryptoPriceList->favoriteList().isEmpty());
+}
+
+void PricesListWidget::onCryptoPriceStatsUpdated()
+{
+	updateMarketCap();
+	updateBtcDominance();
 }
 
 void PricesListWidget::onCryptoPriceSortOrderChanged()

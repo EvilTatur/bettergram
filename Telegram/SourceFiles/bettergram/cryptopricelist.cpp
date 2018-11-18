@@ -325,6 +325,12 @@ bool CryptoPriceList::areNamesFetched() const
 	return _areNamesFetched;
 }
 
+bool CryptoPriceList::mayFetchStats() const
+{
+	return !_statsLastUpdate.isValid()
+			|| (qAbs(_statsLastUpdate.secsTo(QDateTime::currentDateTime())) >= _freq / 4);
+}
+
 QStringList CryptoPriceList::getShortNames(int startIndex, int count) const
 {
 	QStringList result;
@@ -493,14 +499,6 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 		return;
 	}
 
-	double marketCap = json.value("cap").toDouble();
-	double btcDominance = json.value("btcDominance").toDouble();
-
-	// It is optionally parameter.
-	// This parameter may contain number of seconds for the next update
-	// (5, 60, 90 seconds and etc.).
-	int freq = qAbs(json.value("freq").toInt());
-
 	_lastListValuesTotalCount = json.value("total").toInt();
 
 	QList<QSharedPointer<CryptoPrice>> prices;
@@ -508,8 +506,6 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 	prices = parsePriceListValues(priceListJson);
 
 	fillMissedPrices(prices, shortNames);
-
-	updateData(marketCap, btcDominance, freq);
 
 	sort(_list, false);
 	sort(_favoriteList, true);
@@ -519,7 +515,58 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 		price->downloadIconIfNeeded();
 	}
 
+	setLastUpdate(QDateTime::currentDateTime());
 	emit valuesUpdated(url, prices);
+}
+
+void CryptoPriceList::parseStats(const QByteArray &byteArray)
+{
+	if (byteArray.isEmpty()) {
+		LOG(("Can not get crypto price stats. Response is emtpy"));
+		return;
+	}
+
+	QJsonParseError parseError;
+	QJsonDocument doc = QJsonDocument::fromJson(byteArray, &parseError);
+
+	if (!doc.isObject()) {
+		LOG(("Can not get crypto price stats. Response is wrong. %1 (%2). Response: %3")
+			.arg(parseError.errorString())
+			.arg(parseError.error)
+			.arg(QString::fromUtf8(byteArray)));
+		return;
+	}
+
+	QJsonObject json = doc.object();
+
+	if (json.isEmpty()) {
+		LOG(("Can not get crypto price stats. Response is emtpy or wrong"));
+		return;
+	}
+
+	bool success = json.value("success").toBool();
+
+	if (!success) {
+		QString errorMessage = json.value("message").toString("Unknown error");
+		LOG(("Can not get crypto price stats. %1").arg(errorMessage));
+		return;
+	}
+
+	double marketCap = json.value("cap").toDouble();
+	double btcDominance = json.value("btcDominance").toDouble();
+
+	// It is optionally parameter.
+	// This parameter may contain number of seconds for the next update
+	// (5, 60, 90 seconds and etc.).
+	int freq = qAbs(json.value("freq").toInt());
+
+	setMarketCap(marketCap);
+	setBtcDominance(btcDominance);
+	setFreq(freq);
+
+	_statsLastUpdate = QDateTime::currentDateTime();
+
+	emit statsUpdated();
 }
 
 void CryptoPriceList::emptyValues()
@@ -698,14 +745,6 @@ void CryptoPriceList::load()
 	settings.endGroup();
 
 	updateFavoriteList();
-}
-
-void CryptoPriceList::updateData(double marketCap, double btcDominance, int freq)
-{
-	setMarketCap(marketCap);
-	setBtcDominance(btcDominance);
-	setFreq(freq);
-	setLastUpdate(QDateTime::currentDateTime());
 }
 
 void CryptoPriceList::mergeCryptoPriceList(const QList<CryptoPrice> &priceList)

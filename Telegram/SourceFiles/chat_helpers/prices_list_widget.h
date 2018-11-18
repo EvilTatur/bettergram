@@ -134,6 +134,8 @@ private slots:
 	void onCryptoPriceValuesUpdated(const QUrl &url,
 									const QList<QSharedPointer<Bettergram::CryptoPrice>> &prices);
 
+	void onCryptoPriceStatsUpdated();
+
 	void onCryptoPriceSortOrderChanged();
 
 	void onCurrentPageChanged();
