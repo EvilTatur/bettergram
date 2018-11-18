@@ -400,6 +400,12 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 			continue;
 		}
 
+		const QString type = priceJson.value("type").toString();
+
+		if (type != QStringLiteral("coin")) {
+			continue;
+		}
+
 		const QString name = priceJson.value("name").toString();
 		if (name.isEmpty()) {
 			continue;
