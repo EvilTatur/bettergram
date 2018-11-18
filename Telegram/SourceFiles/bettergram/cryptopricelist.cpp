@@ -560,7 +560,12 @@ QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const Q
 		}
 
 		int rank = priceJson.contains("rank") ? priceJson.value("rank").toInt() : i;
-		double currentPrice = priceJson.value("price").toDouble();
+
+		std::optional<double> currentPrice = std::nullopt;
+
+		if (priceJson.contains("price") && priceJson.value("price").isDouble()) {
+			currentPrice = priceJson.value("price").toDouble();
+		}
 
 		std::optional<double> changeFor24Hours = std::nullopt;
 
