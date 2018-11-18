@@ -377,6 +377,11 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 		return;
 	}
 
+	QString coinsUrlBase = json.value("coinsUrlBase").toString();
+
+	// Now we fetch only 32x32 icons, but maybe in the future we will use 64x64 icons
+	QString coinsIconBase = json.value("coinsIcon32Base").toString();
+
 	QJsonArray priceListJson = json.value("data").toArray();
 
 	if (priceListJson.isEmpty()) {
@@ -395,16 +400,6 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 			continue;
 		}
 
-		QString url = priceJson.value("url").toString();
-		if (url.isEmpty()) {
-			continue;
-		}
-
-		QString iconUrl = priceJson.value("icon").toString();
-		if (iconUrl.isEmpty()) {
-			continue;
-		}
-
 		QString name = priceJson.value("name").toString();
 		if (name.isEmpty()) {
 			continue;
@@ -413,6 +408,27 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 		QString shortName = priceJson.value("code").toString();
 		if (shortName.isEmpty()) {
 			continue;
+		}
+
+		QString url = priceJson.value("url").toString();
+		if (url.isEmpty()) {
+			if (coinsUrlBase.isEmpty()) {
+				continue;
+			}
+
+			url = coinsUrlBase
+					+ name.replace(QStringLiteral(" "), QString())
+					+ QStringLiteral("-")
+					+ shortName.replace(QStringLiteral(" "), QString());
+		}
+
+		QString iconUrl = priceJson.value("icon").toString();		
+		if (iconUrl.isEmpty()) {
+			continue;
+		}
+
+		if (!coinsIconBase.isEmpty()) {
+			iconUrl = coinsIconBase + iconUrl;
 		}
 
 		CryptoPrice cryptoPrice(url, iconUrl, name, shortName, false);
@@ -477,23 +493,9 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 	// (5, 60, 90 seconds and etc.).
 	int freq = qAbs(json.value("freq").toInt());
 
-	// Now we support two types of requests to server:
-	// 1. Enumerate required prices
-	// 2. Sort prices at the server side and request them at offset and count
-	//
-	// At first case we get results at the `favorites` property,
-	// at the second case we get results at the `list` property.
-
 	QList<QSharedPointer<CryptoPrice>> prices;
-	QJsonArray favoriteListJson = json.value("data").toObject().value("favorites").toArray();
-
-	if (favoriteListJson.isEmpty()) {
-		QJsonArray priceListJson = json.value("data").toObject().value("list").toArray();
-
-		prices = parsePriceListValues(priceListJson);
-	} else {
-		prices = parsePriceListValues(favoriteListJson);
-	}
+	QJsonArray priceListJson = json.value("data").toArray();
+	prices = parsePriceListValues(priceListJson);
 
 	fillMissedPrices(prices, shortNames);
 
@@ -534,6 +536,12 @@ QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const Q
 			continue;
 		}
 
+		QString name = priceJson.value("name").toString();
+		if (name.isEmpty()) {
+			LOG(("Price name is empty"));
+			continue;
+		}
+
 		QJsonObject deltaJson = priceJson.value("delta").toObject();
 
 		if (deltaJson.isEmpty()) {
@@ -556,10 +564,10 @@ QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const Q
 			changeForMinute = (deltaJson.value("minute").toDouble() - 1) * 100;
 		}
 
-		QSharedPointer<CryptoPrice> price = findByShortName(shortName);
+		QSharedPointer<CryptoPrice> price = findByName(name, shortName);
 
 		if (!price) {
-			LOG(("Can not find price for crypto currency '%1'").arg(shortName));
+			LOG(("Can not find price for crypto currency '%1.%2'").arg(name, shortName));
 			continue;
 		}
 

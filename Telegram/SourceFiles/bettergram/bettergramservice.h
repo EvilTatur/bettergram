@@ -99,6 +99,7 @@ protected:
 private:
 	static BettergramService *_instance;
 	static const QString _defaultLastUpdateString;
+	static const QString _pricesUrlPrefix;
 
 	static const int _networkTimeout;
 

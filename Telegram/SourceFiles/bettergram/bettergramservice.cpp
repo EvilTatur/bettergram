@@ -29,6 +29,7 @@ namespace Bettergram {
 
 BettergramService *BettergramService::_instance = nullptr;
 const QString BettergramService::_defaultLastUpdateString = "...";
+const QString BettergramService::_pricesUrlPrefix = "alpha-api";
 
 const int BettergramService::_networkTimeout = 10 * 1000;
 
@@ -382,7 +383,7 @@ void BettergramService::getIsPaid()
 
 void BettergramService::getCryptoPriceNames()
 {
-	QUrl url("https://http-api.livecoinwatch.com/currencies");
+	QUrl url(QStringLiteral("https://%1.livecoinwatch.com/currencies").arg(_pricesUrlPrefix));
 
 	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
 
@@ -418,7 +419,8 @@ QUrl BettergramService::getCryptoPriceValues(int offset, int count)
 		return QUrl();
 	}
 
-	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?sort=%1&order=%2&offset=%3&limit=%4")
+	QUrl url(QStringLiteral("https://%1.livecoinwatch.com/coins?sort=%2&order=%3&offset=%4&limit=%5")
+			 .arg(_pricesUrlPrefix)
 			 .arg(_cryptoPriceList->sortString())
 			 .arg(_cryptoPriceList->orderString())
 			 .arg(offset)
@@ -436,9 +438,9 @@ QUrl BettergramService::getCryptoPriceValues(const QStringList &shortNames)
 		return QUrl();
 	}
 
-	//TODO: bettergram: remove 'limit=1' as soon as the server side will be fixed
-
-	QUrl url(QStringLiteral("https://http-api.livecoinwatch.com/bettergram/coins?limit=0&favorites=%1")
+	QUrl url(QStringLiteral("https://%1.livecoinwatch.com/bettergram/coins?offset=0&limit=%2&only=%3")
+			 .arg(_pricesUrlPrefix)
+			 .arg(shortNames.size())
 			 .arg(shortNames.join(QStringLiteral(","))));
 
 	getCryptoPriceValues(url, shortNames);
