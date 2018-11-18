@@ -40,6 +40,7 @@ void RemoteImage::setScaledWidth(int scaledWidth)
 	if (_scaledWidth != scaledWidth) {
 		_scaledWidth = scaledWidth;
 
+		stopDownloadLaterTimer();
 		download();
 	}
 }
@@ -54,6 +55,7 @@ void RemoteImage::setScaledHeight(int scaledHeight)
 	if (_scaledHeight != scaledHeight) {
 		_scaledHeight = scaledHeight;
 
+		stopDownloadLaterTimer();
 		download();
 	}
 }
@@ -73,6 +75,7 @@ void RemoteImage::setScaledSize(int scaledWidth, int scaledHeight)
 	}
 
 	if (isChanged) {
+		stopDownloadLaterTimer();
 		download();
 	}
 }

@@ -36,6 +36,7 @@ void AbstractRemoteFile::setLink(const QUrl &link)
 
 		_link = link;
 
+		stopDownloadLaterTimer();
 		download();
 		emit linkChanged();
 	}
@@ -65,6 +66,7 @@ void AbstractRemoteFile::downloadIfNeeded()
 
 void AbstractRemoteFile::forceDownload()
 {
+	stopDownloadLaterTimer();
 	download();
 }
 
@@ -76,6 +78,10 @@ void AbstractRemoteFile::download()
 	}
 
 	if (_isDownloading) {
+		return;
+	}
+
+	if (_downloadLaterTimerId) {
 		return;
 	}
 
@@ -92,6 +98,7 @@ void AbstractRemoteFile::download()
 		_isDownloading = false;
 
 		if(reply->error() == QNetworkReply::NoError) {
+			_failedCount = 0;
 			dataDownloaded(reply->readAll());
 			_lastDownloadTime = QDateTime::currentDateTime();
 			emit downloaded();
@@ -100,6 +107,14 @@ void AbstractRemoteFile::download()
 				.arg(_link.toString())
 				.arg(reply->errorString())
 				.arg(reply->error()));
+
+			// If the file does not exist on the server then
+			// there is no any reason to try download it soon
+			if (reply->error() == QNetworkReply::ContentNotFoundError) {
+				_failedCount = 10000;
+			} else {
+				_failedCount++;
+			}
 
 			downloadLater();
 		}
@@ -118,6 +133,7 @@ void AbstractRemoteFile::download()
 	QTimer::singleShot(BettergramService::networkTimeout(), Qt::VeryCoarseTimer, networkManager,
 					   [networkManager, reply, this] {
 		_isDownloading = false;
+		_failedCount++;
 
 		reply->deleteLater();
 		networkManager->deleteLater();
@@ -135,12 +151,32 @@ void AbstractRemoteFile::download()
 	});
 }
 
+void AbstractRemoteFile::timerEvent(QTimerEvent *timerEvent)
+{
+	stopDownloadLaterTimer();
+	download();
+}
+
+void AbstractRemoteFile::stopDownloadLaterTimer()
+{
+	if (_downloadLaterTimerId) {
+		killTimer(_downloadLaterTimerId);
+		_downloadLaterTimerId = 0;
+	}
+}
+
 void AbstractRemoteFile::downloadLater()
 {
+	if (_downloadLaterTimerId) {
+		return;
+	}
+
 	qsrand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / (5 * 1000 * 1000)));
 
-	//TODO: bettergram: increase the timeout after each call of this method
-	QTimer::singleShot(2000 + (qrand() % 3000), this, [this](){ download(); });
+	// Increase the timeout after each call of this method
+	int timeout = qMin(5 * 60 * 60 * 1000, _failedCount * 5000) + (qrand() % 3000);
+
+	_downloadLaterTimerId = startTimer(timeout, Qt::VeryCoarseTimer);
 }
 
 bool AbstractRemoteFile::checkLink(const QUrl &link)

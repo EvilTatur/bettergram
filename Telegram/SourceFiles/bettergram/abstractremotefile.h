@@ -41,11 +41,16 @@ protected:
 	virtual bool checkLink(const QUrl &link);
 
 	void download();
+	void stopDownloadLaterTimer();
+
+	void timerEvent(QTimerEvent *timerEvent) override;
 
 private:
 	QUrl _link;
 	QDateTime _lastDownloadTime;
+	int _failedCount = 0;
 	bool _isDownloading = false;
+	int _downloadLaterTimerId = 0;
 
 	void downloadLater();
 };
