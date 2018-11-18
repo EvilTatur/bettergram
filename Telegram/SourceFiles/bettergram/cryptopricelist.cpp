@@ -244,7 +244,7 @@ int CryptoPriceList::count() const
 	if (_isShowOnlyFavorites) {
 		return _favoriteList.count();
 	} else if (_lastListValuesTotalCount > 0) {
-		return _lastListValuesTotalCount;
+		return qMin(_lastListValuesTotalCount, _list.count());
 	} else {
 		return _list.count();
 	}
