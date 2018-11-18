@@ -842,6 +842,8 @@ void PricesListWidget::onCryptoPriceValuesUpdated(const QUrl &url,
 		_pricesAtCurrentPage = prices;
 	}
 
+	updatePagesCount();
+
 	updateLastUpdateLabel();
 	updateMarketCap();
 	updateBtcDominance();

@@ -97,6 +97,9 @@ private:
 	QList<QSharedPointer<CryptoPrice>> _list;
 	QList<QSharedPointer<CryptoPrice>> _favoriteList;
 
+	/// `total` property from the last response
+	int _lastListValuesTotalCount = 0;
+
 	std::optional<double> _marketCap = std::nullopt;
 	QString _marketCapString;
 

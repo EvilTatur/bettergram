@@ -248,6 +248,8 @@ int CryptoPriceList::count() const
 {
 	if (_isShowOnlyFavorites) {
 		return _favoriteList.count();
+	} else if (_lastListValuesTotalCount > 0) {
+		return _lastListValuesTotalCount;
 	} else {
 		return _list.count();
 	}
@@ -498,6 +500,8 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray,
 	// This parameter may contain number of seconds for the next update
 	// (5, 60, 90 seconds and etc.).
 	int freq = qAbs(json.value("freq").toInt());
+
+	_lastListValuesTotalCount = json.value("total").toInt();
 
 	QList<QSharedPointer<CryptoPrice>> prices;
 	QJsonArray priceListJson = json.value("data").toArray();

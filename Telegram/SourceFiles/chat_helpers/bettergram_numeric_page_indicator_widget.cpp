@@ -41,7 +41,6 @@ void BettergramNumericPageIndicatorWidget::setPagesCount(int pagesCount)
 		} else {
 			updateControlsGeometry();
 		}
-
 	}
 }
 
