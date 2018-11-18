@@ -426,29 +426,32 @@ QUrl BettergramService::getCryptoPriceValues(int offset, int count)
 			 .arg(offset)
 			 .arg(count));
 
-	getCryptoPriceValues(url, QStringList());
+	getCryptoPriceValues(url);
 
 	return url;
 }
 
-QUrl BettergramService::getCryptoPriceValues(const QStringList &shortNames)
+QUrl BettergramService::getCryptoPriceValues(int offset, int count, const QStringList &shortNames)
 {
-	if (shortNames.isEmpty()) {
+	if (offset < 0 || offset >= _cryptoPriceList->count() || count <= 0 || shortNames.isEmpty()) {
 		QTimer::singleShot(0, _cryptoPriceList, [this] { _cryptoPriceList->emptyValues(); });
 		return QUrl();
 	}
 
-	QUrl url(QStringLiteral("https://%1.livecoinwatch.com/bettergram/coins?offset=0&limit=%2&only=%3")
+	QUrl url(QStringLiteral("https://%1.livecoinwatch.com/coins?sort=%2&order=%3&offset=%4&limit=%5&only=%6")
 			 .arg(_pricesUrlPrefix)
-			 .arg(shortNames.size())
+			 .arg(_cryptoPriceList->sortString())
+			 .arg(_cryptoPriceList->orderString())
+			 .arg(offset)
+			 .arg(count)
 			 .arg(shortNames.join(QStringLiteral(","))));
 
-	getCryptoPriceValues(url, shortNames);
+	getCryptoPriceValues(url);
 
 	return url;
 }
 
-void BettergramService::getCryptoPriceValues(const QUrl &url, const QStringList &shortNames)
+void BettergramService::getCryptoPriceValues(const QUrl &url)
 {
 	if (!_cryptoPriceList->areNamesFetched()) {
 		getCryptoPriceNames();
@@ -462,13 +465,13 @@ void BettergramService::getCryptoPriceValues(const QUrl &url, const QStringList 
 
 	QNetworkReply *reply = networkManager->get(request);
 
-	connect(reply, &QNetworkReply::finished, this, [this, url, shortNames, reply] {
+	connect(reply, &QNetworkReply::finished, this, [this, url, reply] {
 		if (isApiDeprecated(reply)) {
 			return;
 		}
 
 		if(reply->error() == QNetworkReply::NoError) {
-			_cryptoPriceList->parseValues(reply->readAll(), url, shortNames);
+			_cryptoPriceList->parseValues(reply->readAll(), url);
 
 			if (_cryptoPriceList->mayFetchStats()) {
 				getCryptoPriceStats();

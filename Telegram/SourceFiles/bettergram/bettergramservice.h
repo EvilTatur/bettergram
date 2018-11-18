@@ -80,7 +80,7 @@ public:
 	/// If crypto price names are not fetched we fetch it now.
 	/// We should call this every minute while the crypto price tab is shown
 	QUrl getCryptoPriceValues(int offset, int count);
-	QUrl getCryptoPriceValues(const QStringList &shortNames);
+	QUrl getCryptoPriceValues(int offset, int count, const QStringList &shortNames);
 
 	/// Download and parse resource group list
 	void getResourceGroupList();
@@ -166,7 +166,7 @@ private:
 	/// We should call this at each startup and in every 3 days.
 	void getCryptoPriceNames();
 
-	void getCryptoPriceValues(const QUrl &url, const QStringList &shortNames);
+	void getCryptoPriceValues(const QUrl &url);
 
 	/// Download and parse crypto price stats ('cap' and 'btcDominance').
 	/// We should call this method at each startup

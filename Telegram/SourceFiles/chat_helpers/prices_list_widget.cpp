@@ -162,56 +162,21 @@ void PricesListWidget::getCryptoPriceValues()
 
 	if (priceList->isShowOnlyFavorites()) {
 		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(getCurrentShortNames());
+				service->getCryptoPriceValues(startRowIndexInCurrentPage(),
+											  _numberOfRowsInOnePage,
+											  priceList->getFavoritesShortNames());
 
 		return;
 	}
 
-	switch (priceList->sortOrder()) {
-	case(CryptoPriceList::SortOrder::Rank):
-		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
-		break;
-	case(CryptoPriceList::SortOrder::NameAscending):
-		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(getCurrentShortNames());
-		break;
-	case(CryptoPriceList::SortOrder::NameDescending):
-		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(getCurrentShortNames());
-		break;
-	case(CryptoPriceList::SortOrder::PriceAscending):
-		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
-		break;
-	case(CryptoPriceList::SortOrder::PriceDescending):
-		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
-		break;
-	case(CryptoPriceList::SortOrder::ChangeFor24hAscending):
-		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
-		break;
-	case(CryptoPriceList::SortOrder::ChangeFor24hDescending):
-		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
-		break;
-	default:
-		LOG(("Can not recognize sort order value %1")
-			.arg(static_cast<int>(priceList->sortOrder())));
-	}
+	_urlForFetchingCurrentPage =
+			service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
 }
 
 int PricesListWidget::startRowIndexInCurrentPage() const
 {
 	return qMax(0, qMin(BettergramService::instance()->cryptoPriceList()->count() - 1,
 						_pageIndicator->currentPage() * _numberOfRowsInOnePage));
-}
-
-QStringList PricesListWidget::getCurrentShortNames() const
-{
-	return BettergramService::instance()->cryptoPriceList()->getShortNames(startRowIndexInCurrentPage(),
-																		   _numberOfRowsInOnePage);
 }
 
 void PricesListWidget::refreshRecent()

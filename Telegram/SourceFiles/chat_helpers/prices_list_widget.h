@@ -96,7 +96,6 @@ private:
 	void getCryptoPriceValues();
 
 	int startRowIndexInCurrentPage() const;
-	QStringList getCurrentShortNames() const;
 
 	void setSelectedRow(int selectedRow);
 	void setNumberOfRowsInOnePage(int numberOfRowsInOnePage);
