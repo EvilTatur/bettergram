@@ -400,12 +400,12 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 			continue;
 		}
 
-		QString name = priceJson.value("name").toString();
+		const QString name = priceJson.value("name").toString();
 		if (name.isEmpty()) {
 			continue;
 		}
 
-		QString shortName = priceJson.value("code").toString();
+		const QString shortName = priceJson.value("code").toString();
 		if (shortName.isEmpty()) {
 			continue;
 		}
@@ -417,9 +417,9 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 			}
 
 			url = coinsUrlBase
-					+ name.replace(QStringLiteral(" "), QString())
+					+ QString(name).remove(' ')
 					+ QStringLiteral("-")
-					+ shortName.replace(QStringLiteral(" "), QString());
+					+ QString(shortName).remove(' ');
 		}
 
 		QString iconUrl = priceJson.value("icon").toString();		
@@ -699,7 +699,7 @@ void CryptoPriceList::mergeCryptoPriceList(const QList<CryptoPrice> &priceList)
 	for (iterator it = _list.begin(); it != _list.end();) {
 		const QSharedPointer<CryptoPrice> &price = *it;
 
-		if (containsName(priceList, price->name())) {
+		if (containsName(priceList, price->name(), price->shortName())) {
 			++it;
 		} else {
 			it = _list.erase(it);
@@ -756,10 +756,12 @@ QSharedPointer<CryptoPrice> CryptoPriceList::findByShortName(const QString &shor
 	return QSharedPointer<CryptoPrice>(nullptr);
 }
 
-bool CryptoPriceList::containsName(const QList<CryptoPrice> &priceList, const QString &name)
+bool CryptoPriceList::containsName(const QList<CryptoPrice> &priceList,
+								   const QString &name,
+								   const QString &shortName)
 {
 	for (const CryptoPrice &price : priceList) {
-		if (price.name() == name) {
+		if (price.name() == name && price.shortName() == shortName) {
 			return true;
 		}
 	}

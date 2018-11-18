@@ -118,7 +118,9 @@ private:
 	static const QString &getSortString(SortOrder sortOrder);
 	static const QString &getOrderString(SortOrder sortOrder);
 
-	static bool containsName(const QList<CryptoPrice> &priceList, const QString &name);
+	static bool containsName(const QList<CryptoPrice> &priceList,
+							 const QString &name,
+							 const QString &shortName);
 
 	static bool containsShortName(const QList<QSharedPointer<CryptoPrice>> &priceList,
 								  const QString &shortName);
