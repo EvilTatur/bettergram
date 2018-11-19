@@ -6,6 +6,8 @@
 
 namespace Bettergram {
 
+//TODO: bettergram: rename CryptoPriceList to CryptoCoinList
+
 /**
  * @brief The CryptoPriceList class contains list of CryptoPrice instances.
  */

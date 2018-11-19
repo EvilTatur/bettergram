@@ -6,6 +6,8 @@ namespace Bettergram {
 
 class RemoteImage;
 
+//TODO: bettergram: rename CryptoPrice to CryptoCoin
+
 /**
  * @brief The CryptoPrice class contains current price of one cryptocurrency.
  * See also https://www.livecoinwatch.com
