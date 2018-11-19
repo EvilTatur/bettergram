@@ -35,7 +35,7 @@ constexpr auto kAutoLockTimeoutLateMs = TimeMs(3000);
 AuthSessionSettings::Variables::Variables()
 : sendFilesWay(SendFilesWay::Album)
 , bettergramSelectorTab(ChatHelpers::BettergramSelectorTab::Prices)
-, selectorTab(ChatHelpers::SelectorTab::Prices)
+, selectorTab(ChatHelpers::SelectorTab::Emoji)
 , floatPlayerColumn(Window::Column::Second)
 , floatPlayerCorner(RectPart::TopRight) {
 }
@@ -98,7 +98,7 @@ void AuthSessionSettings::constructFromSerialized(const QByteArray &serialized) 
 
 	QDataStream stream(serialized);
 	stream.setVersion(QDataStream::Qt_5_1);
-	qint32 selectorTab = static_cast<qint32>(ChatHelpers::SelectorTab::Prices);
+	qint32 selectorTab = static_cast<qint32>(ChatHelpers::SelectorTab::Emoji);
 	qint32 lastSeenWarningSeen = 0;
 	qint32 tabbedSelectorSectionEnabled = 1;
 	qint32 tabbedSelectorSectionTooltipShown = 0;
@@ -177,7 +177,6 @@ void AuthSessionSettings::constructFromSerialized(const QByteArray &serialized) 
 
 	auto uncheckedTab = static_cast<ChatHelpers::SelectorTab>(selectorTab);
 	switch (uncheckedTab) {
-	case ChatHelpers::SelectorTab::Prices:
 	case ChatHelpers::SelectorTab::Emoji:
 	case ChatHelpers::SelectorTab::Stickers:
 	case ChatHelpers::SelectorTab::Gifs: _variables.selectorTab = uncheckedTab; break;

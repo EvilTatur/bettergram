@@ -238,7 +238,6 @@ TabbedSelector::TabbedSelector(QWidget *parent, not_null<Window::Controller*> co
 , _bottomShadow(this)
 , _scroll(this, st::emojiScroll)
 , _tabs { {
-   Tab { SelectorTab::Prices, object_ptr<PricesListWidget>(this, controller) },
 	Tab { SelectorTab::Emoji, object_ptr<EmojiListWidget>(this, controller) },
 	Tab { SelectorTab::Stickers, object_ptr<StickersListWidget>(this, controller) },
 	Tab { SelectorTab::Gifs, object_ptr<GifsListWidget>(this, controller) },
@@ -585,7 +584,6 @@ void TabbedSelector::setRoundRadius(int radius) {
 
 void TabbedSelector::createTabsSlider() {
 	auto sections = QStringList();
-	sections.push_back(lang(lng_switch_prices).toUpper());
 	sections.push_back(lang(lng_switch_emoji).toUpper());
 	sections.push_back(lang(lng_switch_stickers).toUpper());
 	sections.push_back(lang(lng_switch_gifs).toUpper());
