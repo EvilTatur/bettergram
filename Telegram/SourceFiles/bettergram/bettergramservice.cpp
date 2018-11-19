@@ -39,8 +39,8 @@ const int BettergramService::_checkForFirstUpdatesDelay = 2 * 60 * 1000;
 // We check for new updates every 10 hours
 const int BettergramService::_checkForUpdatesPeriod = 10 * 60 * 60 * 1000;
 
-// We update crypto price names every 3 days
-const int BettergramService::_updateCryptoPriceNamesPeriod = 3 * 24 * 60 * 60 * 1000;
+// We update crypto price names every day
+const int BettergramService::_updateCryptoPriceNamesPeriod = 1 * 24 * 60 * 60 * 1000;
 
 // We save crypto prices every 2 hours
 const int BettergramService::_saveCryptoPricesPeriod = 2 * 60 * 60 * 1000;

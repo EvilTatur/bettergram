@@ -110,7 +110,7 @@ private:
 	/// We check for new updates every 10 hours
 	static const int _checkForUpdatesPeriod;
 
-	/// We update crypto price names every 3 days
+	/// We update crypto price names every day
 	static const int _updateCryptoPriceNamesPeriod;
 
 	/// We save crypto prices every 2 hours
