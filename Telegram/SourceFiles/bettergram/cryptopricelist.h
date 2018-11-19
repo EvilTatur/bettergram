@@ -47,13 +47,17 @@ public:
 	QSharedPointer<CryptoPrice> at(int index) const;
 	int count() const;
 
+	QList<QSharedPointer<CryptoPrice>> searchList() const;
 	QList<QSharedPointer<CryptoPrice>> favoriteList() const;
 
 	SortOrder sortOrder() const;
 	void setSortOrder(const SortOrder &sortOrder);
 
-	const QString &filterText() const;
-	void setFilterText(const QString &filterText);
+	bool isSearching() const;
+	bool isSearchInProgress() const;
+
+	const QString &searchText() const;
+	void setSearchText(const QString &searchText);
 
 	bool isShowOnlyFavorites() const;
 	void setIsShowOnlyFavorites(bool isShowOnlyFavorites);
@@ -66,8 +70,10 @@ public:
 	bool mayFetchStats() const;
 
 	QStringList getFavoritesShortNames() const;
+	QStringList getSearchListShortNames() const;
 
 	void parseNames(const QByteArray &byteArray);
+	void parseSearchNames(const QByteArray &byteArray);
 	void parseValues(const QByteArray &byteArray, const QUrl &url);
 	void parseStats(const QByteArray &byteArray);
 	void emptyValues();
@@ -84,10 +90,11 @@ signals:
 	void btcDominanceChanged();
 	void freqChanged();
 	void sortOrderChanged();
-	void filterTextChanged();
+	void searchTextChanged();
 	void isShowOnlyFavoritesChanged();
 
 	void namesUpdated();
+	void searchNamesUpdated();
 	void valuesUpdated(const QUrl &url, const QList<QSharedPointer<CryptoPrice>> &prices);
 	void statsUpdated();
 
@@ -96,8 +103,10 @@ protected:
 private:
 	/// Default frequency of updates in seconds
 	static const int _defaultFreq;
+	static const int _minimumSearchText;
 
 	QList<QSharedPointer<CryptoPrice>> _list;
+	QList<QSharedPointer<CryptoPrice>> _searchList;
 	QList<QSharedPointer<CryptoPrice>> _favoriteList;
 
 	/// `total` property from the last response
@@ -118,7 +127,8 @@ private:
 	QDateTime _statsLastUpdate;
 
 	SortOrder _sortOrder = SortOrder::Rank;
-	QString _filterText;
+	QString _searchText;
+	bool _isSearchInProgress = false;
 	bool _isShowOnlyFavorites = false;
 
 	bool _areNamesFetched = false;
@@ -177,6 +187,8 @@ private:
 	void updateBtcDominanceString();
 
 	void updateFavoriteList();
+
+	void searchResultsAreEmpty();
 
 	void addPrivate(const QSharedPointer<CryptoPrice> &price);
 

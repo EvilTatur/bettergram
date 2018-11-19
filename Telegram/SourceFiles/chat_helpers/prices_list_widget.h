@@ -63,6 +63,7 @@ private:
 	class Footer;
 
 	int _timerId = 0;
+	int _searchTimerId = 0;
 	int _selectedRow = -1;
 	int _pressedRow = -1;
 	int _pressedFavoriteIcon = -1;
@@ -83,10 +84,10 @@ private:
 	Ui::FlatLabel *_marketCapValue = nullptr;
 	Ui::FlatLabel *_btcDominance = nullptr;
 	Ui::FlatLabel *_btcDominanceValue = nullptr;
-	Ui::FlatInput *_filterTextEdit = nullptr;
-	Ui::CrossButton *_cancelFilterButton = nullptr;
+	Ui::FlatInput *_searchTextEdit = nullptr;
+	Ui::CrossButton *_cancelSearchButton = nullptr;
 	Ui::IconButton *_favoriteButton = nullptr;
-	Ui::FlatLabel *_yourFavoriteListIsEmpty = nullptr;
+	Ui::FlatLabel *_listIsEmpty = nullptr;
 	BettergramNumericPageIndicatorWidget *_pageIndicator = nullptr;
 	TableColumnHeaderWidget *_coinHeader = nullptr;
 	TableColumnHeaderWidget *_priceHeader = nullptr;
@@ -94,6 +95,7 @@ private:
 	Footer *_footer = nullptr;
 
 	void getCryptoPriceValues();
+	void searchCryptoPriceNames();
 
 	int startRowIndexInCurrentPage() const;
 
@@ -119,9 +121,14 @@ private:
 	void updateLastUpdateLabel();
 	void updateMarketCap();
 	void updateBtcDominance();
+	void updateListIsEmptyLabel();
+	void updateFavoriteButton();
 
 	void startPriceListTimer();
 	void stopPriceListTimer();
+
+	void startSearchPriceListTimer();
+	void stopSearchPriceListTimer();
 
 private slots:
 	void onCoinColumnSortOrderChanged();
@@ -129,6 +136,7 @@ private slots:
 	void on24hColumnSortOrderChanged();
 
 	void onCryptoPriceNamesUpdated();
+	void onSearchCryptoPriceNamesUpdated();
 
 	void onCryptoPriceValuesUpdated(const QUrl &url,
 									const QList<QSharedPointer<Bettergram::CryptoPrice>> &prices);
@@ -138,8 +146,8 @@ private slots:
 	void onCryptoPriceSortOrderChanged();
 
 	void onCurrentPageChanged();
-	void onFilterTextChanged();
-	void onCancelFilter();
+	void onSearchTextChanged();
+	void onCancelSearch();
 	void onFavoriteButtonClicked();
 	void onIsShowOnlyFavoritesChanged();
 };

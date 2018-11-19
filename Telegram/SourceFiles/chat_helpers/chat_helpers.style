@@ -248,7 +248,7 @@ pricesPanFavoriteButton: IconButton {
 }
 
 // This label is shown when user wants to see only favorite coins, but this is empty list
-pricesPanYourFavoriteListIsEmptyLabel: FlatLabel(defaultFlatLabel) {
+pricesPanListIsEmptyLabel: FlatLabel(defaultFlatLabel) {
         align: align(center);
         textFg: windowSubTextFg;
         style: TextStyle(defaultTextStyle) {

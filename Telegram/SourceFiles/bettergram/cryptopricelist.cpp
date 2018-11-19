@@ -10,6 +10,7 @@
 namespace Bettergram {
 
 const int CryptoPriceList::_defaultFreq = 60;
+const int CryptoPriceList::_minimumSearchText = 2;
 
 const QString &CryptoPriceList::getSortString(SortOrder sortOrder)
 {
@@ -231,7 +232,9 @@ QSharedPointer<CryptoPrice> CryptoPriceList::at(int index) const
 		return QSharedPointer<CryptoPrice>(nullptr);
 	}
 
-	if (_isShowOnlyFavorites) {
+	if (isSearching()) {
+		return _searchList.at(index);
+	} else if (_isShowOnlyFavorites) {
 		return _favoriteList.at(index);
 	} else {
 		return _list.at(index);
@@ -241,7 +244,9 @@ QSharedPointer<CryptoPrice> CryptoPriceList::at(int index) const
 
 int CryptoPriceList::count() const
 {
-	if (_isShowOnlyFavorites) {
+	if (isSearching()) {
+		return _searchList.count();
+	} else if (_isShowOnlyFavorites) {
 		return _favoriteList.count();
 	} else if (_lastListValuesTotalCount > 0) {
 		return qMin(_lastListValuesTotalCount, _list.count());
@@ -250,7 +255,12 @@ int CryptoPriceList::count() const
 	}
 }
 
-QList<QSharedPointer<CryptoPrice> > CryptoPriceList::favoriteList() const
+QList<QSharedPointer<CryptoPrice>> CryptoPriceList::searchList() const
+{
+	return _searchList;
+}
+
+QList<QSharedPointer<CryptoPrice>> CryptoPriceList::favoriteList() const
 {
 	return _favoriteList;
 }
@@ -279,16 +289,31 @@ const QString &CryptoPriceList::orderString()
 	return getOrderString(_sortOrder);
 }
 
-const QString &CryptoPriceList::filterText() const
+bool CryptoPriceList::isSearching() const
 {
-	return _filterText;
+	return _searchText.size() >= _minimumSearchText;
 }
 
-void CryptoPriceList::setFilterText(const QString &filterText)
+bool CryptoPriceList::isSearchInProgress() const
 {
-	if (_filterText != filterText) {
-		_filterText = filterText;
-		emit filterTextChanged();
+	return _isSearchInProgress;
+}
+
+const QString &CryptoPriceList::searchText() const
+{
+	return _searchText;
+}
+
+void CryptoPriceList::setSearchText(const QString &searchText)
+{
+	QString trimmedSearchText = searchText.trimmed();
+
+	if (_searchText != trimmedSearchText) {
+		_searchText = trimmedSearchText;
+
+		_isSearchInProgress = isSearching();
+
+		emit searchTextChanged();
 	}
 }
 
@@ -329,6 +354,17 @@ QStringList CryptoPriceList::getFavoritesShortNames() const
 	QStringList result;
 
 	for (const QSharedPointer<CryptoPrice> &coin : _favoriteList) {
+		result.push_back(coin->shortName());
+	}
+
+	return result;
+}
+
+QStringList CryptoPriceList::getSearchListShortNames() const
+{
+	QStringList result;
+
+	for (const QSharedPointer<CryptoPrice> &coin : _searchList) {
 		result.push_back(coin->shortName());
 	}
 
@@ -454,6 +490,144 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 	if (_areNamesFetched) {
 		emit namesUpdated();
 	}
+}
+
+void CryptoPriceList::parseSearchNames(const QByteArray &byteArray)
+{
+	qDebug() << "";
+	qDebug() << "parseSearchNames:" << byteArray;
+	qDebug() << "";
+	_searchList.clear();
+
+	if (!isSearching()) {
+		searchResultsAreEmpty();
+		return;
+	}
+
+	if (byteArray.isEmpty()) {
+		LOG(("Can not search crypto price names. Response is emtpy"));
+
+		searchResultsAreEmpty();
+		return;
+	}
+
+	QJsonParseError parseError;
+	QJsonDocument doc = QJsonDocument::fromJson(byteArray, &parseError);
+
+	if (!doc.isObject()) {
+		LOG(("Can not search crypto price names. Response is wrong. %1 (%2). Response: %3")
+			.arg(parseError.errorString())
+			.arg(parseError.error)
+			.arg(QString::fromUtf8(byteArray)));
+
+		searchResultsAreEmpty();
+		return;
+	}
+
+	QJsonObject json = doc.object();
+
+	if (json.isEmpty()) {
+		LOG(("Can not search crypto price names. Response is emtpy or wrong"));
+
+		searchResultsAreEmpty();
+		return;
+	}
+
+	bool success = json.value("success").toBool();
+
+	if (!success) {
+		QString errorMessage = json.value("message").toString("Unknown error");
+		LOG(("Can not search crypto price names. %1").arg(errorMessage));
+
+		searchResultsAreEmpty();
+		return;
+	}
+
+	QString coinsUrlBase = json.value("coinsUrlBase").toString();
+
+	// Now we fetch only 32x32 icons, but maybe in the future we will use 64x64 icons
+	QString coinsIconBase = json.value("coinsIcon32Base").toString();
+
+	QJsonArray priceListJson = json.value("data").toArray();
+
+	if (priceListJson.isEmpty()) {
+		searchResultsAreEmpty();
+		return;
+	}
+
+	for (QJsonValue jsonValue : priceListJson) {
+		QJsonObject priceJson = jsonValue.toObject();
+
+		if (priceJson.isEmpty()) {
+			LOG(("Price json is empty"));
+			continue;
+		}
+
+		const QString type = priceJson.value("type").toString();
+
+		if (type != QStringLiteral("coin")) {
+			continue;
+		}
+
+		const QString name = priceJson.value("name").toString();
+		if (name.isEmpty()) {
+			continue;
+		}
+
+		const QString shortName = priceJson.value("code").toString();
+		if (shortName.isEmpty()) {
+			continue;
+		}
+
+		QSharedPointer<CryptoPrice> price = findByName(name, shortName);
+
+		if (!price) {
+			QString url = priceJson.value("url").toString();
+			if (url.isEmpty()) {
+				if (coinsUrlBase.isEmpty()) {
+					continue;
+				}
+
+				url = coinsUrlBase
+						+ QString(name).remove(' ')
+						+ QStringLiteral("-")
+						+ QString(shortName).remove(' ');
+			}
+
+			QString iconUrl = priceJson.value("icon").toString();
+			if (iconUrl.isEmpty()) {
+				continue;
+			}
+
+			if (!coinsIconBase.isEmpty()) {
+				iconUrl = coinsIconBase + iconUrl;
+			}
+
+			price = QSharedPointer<CryptoPrice>(new CryptoPrice(url,
+																iconUrl,
+																name,
+																shortName,
+																false));
+
+			addPrivate(price);
+		}
+
+		_searchList.push_back(price);
+	}
+
+	_isSearchInProgress = false;
+
+	if (_list.isEmpty()) {
+		searchResultsAreEmpty();
+	} else {
+		emit searchNamesUpdated();
+	}
+}
+
+void CryptoPriceList::searchResultsAreEmpty()
+{
+	_isSearchInProgress = false;
+	emit valuesUpdated(QUrl(), QList<QSharedPointer<CryptoPrice>>());
 }
 
 void CryptoPriceList::parseValues(const QByteArray &byteArray, const QUrl &url)
@@ -624,7 +798,11 @@ QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const Q
 		price->setChangeFor24Hours(changeFor24Hours);
 		price->setMinuteDirection(CryptoPrice::countDirection(changeForMinute));
 
-		if ((_isShowOnlyFavorites && price->isFavorite()) || !_isShowOnlyFavorites) {
+		if (isSearching()) {
+			if (_searchList.contains(price)) {
+				prices.push_back(price);
+			}
+		} else if ((_isShowOnlyFavorites && price->isFavorite()) || !_isShowOnlyFavorites) {
 			prices.push_back(price);
 		}
 

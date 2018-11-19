@@ -409,7 +409,7 @@ void BettergramService::getCryptoPriceNames()
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetCryptoPriceNamesSslFailed);
+			this, &BettergramService::onSslFailed);
 }
 
 QUrl BettergramService::getCryptoPriceValues(int offset, int count)
@@ -449,6 +449,59 @@ QUrl BettergramService::getCryptoPriceValues(int offset, int count, const QStrin
 	getCryptoPriceValues(url);
 
 	return url;
+}
+
+void BettergramService::searchCryptoPriceNames()
+{
+	if (!_cryptoPriceList->isSearching()) {
+		return;
+	}
+
+	const QString searchText = _cryptoPriceList->searchText();
+
+	const QUrl url(QStringLiteral("https://%1.livecoinwatch.com/currencies?search=%2&type=coin")
+				   .arg(_pricesUrlPrefix)
+				   .arg(searchText));
+
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
+	QNetworkRequest request;
+	request.setUrl(url);
+
+	QNetworkReply *reply = networkManager->get(request);
+
+	connect(reply, &QNetworkReply::finished, this, [this, url, searchText, reply] {
+		if (isApiDeprecated(reply)) {
+			return;
+		}
+
+		if(reply->error() == QNetworkReply::NoError) {
+			// We parse the response only if the search text is the same
+			if (_cryptoPriceList->searchText() == searchText) {
+				_cryptoPriceList->parseSearchNames(reply->readAll());
+			}
+		} else {
+			LOG(("Can not search crypto price values. Search text: '%1'. %2 (%3)")
+				.arg(searchText)
+				.arg(reply->errorString())
+				.arg(reply->error()));
+		}
+	});
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply, searchText]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply, searchText] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not search crypto price values due timeout. Search text: '%1'").arg(searchText));
+	});
+
+	connect(reply, &QNetworkReply::sslErrors, this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getCryptoPriceValues(const QUrl &url)
@@ -497,7 +550,7 @@ void BettergramService::getCryptoPriceValues(const QUrl &url)
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetCryptoPriceValuesSslFailed);
+			this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getCryptoPriceStats()
@@ -537,7 +590,7 @@ void BettergramService::getCryptoPriceStats()
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetCryptoPriceStatsSslFailed);
+			this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getRssFeedsContent()
@@ -639,7 +692,7 @@ void BettergramService::getRssChannelList()
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetRssChannelListSslFailed);
+			this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getVideoChannelList()
@@ -670,7 +723,7 @@ void BettergramService::getVideoChannelList()
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetVideoChannelListSslFailed);
+			this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getResourceGroupList()
@@ -701,7 +754,7 @@ void BettergramService::getResourceGroupList()
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetResourceGroupListSslFailed);
+			this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::onGetCryptoPriceNamesFinished()
@@ -721,21 +774,7 @@ void BettergramService::onGetCryptoPriceNamesFinished()
 	}
 }
 
-void BettergramService::onGetCryptoPriceNamesSslFailed(QList<QSslError> errors)
-{
-	for(const QSslError &error : errors) {
-		LOG(("%1").arg(error.errorString()));
-	}
-}
-
-void BettergramService::onGetCryptoPriceValuesSslFailed(QList<QSslError> errors)
-{
-	for(const QSslError &error : errors) {
-		LOG(("%1").arg(error.errorString()));
-	}
-}
-
-void BettergramService::onGetCryptoPriceStatsSslFailed(QList<QSslError> errors)
+void BettergramService::onSslFailed(QList<QSslError> errors)
 {
 	for(const QSslError &error : errors) {
 		LOG(("%1").arg(error.errorString()));
@@ -759,13 +798,6 @@ void BettergramService::onGetResourceGroupListFinished()
 	}
 }
 
-void BettergramService::onGetResourceGroupListSslFailed(QList<QSslError> errors)
-{
-	for(const QSslError &error : errors) {
-		LOG(("%1").arg(error.errorString()));
-	}
-}
-
 void BettergramService::onGetRssChannelListFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
@@ -784,13 +816,6 @@ void BettergramService::onGetRssChannelListFinished()
 	}
 }
 
-void BettergramService::onGetRssChannelListSslFailed(QList<QSslError> errors)
-{
-	for(const QSslError &error : errors) {
-		LOG(("%1").arg(error.errorString()));
-	}
-}
-
 void BettergramService::onGetVideoChannelListFinished()
 {
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
@@ -806,13 +831,6 @@ void BettergramService::onGetVideoChannelListFinished()
 		LOG(("Can not get video channel list. %1 (%2)")
 			.arg(reply->errorString())
 			.arg(reply->error()));
-	}
-}
-
-void BettergramService::onGetVideoChannelListSslFailed(QList<QSslError> errors)
-{
-	for(const QSslError &error : errors) {
-		LOG(("%1").arg(error.errorString()));
 	}
 }
 
@@ -859,7 +877,7 @@ void BettergramService::getNextAd(bool reset)
 	});
 
 	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onGetNextAdSslFailed);
+			this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getNextAdLater(bool reset)
@@ -973,13 +991,6 @@ void BettergramService::onGetNextAdFinished()
 		//				  .arg(reply->error()));
 
 		getNextAdLater();
-	}
-}
-
-void BettergramService::onGetNextAdSslFailed(QList<QSslError> errors)
-{
-	for(const QSslError &error : errors) {
-		LOG(("%1").arg(error.errorString()));
 	}
 }
 

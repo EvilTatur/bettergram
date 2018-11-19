@@ -86,23 +86,22 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	_btcDominanceValue->setRichText(textcmdLink(1, BettergramService::instance()->cryptoPriceList()->btcDominanceString()));
 	_btcDominanceValue->setLink(1, std::make_shared<UrlClickHandler>(qsl("https://www.livecoinwatch.com")));
 
-	_filterTextEdit = new Ui::FlatInput(this, st::dialogsFilter, langFactory(lng_dlg_filter));
+	_searchTextEdit = new Ui::FlatInput(this, st::dialogsFilter, langFactory(lng_dlg_filter));
 
-	connect(_filterTextEdit, &Ui::FlatInput::changed,
-			this, &PricesListWidget::onFilterTextChanged);
+	connect(_searchTextEdit, &Ui::FlatInput::changed,
+			this, &PricesListWidget::onSearchTextChanged);
 
-	connect(_filterTextEdit, &Ui::FlatInput::cancelled,
-			this, &PricesListWidget::onCancelFilter);
+	connect(_searchTextEdit, &Ui::FlatInput::cancelled,
+			this, &PricesListWidget::onCancelSearch);
 
-	_cancelFilterButton = new Ui::CrossButton(this, st::dialogsCancelSearch);
-	_cancelFilterButton->setClickedCallback([this] { onCancelFilter(); });
+	_cancelSearchButton = new Ui::CrossButton(this, st::dialogsCancelSearch);
+	_cancelSearchButton->setClickedCallback([this] { onCancelSearch(); });
 
 	_favoriteButton = new Ui::IconButton(this, st::pricesPanFavoriteButton);
 	_favoriteButton->setClickedCallback([this] { onFavoriteButtonClicked(); });
 
-	_yourFavoriteListIsEmpty = new Ui::FlatLabel(this, st::pricesPanYourFavoriteListIsEmptyLabel);
-	_yourFavoriteListIsEmpty->setRichText(lang(lng_prices_your_favorite_list_is_empty));
-	_yourFavoriteListIsEmpty->setVisible(false);
+	_listIsEmpty = new Ui::FlatLabel(this, st::pricesPanListIsEmptyLabel);
+	_listIsEmpty->setVisible(false);
 
 	_pageIndicator = new BettergramNumericPageIndicatorWidget(1, 0, this);
 
@@ -138,6 +137,9 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(priceList, &CryptoPriceList::namesUpdated,
 			this, &PricesListWidget::onCryptoPriceNamesUpdated);
 
+	connect(priceList, &CryptoPriceList::searchNamesUpdated,
+			this, &PricesListWidget::onSearchCryptoPriceNamesUpdated);
+
 	connect(priceList, &CryptoPriceList::valuesUpdated,
 			this, &PricesListWidget::onCryptoPriceValuesUpdated);
 
@@ -157,8 +159,16 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 
 void PricesListWidget::getCryptoPriceValues()
 {
-	BettergramService *service = BettergramService::instance();
-	CryptoPriceList *priceList = BettergramService::instance()->cryptoPriceList();
+	BettergramService *const service = BettergramService::instance();
+	CryptoPriceList *const priceList = service->cryptoPriceList();
+
+	if (priceList->isSearching()) {
+		_urlForFetchingCurrentPage =
+				service->getCryptoPriceValues(startRowIndexInCurrentPage(),
+											  _numberOfRowsInOnePage,
+											  priceList->getSearchListShortNames());
+		return;
+	}
 
 	if (priceList->isShowOnlyFavorites()) {
 		_urlForFetchingCurrentPage =
@@ -171,6 +181,13 @@ void PricesListWidget::getCryptoPriceValues()
 
 	_urlForFetchingCurrentPage =
 			service->getCryptoPriceValues(startRowIndexInCurrentPage(), _numberOfRowsInOnePage);
+}
+
+void PricesListWidget::searchCryptoPriceNames()
+{
+	BettergramService *const service = BettergramService::instance();
+
+	service->searchCryptoPriceNames();
 }
 
 int PricesListWidget::startRowIndexInCurrentPage() const
@@ -212,6 +229,9 @@ void PricesListWidget::timerEvent(QTimerEvent *event)
 {
 	if (event->timerId() == _timerId) {
 		getCryptoPriceValues();
+	} else if (event->timerId() == _searchTimerId) {
+		stopSearchPriceListTimer();
+		searchCryptoPriceNames();
 	}
 }
 
@@ -232,6 +252,29 @@ void PricesListWidget::stopPriceListTimer()
 	if (_timerId) {
 		killTimer(_timerId);
 		_timerId = 0;
+	}
+}
+
+void PricesListWidget::startSearchPriceListTimer()
+{
+	stopSearchPriceListTimer();
+
+	if (!_searchTimerId) {
+		const int timeout = 500;
+
+		_searchTimerId = startTimer(timeout);
+
+		if (!_searchTimerId) {
+			LOG(("Can not start search timer for %1 ms").arg(timeout));
+		}
+	}
+}
+
+void PricesListWidget::stopSearchPriceListTimer()
+{
+	if (_searchTimerId) {
+		killTimer(_searchTimerId);
+		_searchTimerId = 0;
 	}
 }
 
@@ -391,7 +434,9 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 			&& _pressedFavoriteIcon == _selectedRow) {
 		_pricesAtCurrentPage.at(_pressedFavoriteIcon)->toggleIsFavorite();
 
-		if (BettergramService::instance()->cryptoPriceList()->isShowOnlyFavorites()) {
+		CryptoPriceList *priceList = BettergramService::instance()->cryptoPriceList();
+
+		if (priceList->isShowOnlyFavorites() && !priceList->isSearching()) {
 			updatePagesCount();
 			getCryptoPriceValues();
 			update();
@@ -612,26 +657,26 @@ void PricesListWidget::updateControlsGeometry()
 	updateMarketCap();
 	updateBtcDominance();
 
-	_filterTextEdit->moveToLeft(st::pricesPanPadding,
+	_searchTextEdit->moveToLeft(st::pricesPanPadding,
 								_marketCapValue->y() + _marketCapValue->height() + st::pricesPanPadding / 2);
 
 	_favoriteButton->moveToLeft(width() - _favoriteButton->width(),
-								_filterTextEdit->y()
-								+ (_filterTextEdit->height() - _favoriteButton->height()) / 2);
+								_searchTextEdit->y()
+								+ (_searchTextEdit->height() - _favoriteButton->height()) / 2);
 
-	_filterTextEdit->resize(_favoriteButton->x() - st::pricesPanPadding - getMargins().left(),
-							_filterTextEdit->height());
+	_searchTextEdit->resize(_favoriteButton->x() - st::pricesPanPadding - getMargins().left(),
+							_searchTextEdit->height());
 
-	_cancelFilterButton->moveToLeft(_filterTextEdit->x()
-									+ _filterTextEdit->width()
-									- _cancelFilterButton->width()
+	_cancelSearchButton->moveToLeft(_searchTextEdit->x()
+									+ _searchTextEdit->width()
+									- _cancelSearchButton->width()
 									- st::pricesPanPadding,
-									_filterTextEdit->y());
+									_searchTextEdit->y());
 
 	updatePagesCount();
 
 	_pageIndicator->moveToLeft(0,
-							   _filterTextEdit->y() + _filterTextEdit->height() + st::pricesPanPadding);
+							   _searchTextEdit->y() + _searchTextEdit->height() + st::pricesPanPadding);
 
 	_pageIndicator->resizeToWidth(width());
 
@@ -652,10 +697,8 @@ void PricesListWidget::updateControlsGeometry()
 	_priceHeader->moveToLeft(_coinHeader->x() + _coinHeader->width(), headerTop);
 	_24hHeader->moveToLeft(_priceHeader->x() + _priceHeader->width(), headerTop);
 
-	_yourFavoriteListIsEmpty->moveToLeft(st::pricesPanPadding,
-										 getTableContentTop() + st::pricesPanPadding);
-
-	_yourFavoriteListIsEmpty->resizeToWidth(width());
+	_listIsEmpty->moveToLeft(st::pricesPanPadding, getTableContentTop() + st::pricesPanPadding);
+	_listIsEmpty->resizeToWidth(width());
 }
 
 void PricesListWidget::updatePagesCount()
@@ -715,6 +758,37 @@ void PricesListWidget::updateBtcDominance()
 
 	_btcDominanceValue->moveToLeft(xOffset + (btcDominanceWidth - _btcDominanceValue->width()) / 2,
 								   _marketCapValue->y());
+}
+
+void PricesListWidget::updateListIsEmptyLabel()
+{
+	CryptoPriceList *const priceList = BettergramService::instance()->cryptoPriceList();
+
+	if (priceList->isSearching()) {
+		if (!priceList->isSearchInProgress() && priceList->searchList().isEmpty()) {
+			_listIsEmpty->setVisible(true);
+			_listIsEmpty->setRichText(lang(lng_prices_search_list_is_empty));
+		} else {
+			_listIsEmpty->setVisible(false);
+		}
+	} else if (priceList->isShowOnlyFavorites() && priceList->favoriteList().isEmpty()) {
+		_listIsEmpty->setVisible(true);
+		_listIsEmpty->setRichText(lang(lng_prices_your_favorite_list_is_empty));
+	} else {
+		_listIsEmpty->setVisible(false);
+	}
+}
+
+void PricesListWidget::updateFavoriteButton()
+{
+	CryptoPriceList *cryptoPriceList = BettergramService::instance()->cryptoPriceList();
+
+	if (cryptoPriceList->isShowOnlyFavorites() && !cryptoPriceList->isSearching()) {
+		_favoriteButton->setIconOverride(&st::pricesPanFavoriteEnabledIcon,
+										 &st::pricesPanFavoriteEnabledIconOver);
+	} else {
+		_favoriteButton->setIconOverride(nullptr, nullptr);
+	}
 }
 
 void PricesListWidget::onCoinColumnSortOrderChanged()
@@ -803,22 +877,38 @@ void PricesListWidget::onCryptoPriceNamesUpdated()
 	getCryptoPriceValues();
 }
 
+void PricesListWidget::onSearchCryptoPriceNamesUpdated()
+{
+	BettergramService *const service = BettergramService::instance();
+	CryptoPriceList *const priceList = service->cryptoPriceList();
+
+	if (!priceList->isSearching()) {
+		return;
+	}
+
+	_pageIndicator->setCurrentPage(0);
+
+	_urlForFetchingCurrentPage =
+			service->getCryptoPriceValues(startRowIndexInCurrentPage(),
+										  _numberOfRowsInOnePage,
+										  priceList->getSearchListShortNames());
+}
+
 void PricesListWidget::onCryptoPriceValuesUpdated(const QUrl &url,
 												  const QList<QSharedPointer<CryptoPrice>> &prices)
 {
+	CryptoPriceList *const priceList = BettergramService::instance()->cryptoPriceList();
+
 	if (_urlForFetchingCurrentPage == url) {
 		_pricesAtCurrentPage = prices;
+	} else if (priceList->isSearching() && priceList->searchList().isEmpty()) {
+		_pricesAtCurrentPage = QList<QSharedPointer<CryptoPrice>>();
 	}
 
 	updatePagesCount();
-
 	updateLastUpdateLabel();
+	updateListIsEmptyLabel();
 	update();
-
-	CryptoPriceList *cryptoPriceList = BettergramService::instance()->cryptoPriceList();
-
-	_yourFavoriteListIsEmpty->setVisible(cryptoPriceList->isShowOnlyFavorites()
-										 && cryptoPriceList->favoriteList().isEmpty());
 }
 
 void PricesListWidget::onCryptoPriceStatsUpdated()
@@ -839,43 +929,59 @@ void PricesListWidget::onCurrentPageChanged()
 	update();
 }
 
-void PricesListWidget::onFilterTextChanged()
+void PricesListWidget::onSearchTextChanged()
 {
-	_cancelFilterButton->toggle(!_filterTextEdit->text().isEmpty(), anim::type::normal);
+	_cancelSearchButton->toggle(!_searchTextEdit->text().isEmpty(), anim::type::normal);
 
-	BettergramService::instance()->cryptoPriceList()->setFilterText(_filterTextEdit->getLastText());
+	CryptoPriceList *const priceList = BettergramService::instance()->cryptoPriceList();
+
+	priceList->setSearchText(_searchTextEdit->getLastText());
+
+	if (priceList->isSearching()) {
+		// We start timer here instead of just call searchCryptoPriceValues()
+		// in order to decrease number of requests to servers when a user types search text
+		startSearchPriceListTimer();
+	} else {
+		getCryptoPriceValues();
+	}
+
+	updateFavoriteButton();
 }
 
-void PricesListWidget::onCancelFilter()
+void PricesListWidget::onCancelSearch()
 {
-	_filterTextEdit->clear();
-	_filterTextEdit->updatePlaceholder();
-	_cancelFilterButton->toggle(false, anim::type::normal);
+	_searchTextEdit->clear();
+	_searchTextEdit->updatePlaceholder();
+
+	onSearchTextChanged();
 }
 
 void PricesListWidget::onFavoriteButtonClicked()
 {
-	BettergramService::instance()->cryptoPriceList()->toggleIsShowOnlyFavorites();
+	CryptoPriceList *cryptoPriceList = BettergramService::instance()->cryptoPriceList();
+
+	if (!cryptoPriceList->searchText().isEmpty()) {
+		onCancelSearch();
+
+		if (cryptoPriceList->isShowOnlyFavorites()) {
+			onIsShowOnlyFavoritesChanged();
+		} else {
+			cryptoPriceList->toggleIsShowOnlyFavorites();
+		}
+	} else {
+		cryptoPriceList->toggleIsShowOnlyFavorites();
+	}
 }
 
 void PricesListWidget::onIsShowOnlyFavoritesChanged()
 {
-	CryptoPriceList *cryptoPriceList = BettergramService::instance()->cryptoPriceList();
-
-	if (cryptoPriceList->isShowOnlyFavorites()) {
-		_favoriteButton->setIconOverride(&st::pricesPanFavoriteEnabledIcon,
-										 &st::pricesPanFavoriteEnabledIconOver);
-	} else {
-		_favoriteButton->setIconOverride(nullptr, nullptr);
-	}
-
+	updateFavoriteButton();
 	updatePagesCount();
 	getCryptoPriceValues();
 
 	_pageIndicator->setCurrentPage(0);
 
-	_yourFavoriteListIsEmpty->setVisible(cryptoPriceList->isShowOnlyFavorites()
-										 && cryptoPriceList->favoriteList().isEmpty());
+	updateListIsEmptyLabel();
 }
 
 } // namespace ChatHelpers

@@ -81,6 +81,7 @@ public:
 	/// We should call this every minute while the crypto price tab is shown
 	QUrl getCryptoPriceValues(int offset, int count);
 	QUrl getCryptoPriceValues(int offset, int count, const QStringList &shortNames);
+	void searchCryptoPriceNames();
 
 	/// Download and parse resource group list
 	void getResourceGroupList();
@@ -198,22 +199,12 @@ private slots:
 	void onUpdateVideoFeedsContent();
 
 	void onGetCryptoPriceNamesFinished();
-	void onGetCryptoPriceNamesSslFailed(QList<QSslError> errors);
-
-	void onGetCryptoPriceValuesSslFailed(QList<QSslError> errors);
-	void onGetCryptoPriceStatsSslFailed(QList<QSslError> errors);
-
 	void onGetNextAdFinished();
-	void onGetNextAdSslFailed(QList<QSslError> errors);
-
 	void onGetResourceGroupListFinished();
-	void onGetResourceGroupListSslFailed(QList<QSslError> errors);
-
 	void onGetRssChannelListFinished();
-	void onGetRssChannelListSslFailed(QList<QSslError> errors);
-
 	void onGetVideoChannelListFinished();
-	void onGetVideoChannelListSslFailed(QList<QSslError> errors);
+
+	void onSslFailed(QList<QSslError> errors);
 };
 
 } // namespace Bettergram
