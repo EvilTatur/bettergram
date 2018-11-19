@@ -494,9 +494,6 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 
 void CryptoPriceList::parseSearchNames(const QByteArray &byteArray)
 {
-	qDebug() << "";
-	qDebug() << "parseSearchNames:" << byteArray;
-	qDebug() << "";
 	_searchList.clear();
 
 	if (!isSearching()) {
