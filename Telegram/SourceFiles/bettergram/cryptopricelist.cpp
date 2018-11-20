@@ -309,9 +309,15 @@ void CryptoPriceList::setSearchText(const QString &searchText)
 	QString trimmedSearchText = searchText.trimmed();
 
 	if (_searchText != trimmedSearchText) {
+		bool wasSearching = isSearching();
+
 		_searchText = trimmedSearchText;
 
 		_isSearchInProgress = isSearching();
+
+		if (wasSearching != isSearching()) {
+			emit isSearchingChanged();
+		}
 
 		emit searchTextChanged();
 	}
@@ -366,6 +372,17 @@ QStringList CryptoPriceList::getSearchListShortNames() const
 
 	for (const QSharedPointer<CryptoPrice> &coin : _searchList) {
 		result.push_back(coin->shortName());
+	}
+
+	return result;
+}
+
+QStringList CryptoPriceList::getSearchListShortNames(int offset, int count) const
+{
+	QStringList result;
+
+	for (int i = qMax(0, offset); i < qMin(_searchList.size(), offset + count); ++i) {
+		result.push_back(_searchList.at(i)->shortName());
 	}
 
 	return result;
@@ -666,7 +683,9 @@ void CryptoPriceList::parseValues(const QByteArray &byteArray, const QUrl &url)
 	QJsonArray priceListJson = json.value("data").toArray();
 	prices = parsePriceListValues(priceListJson);
 
-	sort(prices);
+	if (!isSearching() && _sortOrder != SortOrder::Rank) {
+		sort(prices);
+	}
 
 	for (const QSharedPointer<CryptoPrice> &price : prices) {
 		price->downloadIconIfNeeded();

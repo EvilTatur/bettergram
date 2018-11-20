@@ -148,6 +148,7 @@ private slots:
 	void onCurrentPageChanged();
 	void onSearchTextChanged();
 	void onCancelSearch();
+	void onIsSearchingChanged();
 	void onFavoriteButtonClicked();
 	void onIsShowOnlyFavoritesChanged();
 };

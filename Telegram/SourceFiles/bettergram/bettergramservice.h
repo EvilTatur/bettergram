@@ -81,6 +81,7 @@ public:
 	/// We should call this every minute while the crypto price tab is shown
 	QUrl getCryptoPriceValues(int offset, int count);
 	QUrl getCryptoPriceValues(int offset, int count, const QStringList &shortNames);
+	QUrl getSearchCryptoPriceValues(int offset, int count);
 	void searchCryptoPriceNames();
 
 	/// Download and parse resource group list

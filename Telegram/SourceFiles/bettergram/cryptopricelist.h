@@ -73,6 +73,7 @@ public:
 
 	QStringList getFavoritesShortNames() const;
 	QStringList getSearchListShortNames() const;
+	QStringList getSearchListShortNames(int offset, int count) const;
 
 	void parseNames(const QByteArray &byteArray);
 	void parseSearchNames(const QByteArray &byteArray);
@@ -93,6 +94,7 @@ signals:
 	void freqChanged();
 	void sortOrderChanged();
 	void searchTextChanged();
+	void isSearchingChanged();
 	void isShowOnlyFavoritesChanged();
 
 	void namesUpdated();

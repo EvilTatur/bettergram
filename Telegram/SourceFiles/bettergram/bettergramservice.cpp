@@ -451,6 +451,39 @@ QUrl BettergramService::getCryptoPriceValues(int offset, int count, const QStrin
 	return url;
 }
 
+QUrl BettergramService::getSearchCryptoPriceValues(int offset, int count)
+{
+	if (offset < 0 || offset >= _cryptoPriceList->count() || count <= 0 || !_cryptoPriceList->isSearching()) {
+		QTimer::singleShot(0, _cryptoPriceList, [this] { _cryptoPriceList->emptyValues(); });
+		return QUrl();
+	}
+
+	QUrl url;
+
+	if (_cryptoPriceList->sortOrder() == CryptoPriceList::SortOrder::Rank) {
+		QStringList shortNames = _cryptoPriceList->getSearchListShortNames(offset, count);
+
+		url = QStringLiteral("https://%1.livecoinwatch.com/coins?limit=%5&only=%6")
+				.arg(_pricesUrlPrefix)
+				.arg(shortNames.size())
+				.arg(shortNames.join(QStringLiteral(",")));
+	} else {
+		QStringList shortNames = _cryptoPriceList->getSearchListShortNames();
+
+		url = QStringLiteral("https://%1.livecoinwatch.com/coins?sort=%2&order=%3&offset=%4&limit=%5&only=%6")
+				.arg(_pricesUrlPrefix)
+				.arg(_cryptoPriceList->sortString())
+				.arg(_cryptoPriceList->orderString())
+				.arg(offset)
+				.arg(shortNames.size())
+				.arg(shortNames.join(QStringLiteral(",")));
+	}
+
+	getCryptoPriceValues(url);
+
+	return url;
+}
+
 void BettergramService::searchCryptoPriceNames()
 {
 	if (!_cryptoPriceList->isSearching()) {

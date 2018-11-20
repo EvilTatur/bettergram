@@ -140,6 +140,9 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	connect(priceList, &CryptoPriceList::searchNamesUpdated,
 			this, &PricesListWidget::onSearchCryptoPriceNamesUpdated);
 
+	connect(priceList, &CryptoPriceList::isSearchingChanged,
+			this, &PricesListWidget::onIsSearchingChanged);
+
 	connect(priceList, &CryptoPriceList::valuesUpdated,
 			this, &PricesListWidget::onCryptoPriceValuesUpdated);
 
@@ -164,9 +167,8 @@ void PricesListWidget::getCryptoPriceValues()
 
 	if (priceList->isSearching()) {
 		_urlForFetchingCurrentPage =
-				service->getCryptoPriceValues(startRowIndexInCurrentPage(),
-											  _numberOfRowsInOnePage,
-											  priceList->getSearchListShortNames());
+				service->getSearchCryptoPriceValues(startRowIndexInCurrentPage(),
+													_numberOfRowsInOnePage);
 		return;
 	}
 
@@ -889,9 +891,8 @@ void PricesListWidget::onSearchCryptoPriceNamesUpdated()
 	_pageIndicator->setCurrentPage(0);
 
 	_urlForFetchingCurrentPage =
-			service->getCryptoPriceValues(startRowIndexInCurrentPage(),
-										  _numberOfRowsInOnePage,
-										  priceList->getSearchListShortNames());
+			service->getSearchCryptoPriceValues(startRowIndexInCurrentPage(),
+												_numberOfRowsInOnePage);
 }
 
 void PricesListWidget::onCryptoPriceValuesUpdated(const QUrl &url,
@@ -954,6 +955,27 @@ void PricesListWidget::onCancelSearch()
 	_searchTextEdit->updatePlaceholder();
 
 	onSearchTextChanged();
+}
+
+void PricesListWidget::onIsSearchingChanged()
+{
+	CryptoPriceList *const priceList = BettergramService::instance()->cryptoPriceList();
+
+	if (priceList->isSearching() && priceList->sortOrder() != CryptoPriceList::SortOrder::Rank) {
+		// We should change sort order to `best match` by default
+
+		disconnect(priceList, &CryptoPriceList::sortOrderChanged,
+				   this, &PricesListWidget::onCryptoPriceSortOrderChanged);
+
+		_coinHeader->resetSortOrder(false);
+		_priceHeader->resetSortOrder(false);
+		_24hHeader->resetSortOrder(false);
+
+		priceList->setSortOrder(CryptoPriceList::SortOrder::Rank);
+
+		connect(priceList, &CryptoPriceList::sortOrderChanged,
+				this, &PricesListWidget::onCryptoPriceSortOrderChanged);
+	}
 }
 
 void PricesListWidget::onFavoriteButtonClicked()
