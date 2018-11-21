@@ -103,6 +103,7 @@ int PaintWideCounter(
 		bool displayUnreadMark,
 		bool displayMentionBadge,
 		bool displayPinnedIcon,
+		bool displayFavoriteIcon,
 		int unreadCount,
 		bool active,
 		bool selected,
@@ -124,12 +125,24 @@ int PaintWideCounter(
 		availableWidth -= unreadWidth + st.padding;
 
 		hadOneBadge = true;
-	} else if (displayPinnedIcon) {
-		auto &icon = (active ? st::dialogsPinnedIconActive : (selected ? st::dialogsPinnedIconOver : st::dialogsPinnedIcon));
-		icon.paint(p, fullWidth - st::dialogsPadding.x() - icon.width(), texttop, fullWidth);
-		availableWidth -= icon.width() + st::dialogsUnreadPadding;
+	} else {
+		auto right = fullWidth;
 
-		hadOneBadge = true;
+		if (displayPinnedIcon) {
+			auto &icon = (active ? st::dialogsPinnedIconActive : (selected ? st::dialogsPinnedIconOver : st::dialogsPinnedIcon));
+			icon.paint(p, fullWidth - st::dialogsPadding.x() - icon.width(), texttop, fullWidth);
+			availableWidth -= icon.width() + st::dialogsUnreadPadding;
+			right -= icon.width() + st::dialogsUnreadPadding;
+
+			hadOneBadge = true;
+		}
+		if (displayFavoriteIcon) {
+			auto &icon = (active ? st::dialogsFavoriteIconActive : (selected ? st::dialogsFavoriteIconOver : st::dialogsFavoriteIcon));
+			icon.paint(p, right - st::dialogsPadding.x() - icon.width(), texttop, right);
+			availableWidth -= icon.width() + st::dialogsUnreadPadding;
+
+			hadOneBadge = true;
+		}
 	}
 	if (displayMentionBadge) {
 		auto counter = qsl("@");
@@ -582,6 +595,9 @@ void RowPainter::paint(
 		&& !displayMentionBadge
 		&& !displayUnreadMark
 		&& entry->isPinnedDialog();
+	const auto displayFavoriteIcon = !displayUnreadCounter
+				&& !displayMentionBadge
+				&& entry->isFavoriteDialog();
 
 	const auto from = history
 		? (history->peer->migrateTo()
@@ -605,6 +621,7 @@ void RowPainter::paint(
 			displayUnreadMark,
 			displayMentionBadge,
 			displayPinnedIcon,
+			displayFavoriteIcon,
 			unreadCount,
 			active,
 			selected,
@@ -713,6 +730,12 @@ void RowPainter::paint(
 	const auto displayUnreadMark = !displayUnreadCounter
 		&& !displayMentionBadge
 		&& unreadMark;
+	const auto displayFavoriteIcon = !displayUnreadCounter
+				&& !displayMentionBadge
+				&& row
+				&& row->searchInChat()
+				&& row->searchInChat().entry()
+				&& row->searchInChat().entry()->isFavoriteDialog();
 	const auto displayPinnedIcon = false;
 
 	const auto paintItemCallback = [&](int nameleft, int namewidth) {
@@ -728,6 +751,7 @@ void RowPainter::paint(
 			displayUnreadMark,
 			displayMentionBadge,
 			displayPinnedIcon,
+			displayFavoriteIcon,
 			unreadCount,
 			active,
 			selected,
