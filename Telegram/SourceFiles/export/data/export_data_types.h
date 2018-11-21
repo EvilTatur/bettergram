@@ -66,6 +66,7 @@ struct File {
 		Unavailable,
 		FileType,
 		FileSize,
+		DateLimits,
 	};
 	FileLocation location;
 	int size = 0;
@@ -87,8 +88,8 @@ std::pair<QString, QSize> WriteImageThumb(
 	const QString &basePath,
 	const QString &largePath,
 	Fn<QSize(QSize)> convertSize,
-	base::optional<QByteArray> format = base::none,
-	base::optional<int> quality = base::none,
+	std::optional<QByteArray> format = std::nullopt,
+	std::optional<int> quality = std::nullopt,
 	const QString &postfix = "_thumb");
 
 QString WriteImageThumb(
@@ -318,7 +319,8 @@ struct ParseMediaContext {
 Media ParseMedia(
 	ParseMediaContext &context,
 	const MTPMessageMedia &data,
-	const QString &folder);
+	const QString &folder,
+	TimeId date);
 
 struct ActionChatCreate {
 	Utf8String title;
@@ -566,6 +568,14 @@ MessagesSlice ParseMessagesSlice(
 	const MTPVector<MTPUser> &users,
 	const MTPVector<MTPChat> &chats,
 	const QString &mediaFolder);
+
+bool SingleMessageBefore(
+	const MTPmessages_Messages &data,
+	TimeId date);
+bool SingleMessageAfter(
+	const MTPmessages_Messages &data,
+	TimeId date);
+bool SkipMessageByDate(const Message &message, const Settings &settings);
 
 Utf8String FormatPhoneNumber(const Utf8String &phoneNumber);
 Utf8String FormatDateTime(

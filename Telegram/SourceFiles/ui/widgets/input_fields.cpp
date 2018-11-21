@@ -15,6 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "mainwindow.h"
 #include "numbers.h"
+#include "auth_session.h"
 #include "messenger.h"
 
 namespace Ui {
@@ -2472,19 +2473,28 @@ not_null<const QTextEdit*> InputField::rawTextEdit() const {
 	return _inner.get();
 }
 
+bool InputField::ShouldSubmit(
+		SubmitSettings settings,
+		Qt::KeyboardModifiers modifiers) {
+	const auto shift = modifiers.testFlag(Qt::ShiftModifier);
+	const auto ctrl = modifiers.testFlag(Qt::ControlModifier)
+		|| modifiers.testFlag(Qt::MetaModifier);
+	return (ctrl && shift)
+		|| (ctrl
+			&& settings != SubmitSettings::None
+			&& settings != SubmitSettings::Enter)
+		|| (!ctrl
+			&& !shift
+			&& settings != SubmitSettings::None
+			&& settings != SubmitSettings::CtrlEnter);
+}
+
 void InputField::keyPressEventInner(QKeyEvent *e) {
 	bool shift = e->modifiers().testFlag(Qt::ShiftModifier), alt = e->modifiers().testFlag(Qt::AltModifier);
 	bool macmeta = (cPlatform() == dbipMac || cPlatform() == dbipMacOld) && e->modifiers().testFlag(Qt::ControlModifier) && !e->modifiers().testFlag(Qt::MetaModifier) && !e->modifiers().testFlag(Qt::AltModifier);
 	bool ctrl = e->modifiers().testFlag(Qt::ControlModifier) || e->modifiers().testFlag(Qt::MetaModifier);
 	bool enterSubmit = (_mode == Mode::SingleLine)
-		|| (ctrl && shift)
-		|| (ctrl
-			&& _submitSettings != SubmitSettings::None
-			&& _submitSettings != SubmitSettings::Enter)
-		|| (!ctrl
-			&& !shift
-			&& _submitSettings != SubmitSettings::None
-			&& _submitSettings != SubmitSettings::CtrlEnter);
+		|| ShouldSubmit(_submitSettings, e->modifiers());
 	bool enter = (e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return);
 	if (e->key() == Qt::Key_Left
 		|| e->key() == Qt::Key_Right
@@ -2851,7 +2861,7 @@ void InputField::commitInstantReplacement(
 		int from,
 		int till,
 		const QString &with,
-		base::optional<QString> checkOriginal) {
+		std::optional<QString> checkOriginal) {
 	const auto original = getTextWithTagsPart(from, till).text;
 	if (checkOriginal
 		&& checkOriginal->compare(original, Qt::CaseInsensitive) != 0) {
@@ -4122,10 +4132,11 @@ void PhoneInput::focusInEvent(QFocusEvent *e) {
 
 void PhoneInput::clearText() {
 	QString phone;
-	if (App::self()) {
-		QVector<int> newPattern = phoneNumberParse(App::self()->phone());
+	if (AuthSession::Exists()) {
+		const auto self = Auth().user();
+		QVector<int> newPattern = phoneNumberParse(self->phone());
 		if (!newPattern.isEmpty()) {
-			phone = App::self()->phone().mid(0, newPattern.at(0));
+			phone = self->phone().mid(0, newPattern.at(0));
 		}
 	}
 	setText(phone);

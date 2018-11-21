@@ -33,7 +33,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mediaview.h"
 #include "storage/localstorage.h"
 #include "apiwrap.h"
-#include "settings/settings_widget.h"
+#include "settings/settings_intro.h"
 #include "platform/platform_notifications_manager.h"
 #include "window/layer_widget.h"
 #include "window/notifications_manager.h"
@@ -80,7 +80,9 @@ MainWindow::MainWindow() {
 
 	setLocale(QLocale(QLocale::English, QLocale::UnitedStates));
 
-	subscribe(Global::RefSelfChanged(), [this] { updateGlobalMenu(); });
+	subscribe(Messenger::Instance().authSessionChanged(), [this] {
+		updateGlobalMenu();
+	});
 	subscribe(Window::Theme::Background(), [this](const Window::Theme::BackgroundUpdate &data) {
 		themeUpdated(data);
 	});
@@ -211,74 +213,9 @@ void MainWindow::setupIntro() {
 	}
 
 	fixOrder();
-
-	_delayedServiceMsgs.clear();
-	if (_serviceHistoryRequest) {
-		MTP::cancel(_serviceHistoryRequest);
-		_serviceHistoryRequest = 0;
-	}
 }
 
-void MainWindow::serviceNotification(const TextWithEntities &message, const MTPMessageMedia &media, int32 date, bool force) {
-	if (date <= 0) date = unixtime();
-	auto h = (_main && App::userLoaded(ServiceUserId)) ? App::history(ServiceUserId).get() : nullptr;
-	if (!h || (!force && h->isEmpty())) {
-		_delayedServiceMsgs.push_back(DelayedServiceMsg(message, media, date));
-		return sendServiceHistoryRequest();
-	}
-
-	_main->insertCheckedServiceNotification(message, media, date);
-}
-
-void MainWindow::showDelayedServiceMsgs() {
-	for (auto &delayed : base::take(_delayedServiceMsgs)) {
-		serviceNotification(delayed.message, delayed.media, delayed.date, true);
-	}
-}
-
-void MainWindow::sendServiceHistoryRequest() {
-	if (!_main || !_main->started() || _delayedServiceMsgs.isEmpty() || _serviceHistoryRequest) return;
-
-	auto user = App::userLoaded(ServiceUserId);
-	if (!user) {
-		auto userFlags = MTPDuser::Flag::f_first_name | MTPDuser::Flag::f_phone | MTPDuser::Flag::f_status | MTPDuser::Flag::f_verified;
-		user = App::feedUsers(MTP_vector<MTPUser>(1, MTP_user(
-			MTP_flags(userFlags),
-			MTP_int(ServiceUserId),
-			MTPlong(),
-			MTP_string("Telegram"),
-			MTPstring(),
-			MTPstring(),
-			MTP_string("42777"),
-			MTP_userProfilePhotoEmpty(),
-			MTP_userStatusRecently(),
-			MTPint(),
-			MTPstring(),
-			MTPstring(),
-			MTPstring())));
-	}
-	auto offsetId = 0;
-	auto offsetDate = 0;
-	auto addOffset = 0;
-	auto limit = 1;
-	auto maxId = 0;
-	auto minId = 0;
-	auto historyHash = 0;
-	_serviceHistoryRequest = MTP::send(
-		MTPmessages_GetHistory(
-			user->input,
-			MTP_int(offsetId),
-			MTP_int(offsetDate),
-			MTP_int(addOffset),
-			MTP_int(limit),
-			MTP_int(maxId),
-			MTP_int(minId),
-			MTP_int(historyHash)),
-		_main->rpcDone(&MainWidget::serviceHistoryDone),
-		_main->rpcFail(&MainWidget::serviceHistoryFail));
-}
-
-void MainWindow::setupMain(const MTPUser *self) {
+void MainWindow::setupMain() {
 	Expects(AuthSession::Exists());
 
 	auto animated = (_intro || _passcodeLock);
@@ -295,7 +232,7 @@ void MainWindow::setupMain(const MTPUser *self) {
 	} else {
 		_main->activate();
 	}
-	_main->start(self);
+	_main->start();
 
 	fixOrder();
 }
@@ -303,7 +240,11 @@ void MainWindow::setupMain(const MTPUser *self) {
 void MainWindow::showSettings() {
 	if (isHidden()) showFromTray();
 
-	controller()->showSpecialLayer(Box<Settings::Widget>());
+	if (const auto controller = this->controller()) {
+		controller->showSettings();
+	} else {
+		showSpecialLayer(Box<Settings::LayerWidget>(), anim::type::normal);
+	}
 }
 
 void MainWindow::showSpecialLayer(
@@ -365,6 +306,12 @@ void MainWindow::ui_hideSettingsAndLayer(anim::type animated) {
 		if (animated == anim::type::instant) {
 			destroyLayerDelayed();
 		}
+	}
+}
+
+void MainWindow::ui_removeLayerBlackout() {
+	if (_layer) {
+		_layer->removeBodyCache();
 	}
 }
 
@@ -470,16 +417,20 @@ void MainWindow::themeUpdated(const Window::Theme::BackgroundUpdate &data) {
 
 bool MainWindow::doWeReadServerHistory() {
 	updateIsActive(0);
-	return isActive() && _main && !Ui::isLayerShown() && _main->doWeReadServerHistory();
+	return isActive()
+		&& !Ui::isLayerShown()
+		&& (_main ? _main->doWeReadServerHistory() : false);
 }
 
 bool MainWindow::doWeReadMentions() {
 	updateIsActive(0);
-	return isActive() && _main && !Ui::isLayerShown() && _main->doWeReadMentions();
+	return isActive()
+		&& !Ui::isLayerShown()
+		&& (_main ? _main->doWeReadMentions() : false);
 }
 
 void MainWindow::checkHistoryActivation() {
-	if (_main && doWeReadServerHistory()) {
+	if (doWeReadServerHistory()) {
 		_main->markActiveHistoryAsRead();
 	}
 }
@@ -596,7 +547,7 @@ void MainWindow::updateTrayMenu(bool force) {
 void MainWindow::onShowAddContact() {
 	if (isHidden()) showFromTray();
 
-	if (App::self()) {
+	if (AuthSession::Exists()) {
 		Ui::show(Box<AddContactBox>(), LayerOption::KeepOther);
 	}
 }
@@ -604,7 +555,7 @@ void MainWindow::onShowAddContact() {
 void MainWindow::onShowNewGroup() {
 	if (isHidden()) showFromTray();
 
-	if (App::self()) {
+	if (AuthSession::Exists()) {
 		Ui::show(
 			Box<GroupInfoBox>(CreatingGroupGroup, false),
 			LayerOption::KeepOther);
@@ -795,7 +746,7 @@ MainWindow::TempDirState MainWindow::localStorageState() {
 	if (_clearManager && _clearManager->hasTask(Local::ClearManagerStorage)) {
 		return TempDirRemoving;
 	}
-	return (Local::hasImages() || Local::hasStickers() || Local::hasWebFiles() || Local::hasAudios()) ? TempDirExists : TempDirEmpty;
+	return TempDirEmpty;
 }
 
 void MainWindow::tempDirDelete(int task) {
@@ -924,6 +875,9 @@ QImage MainWindow::iconWithCounter(int size, int count, style::color bg, style::
 	}
 
 	QImage img(smallIcon ? ((size == 16) ? iconbig16 : (size == 32 ? iconbig32 : iconbig64)) : ((size == 16) ? icon16 : (size == 32 ? icon32 : icon64)));
+	if (AuthSession::Exists() && Auth().supportMode()) {
+		Window::ConvertIconToBlack(img);
+	}
 	if (!count) return img;
 
 	if (smallIcon) {

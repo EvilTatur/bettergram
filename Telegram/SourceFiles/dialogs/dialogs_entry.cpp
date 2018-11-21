@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "dialogs/dialogs_key.h"
 #include "dialogs/dialogs_indexed_list.h"
 #include "mainwidget.h"
+#include "auth_session.h"
 #include "styles/style_dialogs.h"
 #include "history/history_item.h"
 #include "history/history.h"
@@ -60,7 +61,7 @@ void Entry::cachePinnedIndex(int index) {
 		}
 
 		QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
-		settings.beginGroup(App::self()->phone());
+		settings.beginGroup(Auth().user()->phone());
 		settings.beginGroup("pinned");
 		settings.setValue(QString::number(_key.id()), _pinnedIndex);
 		settings.endGroup();
@@ -84,6 +85,11 @@ bool Entry::needUpdateInChatList() const {
 }
 
 void Entry::updateChatListSortPosition() {
+	if (Auth().supportMode()
+		&& _sortKeyInChatList != 0
+		&& Auth().settings().supportFixChatsOrder()) {
+		return;
+	}
 	_sortKeyInChatList = useProxyPromotion()
 		? ProxyPromotedDialogPos()
 		: isPinnedDialog()
@@ -243,7 +249,7 @@ void Entry::loadIsFavorite(uint64 id) {
 	QString keyString = QString::number(id);
 
 	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
-	settings.beginGroup(App::self()->phone());
+	settings.beginGroup(Auth().user()->phone());
 	settings.beginGroup("favorites");
 
 	if (settings.contains(keyString)) {
@@ -260,7 +266,7 @@ void Entry::loadPinnedIndex(uint64 id)
 {
 	Bettergram::BettergramService::instance()->portSettingsFiles();
 	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
-	settings.beginGroup(App::self()->phone());
+	settings.beginGroup(Auth().user()->phone());
 	settings.beginGroup("pinned");
 	_pinnedIndex = settings.value(QString::number(id)).toInt();
 	settings.endGroup();
@@ -277,7 +283,7 @@ void Entry::setIsFavoriteDialog(bool isFavorite) {
 		QString keyString = QString::number(_key.id());
 
 		QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
-		settings.beginGroup(App::self()->phone());
+		settings.beginGroup(Auth().user()->phone());
 		settings.beginGroup("favorites");
 
 		if (_isFavorite) {

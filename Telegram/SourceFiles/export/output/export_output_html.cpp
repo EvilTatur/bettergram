@@ -1058,7 +1058,7 @@ auto HtmlWriter::Wrap::pushMessage(
 		}
 		return "You have sent the following documents: "
 			+ SerializeList(list);
-	}, [](const base::none_type &) { return QByteArray(); });
+	}, [](std::nullopt_t) { return QByteArray(); });
 
 	if (!serviceText.isEmpty()) {
 		const auto &content = message.action.content;
@@ -1658,7 +1658,7 @@ MediaData HtmlWriter::Wrap::prepareMediaData(
 		result.status = Data::FormatMoneyAmount(data.amount, data.currency);
 	}, [](const UnsupportedMedia &data) {
 		Unexpected("Unsupported message.");
-	}, [](const base::none_type &) {});
+	}, [](std::nullopt_t) {});
 	return result;
 }
 
@@ -2276,9 +2276,12 @@ Result HtmlWriter::writeDialogSlice(const Data::MessagesSlice &data) {
 		? ((_messagesCount - 1) / kMessagesInFile)
 		: 0;
 	auto previous = _lastMessageInfo.get();
-	auto saved = base::optional<MessageInfo>();
+	auto saved = std::optional<MessageInfo>();
 	auto block = QByteArray();
 	for (const auto &message : data.list) {
+		if (Data::SkipMessageByDate(message, _settings)) {
+			continue;
+		}
 		const auto newIndex = (_messagesCount / kMessagesInFile);
 		if (oldIndex != newIndex) {
 			if (const auto result = _chat->writeBlock(block); !result) {
@@ -2291,7 +2294,7 @@ Result HtmlWriter::writeDialogSlice(const Data::MessagesSlice &data) {
 				block = QByteArray();
 				_lastMessageInfo = nullptr;
 				previous = nullptr;
-				saved = base::none;
+				saved = std::nullopt;
 				oldIndex = newIndex;
 			} else {
 				return next;
@@ -2328,7 +2331,7 @@ Result HtmlWriter::writeDialogSlice(const Data::MessagesSlice &data) {
 	if (saved) {
 		_lastMessageInfo = std::make_unique<MessageInfo>(*saved);
 	}
-	return _chat->writeBlock(block);
+	return block.isEmpty() ? Result::Success() : _chat->writeBlock(block);
 }
 
 Result HtmlWriter::writeEmptySinglePeer() {
@@ -2345,7 +2348,7 @@ Result HtmlWriter::writeEmptySinglePeer() {
 		--_dateMessageId,
 		_dialog,
 		_settings.path,
-		"Empty chat"));
+		"No exported messages"));
 }
 
 Result HtmlWriter::writeDialogEnd() {

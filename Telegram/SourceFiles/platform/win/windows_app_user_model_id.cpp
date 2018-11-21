@@ -30,7 +30,7 @@ const WCHAR AppUserModelIdRelease[] = L"Bettergram.Bettergram.Store";
 #else // OS_WIN_STORE
 const WCHAR AppUserModelIdRelease[] = L"Bettergram.Bettergram";
 #endif // OS_WIN_STORE
-const WCHAR AppUserModelIdBeta[] = L"Bettergram.Bettergram.Beta";
+const WCHAR AppUserModelIdAlpha[] = L"Bettergram.Bettergram.Alpha";
 
 } // namespace
 
@@ -252,8 +252,8 @@ bool validateShortcut() {
 	QString path = systemShortcutPath();
 	if (path.isEmpty() || cExeName().isEmpty()) return false;
 
-	if (cBetaVersion()) {
-	        path += qsl("BettergramBeta.lnk");
+	if (cAlphaVersion()) {
+		path += qsl("BettergramAlpha.lnk");
 		if (validateShortcutAt(path)) return true;
 	} else {
 	        if (validateShortcutAt(path + qsl("Bettergram/Bettergram.lnk"))) return true;
@@ -310,7 +310,7 @@ bool validateShortcut() {
 }
 
 const WCHAR *getId() {
-	return cBetaVersion() ? AppUserModelIdBeta : AppUserModelIdRelease;
+	return cAlphaVersion() ? AppUserModelIdAlpha : AppUserModelIdRelease;
 }
 
 const PROPERTYKEY &getKey() {

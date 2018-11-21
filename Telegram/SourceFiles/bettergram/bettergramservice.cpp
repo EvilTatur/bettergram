@@ -6,6 +6,7 @@
 #include "resourcegrouplist.h"
 #include "aditem.h"
 
+#include <auth_session.h>
 #include <mainwidget.h>
 #include <messenger.h>
 #include <settings.h>
@@ -200,8 +201,8 @@ void BettergramService::portSettingsFiles()
 	QSettings oldSettings;
 	QSettings newSettings = bettergramSettings();
 
-	oldSettings.beginGroup(App::self()->phone());
-	newSettings.beginGroup(App::self()->phone());
+	oldSettings.beginGroup(Auth().user()->phone());
+	newSettings.beginGroup(Auth().user()->phone());
 
 	oldSettings.beginGroup("favorites");
 	newSettings.beginGroup("favorites");

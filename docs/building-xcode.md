@@ -94,7 +94,7 @@ Go to ***BuildPath*** and run
 
     git clone https://chromium.googlesource.com/external/gyp
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    export PATH="$PWD/depot_tools:$PATH" 
+    export PATH="$PWD/depot_tools:$PATH"
     cd gyp
     git checkout 702ac58e47
     git apply ../../bettergram/Telegram/Patches/gyp.diff

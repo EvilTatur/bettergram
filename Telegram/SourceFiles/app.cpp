@@ -49,8 +49,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace {
 	App::LaunchState _launchState = App::Launched;
 
-	UserData *self = nullptr;
-
 	std::unordered_map<PeerId, std::unique_ptr<PeerData>> peersData;
 
 	using LocationsData = QHash<LocationCoords, LocationData*>;
@@ -309,10 +307,6 @@ namespace App {
 					: data->phone().isEmpty()
 					? UserData::ContactStatus::PhoneUnknown
 					: UserData::ContactStatus::CanAdd);
-				if (d.is_self() && ::self != data) {
-					::self = data;
-					Global::RefSelfChanged().notify();
-				}
 			}
 
 			if (canShareThisContact != data->canShareThisContactFast()) {
@@ -329,13 +323,16 @@ namespace App {
 			if (data->loadedStatus == PeerData::NotLoaded) {
 				data->loadedStatus = PeerData::MinimalLoaded;
 			}
-		} else if (data->loadedStatus != PeerData::FullLoaded) {
+		} else if (data->loadedStatus != PeerData::FullLoaded
+			&& (!data->isSelf() || !data->phone().isEmpty())) {
 			data->loadedStatus = PeerData::FullLoaded;
 		}
 
 		if (status && !minimal) {
-			auto oldOnlineTill = data->onlineTill;
-			auto newOnlineTill = Auth().api().onlineTillFromStatus(*status, oldOnlineTill);
+			const auto oldOnlineTill = data->onlineTill;
+			const auto newOnlineTill = ApiWrap::OnlineTillFromStatus(
+				*status,
+				oldOnlineTill);
 			if (oldOnlineTill != newOnlineTill) {
 				data->onlineTill = newOnlineTill;
 				update.flags |= UpdateFlag::UserOnlineChanged;
@@ -344,7 +341,7 @@ namespace App {
 
 		if (data->contactStatus() == UserData::ContactStatus::PhoneUnknown
 			&& !data->phone().isEmpty()
-			&& data->id != Auth().userPeerId()) {
+			&& !data->isSelf()) {
 			data->setContactStatus(UserData::ContactStatus::CanAdd);
 		}
 		if (App::main()) {
@@ -918,7 +915,7 @@ namespace App {
 	}
 
 	void checkSavedGif(HistoryItem *item) {
-		if (!item->Has<HistoryMessageForwarded>() && (item->out() || item->history()->peer == App::self())) {
+		if (!item->Has<HistoryMessageForwarded>() && (item->out() || item->history()->peer == Auth().user())) {
 			if (const auto media = item->media()) {
 				if (const auto document = media->document()) {
 					if (document->isGifv()) {
@@ -1153,10 +1150,6 @@ namespace App {
 		}
 	}
 
-	UserData *self() {
-		return ::self;
-	}
-
 	PeerData *peerByName(const QString &username) {
 		const auto uname = username.trimmed();
 		for (const auto &[peerId, peer] : peersData) {
@@ -1262,7 +1255,6 @@ namespace App {
 
 	void historyClearMsgs() {
 		::dependentItems.clear();
-
 		const auto oldData = base::take(msgsData);
 		const auto oldChannelData = base::take(channelMsgsData);
 		for (const auto item : oldData) {
@@ -1272,6 +1264,9 @@ namespace App {
 			for (const auto item : data) {
 				delete item;
 			}
+		}
+		for (const auto data : base::take(::locationsData)) {
+			delete data;
 		}
 
 		clearMousedItems();
@@ -1294,8 +1289,6 @@ namespace App {
 		cSetAutoDownloadPhoto(0);
 		cSetAutoDownloadAudio(0);
 		cSetAutoDownloadGif(0);
-		::self = nullptr;
-		Global::RefSelfChanged().notify(true);
 	}
 
 	void historyRegDependency(HistoryItem *dependent, HistoryItem *dependency) {
@@ -1596,11 +1589,6 @@ namespace App {
 			Auth().data().forgetMedia();
 			serviceImageCacheSize = imageCacheSize();
 		}
-	}
-
-	bool isValidPhone(QString phone) {
-		phone = phone.replace(QRegularExpression(qsl("[^\\d]")), QString());
-		return phone.length() >= 8 || phone == qsl("777") || phone == qsl("333") || phone == qsl("111") || (phone.startsWith(qsl("42")) && (phone.length() == 2 || phone.length() == 5 || phone == qsl("4242")));
 	}
 
 	void quit() {

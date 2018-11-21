@@ -61,6 +61,7 @@
       'telegram_win.gypi',
       'telegram_mac.gypi',
       'telegram_linux.gypi',
+      'openssl.gypi',
       'qt.gypi',
       'qt_moc.gypi',
       'qt_rcc.gypi',
@@ -77,7 +78,9 @@
       'utils.gyp:Updater',
       '../ThirdParty/libtgvoip/libtgvoip.gyp:libtgvoip',
       'crl.gyp:crl',
+      'lib_base.gyp:lib_base',
       'lib_export.gyp:lib_export',
+      'lib_storage.gyp:lib_storage',
     ],
 
     'defines': [
@@ -85,6 +88,7 @@
       'AL_ALEXT_PROTOTYPES',
       'TGVOIP_USE_CXX11_LIB',
       'CUSTOM_API_ID',
+      'XXH_INLINE_ALL',
       '<!@(python -c "for s in \'<(build_defines)\'.split(\',\'): print(s)")',
     ],
 
@@ -104,6 +108,7 @@
       '<(submodules_loc)/GSL/include',
       '<(submodules_loc)/variant/include',
       '<(submodules_loc)/crl/src',
+      '<(submodules_loc)/xxHash',
     ],
     'sources': [
       '<@(qrc_files)',
@@ -131,6 +136,13 @@
         'mac_bundle_resources': [
           '<!@(python -c "for s in \'<@(langpacks)\'.split(\' \'): print(\'<(res_loc)/langs/\' + s + \'.lproj/Localizable.strings\')")',
           '../Telegram/Images.xcassets',
+        ],
+      }], [ 'build_macstore', {
+        'mac_sandbox': 1,
+        'mac_sandbox_development_team': '6N38VWS5BX',
+        'product_name': 'Telegram Desktop',
+        'sources': [
+          '../Telegram/Telegram Desktop.entitlements',
         ],
       }],
     ],

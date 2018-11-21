@@ -10,6 +10,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/flags.h"
 #include "data/data_file_origin.h"
 
+namespace Storage {
+namespace Cache {
+struct Key;
+} // namespace Cache
+} // namespace Storage
+
 enum class ImageRoundRadius {
 	None,
 	Large,
@@ -153,7 +159,9 @@ public:
 		return _fileReference;
 	}
 	void refreshFileReference(const QByteArray &data) {
-		_fileReference = data;
+		if (!data.isEmpty()) {
+			_fileReference = data;
+		}
 	}
 
 	static StorageImageLocation FromMTP(
@@ -240,6 +248,34 @@ private:
 };
 
 inline bool operator!=(const WebFileLocation &a, const WebFileLocation &b) {
+	return !(a == b);
+}
+
+struct GeoPointLocation {
+	float64 lat = 0.;
+	float64 lon = 0.;
+	uint64 access = 0;
+	int32 width = 0;
+	int32 height = 0;
+	int32 zoom = 0;
+	int32 scale = 0;
+};
+
+inline bool operator==(
+		const GeoPointLocation &a,
+		const GeoPointLocation &b) {
+	return (a.lat == b.lat)
+		&& (a.lon == b.lon)
+		&& (a.access == b.access)
+		&& (a.width == b.width)
+		&& (a.height == b.height)
+		&& (a.zoom == b.zoom)
+		&& (a.scale == b.scale);
+}
+
+inline bool operator!=(
+		const GeoPointLocation &a,
+		const GeoPointLocation &b) {
 	return !(a == b);
 }
 
@@ -370,6 +406,7 @@ public:
 	virtual const StorageImageLocation &location() const {
 		return StorageImageLocation::Null;
 	}
+	virtual std::optional<Storage::Cache::Key> cacheKey() const;
 
 	bool isNull() const;
 
@@ -392,7 +429,7 @@ public:
 	virtual ~Image();
 
 protected:
-	Image(QByteArray format = "PNG") : _format(format), _forgot(false) {
+	Image(QByteArray format = "PNG") : _format(format) {
 	}
 
 	void restore() const;
@@ -410,12 +447,8 @@ protected:
 		return _data.height();
 	}
 
-	virtual bool hasLocalCopy() const {
-		return false;
-	}
-
 	mutable QByteArray _saved, _format;
-	mutable bool _forgot;
+	mutable bool _forgot = false;
 	mutable QPixmap _data;
 
 private:
@@ -445,6 +478,12 @@ inline StorageKey storageKey(const WebFileLocation &location) {
 		*reinterpret_cast<const uint64*>(sha.data()),
 		*reinterpret_cast<const int32*>(sha.data() + sizeof(uint64)));
 }
+inline StorageKey storageKey(const GeoPointLocation &location) {
+	return StorageKey(
+		(uint64(std::round(std::abs(location.lat + 360.) * 1000000)) << 32)
+		| uint64(std::round(std::abs(location.lon + 360.) * 1000000)),
+		(uint64(location.width) << 32) | uint64(location.height));
+}
 
 class RemoteImage : public Image {
 public:
@@ -462,8 +501,8 @@ public:
 	float64 progress() const override;
 	int32 loadOffset() const override;
 
-	void setData(
-		QByteArray &bytes,
+	void setImageBytes(
+		const QByteArray &bytes,
 		const QByteArray &format = QByteArray());
 
 	void load(
@@ -505,11 +544,15 @@ private:
 
 class StorageImage : public RemoteImage {
 public:
-	StorageImage(const StorageImageLocation &location, int32 size = 0);
-	StorageImage(const StorageImageLocation &location, QByteArray &bytes);
+	explicit StorageImage(const StorageImageLocation &location, int32 size = 0);
+	StorageImage(const StorageImageLocation &location, const QByteArray &bytes);
 
 	const StorageImageLocation &location() const override {
 		return _location;
+	}
+	std::optional<Storage::Cache::Key> cacheKey() const override;
+	void refreshFileReference(const QByteArray &data) {
+		_location.refreshFileReference(data);
 	}
 
 protected:
@@ -518,8 +561,6 @@ protected:
 		Data::FileOrigin origin,
 		LoadFromCloudSetting fromCloud,
 		bool autoLoading) override;
-
-	bool hasLocalCopy() const override;
 
 	int32 countWidth() const override;
 	int32 countHeight() const override;
@@ -538,6 +579,8 @@ public:
 		int height,
 		int size = 0);
 
+	std::optional<Storage::Cache::Key> cacheKey() const override;
+
 protected:
 	void setInformation(int size, int width, int height) override;
 	FileLoader *createLoader(
@@ -548,8 +591,6 @@ protected:
 	QSize shrinkBox() const override {
 		return _box;
 	}
-
-	bool hasLocalCopy() const override;
 
 	int countWidth() const override;
 	int countHeight() const override;
@@ -562,11 +603,32 @@ protected:
 
 };
 
+class GeoPointImage : public RemoteImage {
+public:
+	GeoPointImage(const GeoPointLocation &location);
+
+	std::optional<Storage::Cache::Key> cacheKey() const override;
+
+protected:
+	void setInformation(int size, int width, int height) override;
+	FileLoader *createLoader(
+		Data::FileOrigin origin,
+		LoadFromCloudSetting fromCloud,
+		bool autoLoading) override;
+
+	int countWidth() const override;
+	int countHeight() const override;
+
+	GeoPointLocation _location;
+	int _size = 0;
+
+};
+
 class DelayedStorageImage : public StorageImage {
 public:
 	DelayedStorageImage();
 	DelayedStorageImage(int32 w, int32 h);
-	DelayedStorageImage(QByteArray &bytes);
+	//DelayedStorageImage(QByteArray &bytes);
 
 	void setStorageLocation(
 		Data::FileOrigin origin,
@@ -612,6 +674,8 @@ public:
 
 	void setSize(int width, int height);
 
+	std::optional<Storage::Cache::Key> cacheKey() const override;
+
 protected:
 	QSize shrinkBox() const override {
 		return _box;
@@ -624,8 +688,6 @@ protected:
 
 	int32 countWidth() const override;
 	int32 countHeight() const override;
-
-	bool hasLocalCopy() const override;
 
 private:
 	QString _url;
@@ -647,7 +709,7 @@ Image *getImage(
 	const QPixmap &pixmap);
 Image *getImage(int32 width, int32 height);
 StorageImage *getImage(const StorageImageLocation &location, int size = 0);
-StorageImage *getImage(
+StorageImage *getImage( // photoCachedSize
 	const StorageImageLocation &location,
 	const QByteArray &bytes);
 Image *getImage(const MTPWebDocument &location);
@@ -661,6 +723,8 @@ WebFileImage *getImage(
 	const WebFileLocation &location,
 	QSize box,
 	int size = 0);
+GeoPointImage *getImage(
+	const GeoPointLocation &location);
 
 } // namespace internal
 
@@ -692,6 +756,9 @@ public:
 	}
 	ImagePtr(const WebFileLocation &location, QSize box, int size = 0)
 		: Parent(internal::getImage(location, box, size)) {
+	}
+	ImagePtr(const GeoPointLocation &location)
+		: Parent(internal::getImage(location)) {
 	}
 	ImagePtr(int32 width, int32 height, const MTPFileLocation &location, ImagePtr def = ImagePtr());
 	ImagePtr(int32 width, int32 height) : Parent(internal::getImage(width, height)) {

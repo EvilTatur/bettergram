@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "export/view/export_view_settings.h"
 
 #include "export/output/export_output_abstract.h"
+#include "export/view/export_view_panel_controller.h"
 #include "lang/lang_keys.h"
 #include "ui/widgets/checkbox.h"
 #include "ui/widgets/buttons.h"
@@ -20,6 +21,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/wrap/fade_wrap.h"
 #include "platform/platform_specific.h"
 #include "core/file_utilities.h"
+#include "boxes/calendar_box.h"
 #include "auth_session.h"
 #include "styles/style_widgets.h"
 #include "styles/style_export.h"
@@ -76,6 +78,7 @@ SettingsWidget::SettingsWidget(QWidget *parent, Settings data)
 : RpWidget(parent)
 , _singlePeerId(ReadPeerId(data.singlePeer))
 , _internal_data(std::move(data)) {
+	ResolveSettings(_internal_data);
 	setupContent();
 }
 
@@ -93,9 +96,10 @@ void SettingsWidget::setupContent() {
 	const auto scroll = Ui::CreateChild<Ui::ScrollArea>(
 		this,
 		st::boxLayerScroll);
-	const auto wrap = scroll->setOwnedWidget(object_ptr<Ui::IgnoreMargins>(
-		scroll,
-		object_ptr<Ui::VerticalLayout>(scroll)));
+	const auto wrap = scroll->setOwnedWidget(
+		object_ptr<Ui::OverrideMargins>(
+			scroll,
+			object_ptr<Ui::VerticalLayout>(scroll)));
 	const auto content = static_cast<Ui::VerticalLayout*>(wrap->entity());
 
 	const auto buttons = setupButtons(scroll, wrap);
@@ -207,6 +211,7 @@ void SettingsWidget::setupPathAndFormat(
 		not_null<Ui::VerticalLayout*> container) {
 	if (_singlePeerId != 0) {
 		addLocationLabel(container);
+		addLimitsLabel(container);
 		return;
 	}
 	const auto formatGroup = std::make_shared<Ui::RadioenumGroup<Format>>(
@@ -239,13 +244,7 @@ void SettingsWidget::addLocationLabel(
 		return data.path;
 	}) | rpl::distinct_until_changed(
 	) | rpl::map([](const QString &path) {
-		const auto check = [](const QString &value) {
-			const auto result = value.endsWith('/')
-				? value.mid(0, value.size() - 1)
-				: value;
-			return (cPlatform() == dbipWindows) ? result.toLower() : result;
-		};
-		const auto text = (check(path) == check(psDownloadPath()))
+		const auto text = IsDefaultPath(path)
 			? QString("Downloads/Bettergram")
 			: path;
 		auto pathLink = TextWithEntities{
@@ -274,6 +273,127 @@ void SettingsWidget::addLocationLabel(
 #endif // OS_MAC_STORE
 }
 
+void SettingsWidget::addLimitsLabel(
+		not_null<Ui::VerticalLayout*> container) {
+	auto pathLabel = value() | rpl::map([](const Settings &data) {
+		return std::make_tuple(data.singlePeerFrom, data.singlePeerTill);
+	}) | rpl::distinct_until_changed(
+	) | rpl::map([](TimeId from, TimeId till) {
+		const auto begin = from
+			? langDayOfMonthFull(ParseDateTime(from).date())
+			: lang(lng_export_beginning);
+		const auto end = till
+			? langDayOfMonthFull(ParseDateTime(till).date())
+			: lang(lng_export_end);
+		auto fromLink = TextWithEntities{ begin };
+		fromLink.entities.push_back(EntityInText(
+			EntityInTextCustomUrl,
+			0,
+			begin.size(),
+			QString("internal:edit_from")));
+		auto tillLink = TextWithEntities{ end };
+		tillLink.entities.push_back(EntityInText(
+			EntityInTextCustomUrl,
+			0,
+			end.size(),
+			QString("internal:edit_till")));
+		return lng_export_limits__generic<TextWithEntities>(
+			lt_from,
+			fromLink,
+			lt_till,
+			tillLink);
+	}) | rpl::after_next([=] {
+		container->resizeToWidth(container->width());
+	});
+	const auto label = container->add(
+		object_ptr<Ui::FlatLabel>(
+			container,
+			std::move(pathLabel),
+			st::exportLocationLabel),
+		st::exportLimitsPadding);
+	label->setClickHandlerFilter([=](
+			const ClickHandlerPtr &handler,
+			Qt::MouseButton) {
+		const auto url = handler->dragText();
+		if (url == qstr("internal:edit_from")) {
+			const auto done = [=](TimeId limit) {
+				changeData([&](Settings &settings) {
+					settings.singlePeerFrom = limit;
+				});
+			};
+			editDateLimit(
+				readData().singlePeerFrom,
+				0,
+				readData().singlePeerTill,
+				lng_export_from_beginning,
+				done);
+		} else if (url == qstr("internal:edit_till")) {
+			const auto done = [=](TimeId limit) {
+				changeData([&](Settings &settings) {
+					settings.singlePeerTill = limit;
+				});
+			};
+			editDateLimit(
+				readData().singlePeerTill,
+				readData().singlePeerFrom,
+				0,
+				lng_export_till_end,
+				done);
+		} else {
+			Unexpected("Click handler URL in export limits edit.");
+		}
+		return false;
+	});
+
+}
+
+void SettingsWidget::editDateLimit(
+		TimeId current,
+		TimeId min,
+		TimeId max,
+		LangKey resetLabel,
+		Fn<void(TimeId)> done) {
+	Expects(_showBoxCallback != nullptr);
+
+	const auto highlighted = current
+		? ParseDateTime(current).date()
+		: max
+		? ParseDateTime(max).date()
+		: min
+		? ParseDateTime(min).date()
+		: QDate::currentDate();
+	const auto month = highlighted;
+	const auto shared = std::make_shared<QPointer<CalendarBox>>();
+	const auto finalize = [=](not_null<CalendarBox*> box) {
+		box->setMaxDate(max
+			? ParseDateTime(max).date()
+			: QDate::currentDate());
+		box->setMinDate(min
+			? ParseDateTime(min).date()
+			: QDate(2013, 8, 1)); // Telegram was launched in August 2013 :)
+		box->addLeftButton(langFactory(resetLabel), crl::guard(this, [=] {
+			done(0);
+			if (const auto weak = shared->data()) {
+				weak->closeBox();
+			}
+		}));
+	};
+	const auto callback = crl::guard(this, [=](const QDate &date) {
+		done(ServerTimeFromParsed(QDateTime(date)));
+		if (const auto weak = shared->data()) {
+			weak->closeBox();
+		}
+	});
+	auto box = Box<CalendarBox>(
+		month,
+		highlighted,
+		callback,
+		finalize,
+		st::exportCalendarSizes);
+	*shared = make_weak(box.data());
+	_showBoxCallback(std::move(box));
+}
+
 not_null<Ui::RpWidget*> SettingsWidget::setupButtons(
 		not_null<Ui::ScrollArea*> scroll,
 		not_null<Ui::RpWidget*> wrap) {
@@ -300,7 +420,7 @@ not_null<Ui::RpWidget*> SettingsWidget::setupButtons(
 	}));
 
 	value() | rpl::map([](const Settings &data) {
-		return data.types != Types(0);
+		return (data.types != Types(0)) || data.onlySinglePeer();
 	}) | rpl::distinct_until_changed(
 	) | rpl::start_with_next([=](bool canStart) {
 		refreshButtons(buttons, canStart);
@@ -469,27 +589,19 @@ void SettingsWidget::addSizeSlider(
 		object_ptr<Ui::MediaSlider>(container, st::exportFileSizeSlider),
 		st::exportFileSizePadding);
 	slider->resize(st::exportFileSizeSlider.seekSize);
-	slider->setAlwaysDisplayMarker(true);
-	slider->setDirection(Ui::ContinuousSlider::Direction::Horizontal);
-	for (auto i = 0; i != kSizeValueCount + 1; ++i) {
-		if (readData().media.sizeLimit <= SizeLimitByIndex(i)) {
-			slider->setValue(i / float64(kSizeValueCount));
-			break;
-		}
-	}
+	slider->setPseudoDiscrete(
+		kSizeValueCount + 1,
+		SizeLimitByIndex,
+		readData().media.sizeLimit,
+		[=](int limit) {
+			changeData([&](Settings &data) {
+				data.media.sizeLimit = limit;
+			});
+		});
 
 	const auto label = Ui::CreateChild<Ui::LabelSimple>(
 		container.get(),
 		st::exportFileSizeLabel);
-	slider->setAdjustCallback([=](float64 value) {
-		return std::round(value * kSizeValueCount) / kSizeValueCount;
-	});
-	slider->setChangeProgressCallback([=](float64 value) {
-		const auto index = int(std::round(value * kSizeValueCount));
-		changeData([&](Settings &data) {
-			data.media.sizeLimit = SizeLimitByIndex(index);
-		});
-	});
 	value() | rpl::map([](const Settings &data) {
 		return data.media.sizeLimit;
 	}) | rpl::start_with_next([=](int sizeLimit) {
@@ -511,7 +623,6 @@ void SettingsWidget::addSizeSlider(
 			st::exportFileSizePadding.right(),
 			geometry.y() - label->height() - st::exportFileSizeLabelBottom);
 	}, label->lifetime());
-
 }
 
 void SettingsWidget::refreshButtons(
@@ -532,7 +643,10 @@ void SettingsWidget::refreshButtons(
 		: nullptr;
 	if (start) {
 		start->show();
-		_startClicks = start->clicks();
+		_startClicks = start->clicks(
+		) | rpl::map([] {
+			return rpl::empty_value();
+		});
 
 		container->sizeValue(
 		) | rpl::start_with_next([=](QSize size) {
@@ -547,7 +661,10 @@ void SettingsWidget::refreshButtons(
 		langFactory(lng_cancel),
 		st::defaultBoxButton);
 	cancel->show();
-	_cancelClicks = cancel->clicks();
+	_cancelClicks = cancel->clicks(
+	) | rpl::map([] {
+		return rpl::empty_value();
+	});
 
 	rpl::combine(
 		container->sizeValue(),
@@ -564,6 +681,7 @@ void SettingsWidget::chooseFolder() {
 	const auto callback = [=](QString &&result) {
 		changeData([&](Settings &data) {
 			data.path = std::move(result);
+			data.forceSubPath = IsDefaultPath(data.path);
 		});
 	};
 	FileDialog::GetFolder(

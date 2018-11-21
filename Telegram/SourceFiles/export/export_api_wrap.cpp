@@ -14,7 +14,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mtproto/rpc_sender.h"
 #include "base/value_ordering.h"
 #include "base/bytes.h"
-
 #include <set>
 #include <deque>
 
@@ -98,7 +97,7 @@ public:
 	LoadedFileCache(int limit);
 
 	void save(const Location &location, const QString &relativePath);
-	base::optional<QString> find(const Location &location) const;
+	std::optional<QString> find(const Location &location) const;
 
 private:
 	int _limit = 0;
@@ -136,7 +135,7 @@ struct ApiWrap::UserpicsProcess {
 	FnMut<void()> finish;
 
 	int processed = 0;
-	base::optional<Data::UserpicsSlice> slice;
+	std::optional<Data::UserpicsSlice> slice;
 	uint64 maxId = 0;
 	bool lastSlice = false;
 	int fileIndex = 0;
@@ -208,7 +207,7 @@ struct ApiWrap::ChatProcess {
 	int32 largestIdPlusOne = 1;
 
 	Data::ParseMediaContext context;
-	base::optional<Data::MessagesSlice> slice;
+	std::optional<Data::MessagesSlice> slice;
 	bool lastSlice = false;
 	int fileIndex = 0;
 };
@@ -310,16 +309,16 @@ void ApiWrap::LoadedFileCache::save(
 	}
 }
 
-base::optional<QString> ApiWrap::LoadedFileCache::find(
+std::optional<QString> ApiWrap::LoadedFileCache::find(
 		const Location &location) const {
 	if (!location) {
-		return base::none;
+		return std::nullopt;
 	}
 	const auto key = ComputeLocationKey(location);
 	if (const auto i = _map.find(key); i != end(_map)) {
 		return i->second;
 	}
-	return base::none;
+	return std::nullopt;
 }
 
 ApiWrap::FileProcess::FileProcess(const QString &path, Output::Stats *stats)
@@ -932,7 +931,7 @@ void ApiWrap::requestMessagesCount(int localSplitIndex) {
 		Expects(_chatProcess != nullptr);
 
 		const auto count = result.match(
-		[](const MTPDmessages_messages &data) {
+			[](const MTPDmessages_messages &data) {
 			return data.vmessages.v.size();
 		}, [](const MTPDmessages_messagesSlice &data) {
 			return data.vcount.v;
@@ -945,17 +944,57 @@ void ApiWrap::requestMessagesCount(int localSplitIndex) {
 			error("Unexpected messagesNotModified received.");
 			return;
 		}
-		_chatProcess->info.messagesCountPerSplit[localSplitIndex] = count;
-		if (localSplitIndex + 1 < _chatProcess->info.splits.size()) {
-			requestMessagesCount(localSplitIndex + 1);
-		} else if (_chatProcess->start(_chatProcess->info)) {
-			requestMessagesSlice();
+		const auto skipSplit = !Data::SingleMessageAfter(
+			result,
+			_settings->singlePeerFrom);
+		if (skipSplit) {
+			// No messages from the requested range, skip this split.
+			messagesCountLoaded(localSplitIndex, 0);
+			return;
 		}
+		checkFirstMessageDate(localSplitIndex, count);
 	});
 }
 
+void ApiWrap::checkFirstMessageDate(int localSplitIndex, int count) {
+	Expects(_chatProcess != nullptr);
+	Expects(localSplitIndex < _chatProcess->info.splits.size());
+
+	if (_settings->singlePeerTill <= 0) {
+		messagesCountLoaded(localSplitIndex, count);
+		return;
+	}
+
+	// Request first message in this split to check if its' date < till.
+	requestChatMessages(
+		_chatProcess->info.splits[localSplitIndex],
+		1, // offset_id
+		-1, // add_offset
+		1, // limit
+		[=](const MTPmessages_Messages &result) {
+		Expects(_chatProcess != nullptr);
+
+		const auto skipSplit = !Data::SingleMessageBefore(
+			result,
+			_settings->singlePeerTill);
+		messagesCountLoaded(localSplitIndex, skipSplit ? 0 : count);
+	});
+}
+
+void ApiWrap::messagesCountLoaded(int localSplitIndex, int count) {
+	Expects(_chatProcess != nullptr);
+	Expects(localSplitIndex < _chatProcess->info.splits.size());
+
+	_chatProcess->info.messagesCountPerSplit[localSplitIndex] = count;
+	if (localSplitIndex + 1 < _chatProcess->info.splits.size()) {
+		requestMessagesCount(localSplitIndex + 1);
+	} else if (_chatProcess->start(_chatProcess->info)) {
+		requestMessagesSlice();
+	}
+}
+
 void ApiWrap::finishExport(FnMut<void()> done) {
-	const auto guard = gsl::finally([&] { _takeoutId = base::none; });
+	const auto guard = gsl::finally([&] { _takeoutId = std::nullopt; });
 
 	mainRequest(MTPaccount_FinishTakeoutSession(
 		MTP_flags(MTPaccount_FinishTakeoutSession::Flag::f_success)
@@ -1201,6 +1240,12 @@ void ApiWrap::appendChatsSlice(
 void ApiWrap::requestMessagesSlice() {
 	Expects(_chatProcess != nullptr);
 
+	const auto count = _chatProcess->info.messagesCountPerSplit[
+		_chatProcess->localSplitIndex];
+	if (!count) {
+		loadMessagesFiles({});
+		return;
+	}
 	requestChatMessages(
 		_chatProcess->info.splits[_chatProcess->localSplitIndex],
 		_chatProcess->largestIdPlusOne,
@@ -1309,6 +1354,10 @@ void ApiWrap::loadNextMessageFile() {
 	for (auto &list = _chatProcess->slice->list
 		; _chatProcess->fileIndex < list.size()
 		; ++_chatProcess->fileIndex) {
+		const auto &message = list[_chatProcess->fileIndex];
+		if (Data::SkipMessageByDate(message, *_settings)) {
+			continue;
+		}
 		const auto fileProgress = [=](FileProgress value) {
 			return loadMessageFileProgress(value);
 		};
@@ -1453,7 +1502,10 @@ bool ApiWrap::processFileLoad(
 	}) : Type(0);
 
 	const auto limit = _settings->media.sizeLimit;
-	if ((_settings->media.types & type) != type) {
+	if (message && Data::SkipMessageByDate(*message, *_settings)) {
+		file.skipReason = SkipReason::DateLimits;
+		return true;
+	} else if ((_settings->media.types & type) != type) {
 		file.skipReason = SkipReason::FileType;
 		return true;
 	} else if ((message ? message->file().size : file.size) >= limit) {
