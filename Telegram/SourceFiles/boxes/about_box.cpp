@@ -72,7 +72,7 @@ void AboutBox::showVersionHistory() {
 
 		Application::clipboard()->setText(url);
 
-		Ui::show(Box<InformBox>("The link to the current private alpha version of Telegram Desktop was copied to the clipboard."));
+		Ui::show(Box<InformBox>("The link to the current private alpha version of Bettergram was copied to the clipboard."));
 	} else {
 		QDesktopServices::openUrl(qsl("https://bettergram.io/changelog"));
 	}

@@ -336,7 +336,7 @@ void start(not_null<Core::Launcher*> launcher) {
 #if defined Q_OS_MAC || defined Q_OS_LINUX
 	} else {
 		if (!cWorkingDir().isEmpty()) {
-			// This value must come from TelegramForcePortable
+			// This value must come from BettergramForcePortable
 			// or from the "-workdir" command line argument.
 			cForceWorkingDir(cWorkingDir());
 		} else {
@@ -368,7 +368,7 @@ void start(not_null<Core::Launcher*> launcher) {
 #elif defined Q_OS_WIN
 	} else {
 		if (!cWorkingDir().isEmpty()) {
-			// This value must come from TelegramForcePortable
+			// This value must come from BettergramForcePortable
 			// or from the "-workdir" command line argument.
 			cForceWorkingDir(cWorkingDir());
 			workingDirChosen = true;

@@ -373,7 +373,7 @@ namespace Sandbox {
 
 bool MoveLegacyAlphaFolder(const QString &folder, const QString &file) {
 	const auto was = cExeDir() + folder;
-	const auto now = cExeDir() + qsl("TelegramForcePortable");
+	const auto now = cExeDir() + qsl("BettergramForcePortable");
 	if (QDir(was).exists() && !QDir(now).exists()) {
 		const auto oldFile = was + "/tdata/" + file;
 		const auto newFile = was + "/tdata/alpha";
@@ -396,8 +396,8 @@ bool MoveLegacyAlphaFolder(const QString &folder, const QString &file) {
 }
 
 bool MoveLegacyAlphaFolder() {
-	if (!MoveLegacyAlphaFolder(qsl("TelegramAlpha_data"), qsl("alpha"))
-		|| !MoveLegacyAlphaFolder(qsl("TelegramBeta_data"), qsl("beta"))) {
+	if (!MoveLegacyAlphaFolder(qsl("BettergramAlpha_data"), qsl("alpha"))
+		|| !MoveLegacyAlphaFolder(qsl("BettergramBeta_data"), qsl("beta"))) {
 		return false;
 	}
 	return true;
@@ -408,7 +408,7 @@ bool CheckPortableVersionDir() {
 		return false;
 	}
 
-	const auto portable = cExeDir() + qsl("TelegramForcePortable");
+	const auto portable = cExeDir() + qsl("BettergramForcePortable");
 	QFile key(portable + qsl("/tdata/alpha"));
 	if (cAlphaVersion()) {
 		cForceWorkingDir(portable + '/');

@@ -63,7 +63,7 @@ int Launcher::exec() {
 
 	auto result = executeApplication();
 
-	DEBUG_LOG(("Telegram finished, result: %1").arg(result));
+	DEBUG_LOG(("Bettergram finished, result: %1").arg(result));
 
 	if (!UpdaterDisabled() && cRestartingUpdate()) {
 		DEBUG_LOG(("Application Info: executing updater to install update..."));
@@ -71,7 +71,7 @@ int Launcher::exec() {
 			psDeleteDir(cWorkingDir() + qsl("tupdates/temp"));
 		}
 	} else if (cRestarting()) {
-		DEBUG_LOG(("Application Info: executing Telegram, because of restart..."));
+		DEBUG_LOG(("Application Info: executing Bettergram, because of restart..."));
 		launchUpdater(UpdaterLaunch::JustRelaunch);
 	}
 

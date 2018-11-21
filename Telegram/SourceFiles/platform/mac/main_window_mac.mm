@@ -257,7 +257,7 @@ void MainWindow::Private::initCustomTitle() {
 
 	// Disabled for now.
 	//_useNativeTitle = true;
-	//setWindowTitle(qsl("Telegram"));
+	//setWindowTitle(qsl("Bettergram"));
 #endif // !OS_MAC_OLD
 }
 
@@ -575,7 +575,7 @@ void MainWindow::psFirstShow() {
 }
 
 void MainWindow::createGlobalMenu() {
-	auto main = psMainMenu.addMenu(qsl("Telegram"));
+	auto main = psMainMenu.addMenu(qsl("Bettergram"));
 	auto about = main->addAction(lang(lng_mac_menu_about_telegram));
 	connect(about, &QAction::triggered, about, [] {
 		if (App::wnd() && App::wnd()->isHidden()) App::wnd()->showFromTray();

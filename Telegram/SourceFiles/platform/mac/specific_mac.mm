@@ -129,7 +129,7 @@ QStringList atosstr(uint64 *addresses, int count, uint64 base) {
 	if (!count || cExeName().isEmpty()) return result;
 
 	result.reserve(count);
-	QString cmdstr = "atos -o " + escapeShell(cExeDir() + cExeName()) + qsl("/Contents/MacOS/Telegram -l 0x%1").arg(base, 0, 16);
+	QString cmdstr = "atos -o " + escapeShell(cExeDir() + cExeName()) + qsl("/Contents/MacOS/Bettergram -l 0x%1").arg(base, 0, 16);
 	for (int i = 0; i < count; ++i) {
 		if (addresses[i]) {
 			cmdstr += qsl(" 0x%1").arg(addresses[i], 0, 16);
