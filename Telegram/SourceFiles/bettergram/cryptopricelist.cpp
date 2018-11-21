@@ -476,9 +476,9 @@ void CryptoPriceList::parseNames(const QByteArray &byteArray)
 			}
 
 			url = coinsUrlBase
-					+ QString(name).remove(' ')
+					+ QString(name).remove(QRegExp(QStringLiteral("\\W")))
 					+ QStringLiteral("-")
-					+ QString(shortName).remove(' ');
+					+ QString(shortName).remove(QRegExp(QStringLiteral("\\W")));
 		}
 
 		QString iconUrl = priceJson.value("icon").toString();
@@ -603,9 +603,9 @@ void CryptoPriceList::parseSearchNames(const QByteArray &byteArray)
 				}
 
 				url = coinsUrlBase
-						+ QString(name).remove(' ')
+						+ QString(name).remove(QRegExp(QStringLiteral("\\W")))
 						+ QStringLiteral("-")
-						+ QString(shortName).remove(' ');
+						+ QString(shortName).remove(QRegExp(QStringLiteral("\\W")));
 			}
 
 			QString iconUrl = priceJson.value("icon").toString();
