@@ -463,7 +463,7 @@ QUrl BettergramService::getSearchCryptoPriceValues(int offset, int count)
 	if (_cryptoPriceList->sortOrder() == CryptoPriceList::SortOrder::Rank) {
 		QStringList shortNames = _cryptoPriceList->getSearchListShortNames(offset, count);
 
-		url = QStringLiteral("https://%1.livecoinwatch.com/coins?limit=%5&only=%6")
+		url = QStringLiteral("https://%1.livecoinwatch.com/coins?sort=none&limit=%2&only=%3")
 				.arg(_pricesUrlPrefix)
 				.arg(shortNames.size())
 				.arg(shortNames.join(QStringLiteral(",")));
