@@ -189,7 +189,7 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 
 	Platform::RegisterCustomScheme();
 
-	_isSettingsPorted = bettergramSettings().value("isSettingsPorted").toBool();
+	_isSettingsPorted = QSettings(bettergramSettingsPath(), QSettings::IniFormat).value("isSettingsPorted").toBool();
 }
 
 void BettergramService::portSettingsFiles()
@@ -199,7 +199,7 @@ void BettergramService::portSettingsFiles()
 	}
 
 	QSettings oldSettings;
-	QSettings newSettings = bettergramSettings();
+	QSettings newSettings(bettergramSettingsPath(), QSettings::IniFormat);
 
 	oldSettings.beginGroup(Auth().user()->phone());
 	newSettings.beginGroup(Auth().user()->phone());
@@ -356,24 +356,19 @@ QString BettergramService::settingsPath(const QString &name) const
 	return settingsDirPath() + name + QStringLiteral(".ini");
 }
 
-QSettings BettergramService::settings(const QString &name) const
+QString BettergramService::bettergramSettingsPath() const
 {
-	return QSettings(settingsPath(name), QSettings::IniFormat);
+	return settingsPath(QStringLiteral("bettergram"));
 }
 
-QSettings BettergramService::bettergramSettings() const
+QString BettergramService::pricesSettingsPath() const
 {
-	return settings(QStringLiteral("bettergram"));
+	return settingsPath(QStringLiteral("prices"));
 }
 
-QSettings BettergramService::pricesSettings() const
+QString BettergramService::pricesCacheSettingsPath() const
 {
-	return settings(QStringLiteral("prices"));
-}
-
-QSettings BettergramService::pricesCacheSettings() const
-{
-	return QSettings(pricesCacheDirPath() + QStringLiteral("prices.ini"), QSettings::IniFormat);
+	return pricesCacheDirPath() + QStringLiteral("prices.ini");
 }
 
 void BettergramService::getIsPaid()

@@ -60,7 +60,7 @@ void Entry::cachePinnedIndex(int index) {
 			changedChatListPinHook();
 		}
 
-		QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+		QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 		settings.beginGroup(Auth().user()->phone());
 		settings.beginGroup("pinned");
 		settings.setValue(QString::number(_key.id()), _pinnedIndex);
@@ -248,7 +248,7 @@ void Entry::loadIsFavorite(uint64 id) {
 
 	QString keyString = QString::number(id);
 
-	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+	QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 	settings.beginGroup(Auth().user()->phone());
 	settings.beginGroup("favorites");
 
@@ -265,7 +265,7 @@ void Entry::loadIsFavorite(uint64 id) {
 void Entry::loadPinnedIndex(uint64 id)
 {
 	Bettergram::BettergramService::instance()->portSettingsFiles();
-	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+	QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 	settings.beginGroup(Auth().user()->phone());
 	settings.beginGroup("pinned");
 	_pinnedIndex = settings.value(QString::number(id)).toInt();
@@ -282,7 +282,7 @@ void Entry::setIsFavoriteDialog(bool isFavorite) {
 		_isFavorite = isFavorite;
 		QString keyString = QString::number(_key.id());
 
-		QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+		QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 		settings.beginGroup(Auth().user()->phone());
 		settings.beginGroup("favorites");
 

@@ -297,7 +297,7 @@ void CryptoPrice::setIsFavorite(bool isFavorite, bool isNeedToSaveToSettings)
 		_isFavorite = isFavorite;
 
 		if (isNeedToSaveToSettings) {
-			QSettings settings = BettergramService::instance()->pricesSettings();
+			QSettings settings(BettergramService::instance()->pricesSettingsPath(), QSettings::IniFormat);
 
 			settings.beginGroup(QStringLiteral("favorites"));
 
@@ -316,7 +316,7 @@ void CryptoPrice::setIsFavorite(bool isFavorite, bool isNeedToSaveToSettings)
 
 void CryptoPrice::loadIsFavorite()
 {
-	QSettings settings = BettergramService::instance()->pricesSettings();
+	QSettings settings(BettergramService::instance()->pricesSettingsPath(), QSettings::IniFormat);
 
 	settings.beginGroup(QStringLiteral("favorites"));
 

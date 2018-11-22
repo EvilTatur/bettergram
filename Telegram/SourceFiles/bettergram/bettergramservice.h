@@ -64,10 +64,9 @@ public:
 	QString resourcesCachePath() const;
 	QString settingsPath(const QString &name) const;
 
-	QSettings settings(const QString &name) const;
-	QSettings bettergramSettings() const;
-	QSettings pricesSettings() const;
-	QSettings pricesCacheSettings() const;
+	QString bettergramSettingsPath() const;
+	QString pricesSettingsPath() const;
+	QString pricesCacheSettingsPath() const;
 
 	/// Port settings files from the first Bettergram version.
 	/// At the first version of the Bettergram we save settings at the QSettings() instance,

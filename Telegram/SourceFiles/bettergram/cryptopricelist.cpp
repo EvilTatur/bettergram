@@ -830,7 +830,7 @@ QList<QSharedPointer<CryptoPrice>> CryptoPriceList::parsePriceListValues(const Q
 
 void CryptoPriceList::save() const
 {
-	QSettings settings = BettergramService::instance()->pricesCacheSettings();
+	QSettings settings(BettergramService::instance()->pricesCacheSettingsPath(), QSettings::IniFormat);
 
 	settings.beginGroup("metadata");
 
@@ -871,7 +871,7 @@ void CryptoPriceList::save() const
 
 void CryptoPriceList::load()
 {
-	QSettings settings = BettergramService::instance()->pricesCacheSettings();
+	QSettings settings(BettergramService::instance()->pricesCacheSettingsPath(), QSettings::IniFormat);
 
 	settings.beginGroup("metadata");
 
@@ -1180,7 +1180,7 @@ void CryptoPriceList::addTestData(const QUrl &url,
 								  double changeFor24Hours,
 								  CryptoPrice::Direction minuteDirection)
 {
-	_list.push_back(QSharedPointer(new CryptoPrice(url,
+	_list.push_back(QSharedPointer<CryptoPrice>(new CryptoPrice(url,
 												   iconUrl,
 												   name,
 												   shortName,

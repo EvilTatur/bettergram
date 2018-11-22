@@ -278,7 +278,7 @@ void RssChannelList::parseChannelList(const QJsonObject &json)
 
 void RssChannelList::save()
 {
-	QSettings settings = BettergramService::instance()->settings(_name);
+	QSettings settings(BettergramService::instance()->settingsPath(_name), QSettings::IniFormat);
 
 	settings.beginGroup(_name);
 
@@ -299,7 +299,7 @@ void RssChannelList::save()
 
 void RssChannelList::load()
 {
-	QSettings settings = BettergramService::instance()->settings(_name);
+	QSettings settings(BettergramService::instance()->settingsPath(_name), QSettings::IniFormat);
 
 	settings.beginGroup(_name);
 

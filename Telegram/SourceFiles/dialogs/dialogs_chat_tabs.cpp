@@ -33,7 +33,7 @@ ChatTabs::ChatTabs(QWidget *parent) : TWidget(parent)
 	_oneOnOneButton->setClickedCallback([this] { onTabClicked(_oneOnOneButton->type()); });
 	_announcementButton->setClickedCallback([this] { onTabClicked(_announcementButton->type()); });
 
-	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+	QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 	_type = EntryTypes(static_cast<EntryType>(settings.value(qsl("lastTab"), static_cast<unsigned>(EntryType::None)).toUInt()));
 
    if(_type != EntryType::None)
@@ -53,7 +53,7 @@ void ChatTabs::selectTab(const EntryTypes &type)
 	_oneOnOneButton->unselect();
 	_announcementButton->unselect();
 
-	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+	QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 	settings.setValue(qsl("lastTab"), static_cast<unsigned>(type));
 
 	// Set highlighted icon to the current tab button

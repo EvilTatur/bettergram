@@ -49,7 +49,7 @@ AuthSessionSettings::Variables::Variables()
 QByteArray AuthSessionSettings::serialize() const {
 	// Because we can not use App::self()->phone() here we can not use settings group
 	// and we have to save these settings for all accounts
-	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+	QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 	settings.setValue("bettergramSelectorTab", static_cast<qint32>(_variables.bettergramSelectorTab));
 	settings.setValue("bettergramTabsSectionEnabled", _variables.bettergramTabsSectionEnabled);
 
@@ -99,7 +99,7 @@ QByteArray AuthSessionSettings::serialize() const {
 void AuthSessionSettings::constructFromSerialized(const QByteArray &serialized) {
 	// Because we can not use App::self()->phone() here we can not use settings group
 	// and we have to load these settings for all accounts
-	QSettings settings = Bettergram::BettergramService::instance()->bettergramSettings();
+	QSettings settings(Bettergram::BettergramService::instance()->bettergramSettingsPath(), QSettings::IniFormat);
 	qint32 bettergramSelectorTab = settings.value("bettergramSelectorTab", static_cast<qint32>(ChatHelpers::BettergramSelectorTab::Prices)).toInt();
 	qint32 bettergramTabsSectionEnabled = settings.value("bettergramTabsSectionEnabled").toInt();
 
