@@ -35,7 +35,7 @@ If you want to support autoupdates feature you should do the following things:
 
 #### Changing autoupdate url
 
-The current autoupdate url is `https://updates.bettergram.io`. It is hard coded at the `readAutoupdatePrefixRaw()` method from `localstorage.cpp` file. In order to temporary change this value you can create `<working-directory>/tdata/prefix` file with new autoupdate url value. So, if this file exists and does not empty the application uses the file content as an autoupdate url prefix.
+The current autoupdate url is `https://api.bettergram.io/updates`. It is hard coded at the `readAutoupdatePrefixRaw()` method from `localstorage.cpp` file. In order to temporary change this value you can create `<working-directory>/tdata/prefix` file with new autoupdate url value. So, if this file exists and does not empty the application uses the file content as an autoupdate url prefix.
 
 #### Generating UpdatesPublicKey and UpdatesPublicAlphaKey
 

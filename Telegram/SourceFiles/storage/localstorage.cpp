@@ -2634,7 +2634,7 @@ const QString &readAutoupdatePrefixRaw() {
 	}
 
 #if BETTERGRAM_UPDATES
-	return AutoupdatePrefix("https://updates.bettergram.io");
+	return AutoupdatePrefix("https://api.bettergram.io/updates");
 #else
 	return AutoupdatePrefix("https://updates.tdesktop.com");
 #endif
