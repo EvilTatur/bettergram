@@ -55,7 +55,7 @@ Please do not forget to assign strong passwords for both keys (you should type t
 
 There is `Packer` project in the Bettergram solution. In order to make update packages you should do the following steps:
 
-1. Add `packer_private.h` file to the `TelegramPrivate` directory. This file should contain `PrivateKey` and `PrivateAlphaKey` variables:
+1. Add `packer_private.h` file to the `TelegramPrivate` directory. This file should contain `PrivateKey` and `PrivateBetaKey` variables:
 
    ```
    const char *PrivateKey = "\
@@ -64,24 +64,24 @@ There is `Packer` project in the Bettergram solution. In order to make update pa
    -----END RSA PRIVATE KEY-----\
    ";
 
-   const char *PrivateAlphaKey = "\
+   const char *PrivateBetaKey = "\
    -----BEGIN RSA PRIVATE KEY-----\n\
    ...
    -----END RSA PRIVATE KEY-----\
    ";
    ```
 
-2. Add `beta_private.h` file to the `TelegramPrivate` directory. This file should contain `BetaPrivateKey` variable:
+2. Add `alpha_private.h` file to the `TelegramPrivate` directory. This file should contain `AlphaPrivateKey` variable:
 
    ```
-   const char *BetaPrivateKey = "\
+   const char *AlphaPrivateKey = "\
    -----BEGIN RSA PRIVATE KEY-----\n\
    ...
    -----END RSA PRIVATE KEY-----\
    ";
    ```
 
-   I assume this value may be equal to `PrivateAlphaKey` variable.
+   I assume this value may be equal to `PrivateBetaKey` variable.
 
 3. Build the `Packer` project for each platform (Linux, macOS and Windows)
 4. Run `Packer` utility:

@@ -30,7 +30,7 @@ y0P8cZCZKrPfDDTo+vG4X5+pEO4qyn5xuVuakoDwxaEpY2wXIm45AgMBAAE=\n\
 -----END RSA PUBLIC KEY-----\
 ";
 
-const char *PublicAlphaKey = "\
+const char *PublicBetaKey = "\
 -----BEGIN RSA PUBLIC KEY-----\n\
 MIGJAoGBANVM9KKoX8n6lNzP7+Gmmen4WkbtJi7nuI9nozLDTMQ3IB26rYIfznKx\n\
 Wlx8VJeefeyrnK3usIByRA6cqrknCmJ0hz2/OA0WgK5LD1Y7SzHS66Tvy4VgbOnN\n\
