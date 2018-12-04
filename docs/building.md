@@ -86,11 +86,25 @@ There is `Packer` project in the Bettergram solution. In order to make update pa
 3. Build the `Packer` project for each platform (Linux, macOS and Windows)
 4. Run `Packer` utility:
 
-   ```
-   $ ./Packer -path Bettergram -path Updater -version 1003014
-   ```
+  * For Linux:
 
-   You should use actual Bettergram version number instead of `1003014`. The `Packer` should generate one file that will contain all files from `-path` arguments, something like this: `tlinuxupd1003014`
+	```
+    $ ./Packer -path Bettergram -path Updater -version 1003014
+    ```
+
+  * For macOS:
+
+    ```
+    $ ./Packer -path Bettergram.app -version 1003014
+    ```
+
+  * For Windows:
+
+    ```
+    $ ./Packer.exe -path Bettergram.exe -path Updater.exe -version 1003014
+    ```
+
+   You should use actual Bettergram version number instead of `1003014`. The `Packer` should generate one file that will contain all files from `-path` arguments, something like this: `tlinuxupd1003014`, `tmacupd1003014` or `tupdate1003014`
 
 ## Build new release
 
