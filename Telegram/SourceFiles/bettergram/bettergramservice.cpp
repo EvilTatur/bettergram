@@ -135,17 +135,30 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 
 	_rssChannelList->load();
 
-	if (_rssChannelList->isEmpty()) {
-		_rssChannelList->add(QUrl("https://news.livecoinwatch.com/feed/"));
-		_rssChannelList->add(QUrl("https://coincentral.com/feed/"));
-		_rssChannelList->add(QUrl("https://www.coindesk.com/feed/"));
-		_rssChannelList->add(QUrl("https://www.ccn.com/feed/"));
-	}
+    if (_rssChannelList->isEmpty()) {
+        _rssChannelList->add(QUrl("https://news.livecoinwatch.com/feed/"));
+        _rssChannelList->add(QUrl("https://thetokenist.io/feed/"));
+        _rssChannelList->add(QUrl("https://iamnye.com/blog/feed/"));
+    }
 
 	_videoChannelList->load();
 
-	if (_videoChannelList->isEmpty()) {
-		_videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCyC_4jvPzLiSkJkLIkA7B8g"));
+    if (_videoChannelList->isEmpty()) {
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCXyrBCWaRJzHfOtnWaR47Qw"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCbkjUYiPN8P48r0lurEBP8w"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCu1-oBOM-DzJ89o02Bx3XYw"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCiUnrCUGCJTCC7KjuW493Ww"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCu7Sre5A1NMV8J3s2FhluCw"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCCatR7nWbYrkVXdxXb4cGXw"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCc4Rz_T9Sb1w5rqqo9pL1Og"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UC4sS8q8E5ayyghbhiPon4uw"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCNfIaEvbasoC_yIGz5xnE4g"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UC67AEEecqFEc92nVvcqKdhA"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?channel_id=UCspcykxjIbHo0C9ZOCM9YnA"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?user=obham001"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?user=yourmom7829"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?user=Diaryofamademan"));
+        _videoChannelList->add(QUrl("https://www.youtube.com/feeds/videos.xml?user=LiljeqvistIvan"));
 	}
 
 	connect(_rssChannelList, &RssChannelList::update,
