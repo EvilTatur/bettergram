@@ -30,7 +30,7 @@ namespace Bettergram {
 
 BettergramService *BettergramService::_instance = nullptr;
 const QString BettergramService::_defaultLastUpdateString = "...";
-const QString BettergramService::_pricesUrlPrefix = "alpha-api";
+const QString BettergramService::_pricesUrlPrefix = "http-api";
 
 const int BettergramService::_networkTimeout = 10 * 1000;
 
