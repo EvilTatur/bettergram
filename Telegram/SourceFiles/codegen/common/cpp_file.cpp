@@ -1,9 +1,8 @@
 /*
-This file is part of Telegram Desktop,
-the official desktop application for the Telegram messaging service.
+This file is part of Bettergram.
 
 For license and copyright information please follow this link:
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #include "codegen/common/cpp_file.h"
 
@@ -20,11 +19,11 @@ void writeLicense(QTextStream &stream, const ProjectInfo &project) {
 WARNING! All changes made in this file will be lost!\n\
 Created from '" << project.source << "' by '" << project.name << "'\n\
 \n\
-This file is part of Telegram Desktop,\n\
-the official desktop application for the Telegram messaging service.\n\
+This file is part of Bettergram,\n\
+free open source improved version of the Telegram desktop app.\n\
 \n\
 For license and copyright information please follow this link:\n\
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL\n\
+https://github.com/bettergram/bettergram/blob/master/LEGAL\n\
 */\n";
 }
 

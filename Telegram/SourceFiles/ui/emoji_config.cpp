@@ -2,11 +2,10 @@
 WARNING! All changes made in this file will be lost!
 Created from 'empty' by 'codegen_emoji'
 
-This file is part of Telegram Desktop,
-the official desktop application for the Telegram messaging service.
+This file is part of Bettergram.
 
 For license and copyright information please follow this link:
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #include "emoji_config.h"
 

@@ -1,6 +1,5 @@
 /*
-This file is part of Telegram Desktop,
-the official desktop application for the Telegram messaging service.
+This file is part of Bettergram.
 
 This code is in Public Domain, see license terms in .github/CONTRIBUTING.md
 Copyright (C) 2017, Nicholas Guriev <guriev-ns@ya.ru>

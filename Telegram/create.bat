@@ -123,11 +123,11 @@ exit /b %errorlevel%
   set "Path=%1"
   (
     echo /*
-    echo This file is part of Telegram Desktop,
-    echo the official desktop application for the Telegram messaging service.
+    echo This file is part of Bettergram,
+    echo free open source improved version of the Telegram desktop app.
     echo.
     echo For license and copyright information please follow this link:
-    echo https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+    echo https://github.com/bettergram/bettergram/blob/master/LEGAL
     echo */
   )> "SourceFiles\!Path!"
   exit /b

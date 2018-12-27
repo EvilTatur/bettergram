@@ -1,9 +1,8 @@
 '''
-This file is part of Telegram Desktop,
-the official desktop application for the Telegram messaging service.
+This file is part of Bettergram.
 
 For license and copyright information please follow this link:
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+https://github.com/bettergram/bettergram/blob/master/LEGAL
 '''
 import glob, re, binascii, os, sys
 
@@ -945,11 +944,11 @@ header = '\
 WARNING! All changes made in this file will be lost!\n\
 Created from \'' + os.path.basename(input_file) + '\' by \'codegen_scheme\'\n\
 \n\
-This file is part of Telegram Desktop,\n\
-the official desktop application for the Telegram messaging service.\n\
+This file is part of Bettergram,\n\
+free open source improved version of the Telegram desktop app.\n\
 \n\
 For license and copyright information please follow this link:\n\
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL\n\
+https://github.com/bettergram/bettergram/blob/master/LEGAL\n\
 */\n\
 #pragma once\n\
 \n\
@@ -998,11 +997,11 @@ source = '\
 WARNING! All changes made in this file will be lost!\n\
 Created from \'' + os.path.basename(input_file) + '\' by \'codegen_scheme\'\n\
 \n\
-This file is part of Telegram Desktop,\n\
-the official desktop application for the Telegram messaging service.\n\
+This file is part of Bettergram,\n\
+free open source improved version of the Telegram desktop app.\n\
 \n\
 For license and copyright information please follow this link:\n\
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL\n\
+https://github.com/bettergram/bettergram/blob/master/LEGAL\n\
 */\n\
 #include "scheme.h"\n\
 \n\

@@ -1,9 +1,8 @@
 /*
-This file is part of Telegram Desktop,
-the official desktop application for the Telegram messaging service.
+This file is part of Bettergram.
 
 For license and copyright information please follow this link:
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #include "ui/style/style_core_icon.h"
 

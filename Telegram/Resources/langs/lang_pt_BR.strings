@@ -1,9 +1,8 @@
 /*
-This file is part of Telegram Desktop,
-the official desktop application for the Telegram messaging service.
+This file is part of Bettergram.
 
 For license and copyright information please follow this link:
-https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 "lng_language_name" = "Português (Brasil)";
 "lng_switch_to_this" = "Trocar para Português (Brasil)";

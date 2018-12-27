@@ -1,9 +1,9 @@
-This file is part of Telegram Desktop,
-the official desktop application for the Telegram messaging service.
+This file is part of Bettergram.
 
+Copyright (c) 2018 Bettergram LLC, https://bettergram.io
 Copyright (c) 2014-2018 John Preston, https://desktop.telegram.org
 
-Telegram Desktop is free software: you can redistribute it and/or modify
+Bettergram and Telegram Desktop is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -16,6 +16,7 @@ GNU General Public License for more details.
 In addition, as a special exception, the copyright holders give permission
 to link the code of portions of this program with the OpenSSL library.
 
+More information about the Bettergram project: https://bettergram.io
 More information about the Telegram project: https://telegram.org
 
-Full license: https://github.com/telegramdesktop/tdesktop/blob/master/LICENSE
+Full license: https://github.com/bettergram/bettergram/blob/master/LEGAL
