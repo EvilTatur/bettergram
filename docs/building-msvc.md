@@ -89,7 +89,7 @@ After, call **gyp\refresh.bat** once again.
 
 * Open ***BuildPath*\\bettergram\\Telegram\\Telegram.sln** in Visual Studio 2017
 * Select Telegram project and press Build > Build Telegram (Debug and Release configurations)
-* The result Telegram.exe will be located in ***BuildPath*\bettergram\out\Debug** (and **Release**)
+* The result Bettergram.exe will be located in ***BuildPath*\bettergram\out\Debug** (and **Release**)
 
 If you do not have access to **custom_api_id.h**, you can build a test version of the project by editing the **Telegram.gyp** file and commenting out the define: **CUSTOM_API_ID** (be careful not to check this change in to the repository). Then you must execute the **refresh.bat** file before building. This build should only be used for testing.
 

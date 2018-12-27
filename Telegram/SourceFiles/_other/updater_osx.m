@@ -149,9 +149,9 @@ int main(int argc, const char * argv[]) {
 
 		writeLog([@"Starting update files iteration, path: " stringByAppendingString: srcEnum]);
 
-		// Take the Updater (this currently running binary) from the place where it was placed by Telegram
+		// Take the Updater (this currently running binary) from the place where it was placed by Bettergram
 		// and copy it to the folder with the new version of the app (ready),
-		// so it won't be deleted when we will clear the "Telegram.app/Contents" folder.
+		// so it won't be deleted when we will clear the "Bettergram.app/Contents" folder.
 		NSString *oldVersionUpdaterPath = [appDirFull stringByAppendingString: @"/Contents/Frameworks/Updater" ];
 		NSString *newVersionUpdaterPath = [srcEnum stringByAppendingString:[[NSArray arrayWithObjects:@"/", appName, @"/Contents/Frameworks/Updater", nil] componentsJoinedByString:@""]];
 		writeLog([[NSArray arrayWithObjects: @"Copying Updater from old path ", oldVersionUpdaterPath, @" to new path ", newVersionUpdaterPath, nil] componentsJoinedByString:@""]);

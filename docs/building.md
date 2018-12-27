@@ -10,7 +10,7 @@ Before publish a custom version of Bettergram application you need to get new `a
 To do that you need to follow instructions at the page: [Obtaining api_id](https://core.telegram.org/api/obtaining_api_id).
 See also the thread: [GitHub: "internal server error" on login](https://github.com/telegramdesktop/tdesktop/issues/4717).
 
-So, after obtaining new values of `api_id` and `api_hash` you need to create a new directory next to your `tdesktop` folder with the name: `TelegramPrivate`.
+So, after obtaining new values of `api_id` and `api_hash` you need to create a new directory next to your `bettergram` folder with the name: `TelegramPrivate`.
 And place a new file `custom_api_id.h` there with the content:
 
 ```
