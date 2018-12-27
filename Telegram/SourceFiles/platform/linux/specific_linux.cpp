@@ -426,7 +426,7 @@ void RegisterCustomScheme() {
 			if (RunShellCommand("desktop-file-install --dir=" + EscapeShell(QFile::encodeName(home + qsl(".local/share/applications"))) + " --delete-original " + EscapeShell(QFile::encodeName(file)))) {
 				RunShellCommand("update-desktop-database " + EscapeShell(QFile::encodeName(home + qsl(".local/share/applications"))));
 				RunShellCommand("xdg-mime default bettergram.desktop x-scheme-handler/tg");
-			} else if (_psRunCommand("cp -f " + EscapeShell(QFile::encodeName(file)) + " " + EscapeShell(QFile::encodeName(home + qsl(".local/share/applications"))))) {
+			} else if (RunShellCommand("cp -f " + EscapeShell(QFile::encodeName(file)) + " " + EscapeShell(QFile::encodeName(home + qsl(".local/share/applications"))))) {
 				RunShellCommand("update-desktop-database " + EscapeShell(QFile::encodeName(home + qsl(".local/share/applications"))));
 				RunShellCommand("xdg-mime default bettergram.desktop x-scheme-handler/tg");
 			}
