@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
 set -e
-FullExecPath=$PWD
+
 pushd `dirname $0` > /dev/null
 FullScriptPath=`pwd`
 popd > /dev/null
 
-if [ -f "$FullScriptPath/../build/target" ]; then
-  while IFS='' read -r line || [[ -n "$line" ]]; do
-    BuildTarget="$line"
-  done < "$FullScriptPath/../build/target"
-else
-  BuildTarget=""
-fi
-
-MySystem=`uname -s`
+python $FullScriptPath/generate.py $1 $2 $3 $4 $5 $6
 
 BUILD_TARGET_GENERAL_DESCRIPTION="You can change the build target at the Telegram/build/target file."
 
@@ -44,16 +36,6 @@ then clear the content of the Telegram/build/target file.
 
 To get more information please check the docs/building-xcode.md file."
 
-cd $FullScriptPath
-
-if [ "$MySystem" == "Linux" ]; then
-  ../../../Libraries/gyp/gyp --depth=. --generator-output=.. -Goutput_dir=../out -Dofficial_build_target=$BuildTarget Telegram.gyp --format=cmake
-  cd ../../out/Debug
-  cmake .
-  cd ../Release
-  cmake .
-  cd ../../Telegram/gyp
-else
   if [ "$MySystem" == "Darwin" ]; then
     if [ -n "$BuildTarget" ]; then
       echo "Build target:" $BuildTarget
@@ -84,15 +66,5 @@ else
     fi
   fi
 
-  #gyp --depth=. --generator-output=../.. -Goutput_dir=out Telegram.gyp --format=ninja
-  #gyp --depth=. --generator-output=../.. -Goutput_dir=out Telegram.gyp --format=xcode-ninja
-  #gyp --depth=. --generator-output=../.. -Goutput_dir=out Telegram.gyp --format=xcode
-  # use patched gyp with Xcode project generator
-  ../../../Libraries/gyp/gyp --depth=. --generator-output=.. -Goutput_dir=../out -Gxcode_upgrade_check_project_version=1000 -Dofficial_build_target=$BuildTarget Telegram.gyp --format=xcode
-fi
 
-cd ../..
-
-cd $FullExecPath
 exit
-

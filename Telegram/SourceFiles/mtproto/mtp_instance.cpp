@@ -333,7 +333,8 @@ void Instance::Private::applyDomainIps(
 	for (auto &proxy : Global::RefProxiesList()) {
 		applyToProxy(proxy);
 	}
-	if (applyToProxy(Global::RefSelectedProxy()) && Global::UseProxy()) {
+	if (applyToProxy(Global::RefSelectedProxy())
+		&& (Global::ProxySettings() == ProxyData::Settings::Enabled)) {
 		for (auto &session : _sessions) {
 			session.second->refreshOptions();
 		}
@@ -362,7 +363,8 @@ void Instance::Private::setGoodProxyDomain(
 	for (auto &proxy : Global::RefProxiesList()) {
 		applyToProxy(proxy);
 	}
-	if (applyToProxy(Global::RefSelectedProxy()) && Global::UseProxy()) {
+	if (applyToProxy(Global::RefSelectedProxy())
+		&& (Global::ProxySettings() == ProxyData::Settings::Enabled)) {
 		Sandbox::refreshGlobalProxy();
 	}
 }
@@ -772,11 +774,19 @@ void Instance::Private::configLoadDone(const MTPConfig &result) {
 		Global::RefPhoneCallsEnabledChanged().notify();
 	}
 	Global::SetBlockedMode(data.is_blocked_mode());
+	Global::SetCaptionLengthMax(data.vcaption_length_max.v);
 
 	const auto lang = data.has_suggested_lang_code()
 		? qs(data.vsuggested_lang_code)
 		: QString();
 	Lang::CurrentCloudManager().setSuggestedLanguage(lang);
+	Lang::CurrentCloudManager().setCurrentVersions(
+		(data.has_lang_pack_version()
+			? data.vlang_pack_version.v
+			: 0),
+		(data.has_base_lang_pack_version()
+			? data.vbase_lang_pack_version.v
+			: 0));
 
 	if (data.has_autoupdate_url_prefix()) {
 		// At Bettergram we should use REST API to change update url prefix
@@ -789,18 +799,6 @@ void Instance::Private::configLoadDone(const MTPConfig &result) {
 	_configExpiresAt = getms(true)
 		+ (data.vexpires.v - unixtime()) * TimeMs(1000);
 	requestConfigIfExpired();
-
-	if (AuthSession::Exists()) {
-		using PeerToPeer = Calls::PeerToPeer;
-		const auto current = Auth().settings().callsPeerToPeer();
-		if (current == PeerToPeer::DefaultContacts
-			|| current == PeerToPeer::DefaultEveryone) {
-			Auth().settings().setCallsPeerToPeer(
-				(data.is_default_p2p_contacts()
-					? PeerToPeer::DefaultContacts
-					: PeerToPeer::DefaultEveryone));
-		}
-	}
 
 	emit _instance->configLoaded();
 }
@@ -1541,7 +1539,7 @@ QString Instance::systemLangCode() const {
 }
 
 QString Instance::cloudLangCode() const {
-	return Lang::Current().cloudLangCode();
+	return Lang::Current().cloudLangCode(Lang::Pack::Current);
 }
 
 QString Instance::langPackName() const {

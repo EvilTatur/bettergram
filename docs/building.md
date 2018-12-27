@@ -6,7 +6,7 @@
 
 ## Customize application
 
-Before publish a custom version of Telegram Desktop application you need to get new `api_id` and `api_hash` values.
+Before publish a custom version of Bettergram application you need to get new `api_id` and `api_hash` values.
 To do that you need to follow instructions at the page: [Obtaining api_id](https://core.telegram.org/api/obtaining_api_id).
 See also the thread: [GitHub: "internal server error" on login](https://github.com/telegramdesktop/tdesktop/issues/4717).
 

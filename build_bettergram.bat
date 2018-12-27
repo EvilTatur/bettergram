@@ -3,7 +3,7 @@ SET PATH=%cd%\ThirdParty\NASM;%cd%\ThirdParty\jom;%cd%\ThirdParty\yasm;%PATH%
 mkdir Libraries
 cd Libraries
 
-git clone https://github.com/Microsoft/Range-V3-VS2015 range-v3
+git clone https://github.com/ericniebler/range-v3 range-v3
 
 git clone https://github.com/telegramdesktop/lzma.git
 cd lzma\C\Util\LzmaLib
@@ -35,13 +35,13 @@ msbuild zlibstat.vcxproj /property:Configuration=Debug
 msbuild zlibstat.vcxproj /property:Configuration=ReleaseWithoutAsm
 cd ..\..\..\..
 
-git clone git://repo.or.cz/openal-soft.git
+git clone https://github.com/john-preston/openal-soft.git
 cd openal-soft
-git checkout 18bb46163af
+git checkout fix_macro
 cd build
 cmake -G "Visual Studio 15 2017" -D LIBTYPE:STRING=STATIC -D FORCE_STATIC_VCRT:STRING=ON ..
-msbuild OpenAL32.vcxproj /property:Configuration=Debug
-msbuild OpenAL32.vcxproj /property:Configuration=Release
+msbuild OpenAL.vcxproj /property:Configuration=Debug
+msbuild OpenAL.vcxproj /property:Configuration=Release
 cd ..\..
 
 git clone https://github.com/google/breakpad

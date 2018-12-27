@@ -244,12 +244,6 @@ dragPadding: margins(20px, 10px, 20px, 10px);
 
 dragHeight: 72px;
 
-minPhotoSize: 100px;
-maxMediaSize: 430px;
-maxStickerSize: 256px;
-maxGifSize: 320px;
-maxSignatureSize: 144px;
-
 radialSize: size(50px, 50px);
 radialLine: 3px;
 radialDuration: 350;
@@ -264,19 +258,6 @@ videoIcon: icon {
 	{ "media_video_play", videoPlayIconFg, point(12px, 12px) },
 };
 locationSize: size(320px, 240px);
-
-webPageLeft: 10px;
-webPageBar: 2px;
-webPageTitleFont: semiboldFont;
-webPageTitleStyle: semiboldTextStyle;
-webPageTitleOutFg: historyTextOutFg;
-webPageTitleInFg: historyTextInFg;
-webPageDescriptionOutFg: historyTextOutFg;
-webPageDescriptionInFg: historyTextInFg;
-webPageDescriptionFont: normalFont;
-webPageDescriptionStyle: defaultTextStyle;
-webPagePhotoSize: 100px;
-webPagePhotoDelta: 8px;
 
 mediaPlayerSuppressDuration: 150;
 

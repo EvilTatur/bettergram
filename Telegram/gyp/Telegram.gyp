@@ -89,6 +89,8 @@
       'TGVOIP_USE_CXX11_LIB',
       'CUSTOM_API_ID',
       'XXH_INLINE_ALL',
+      'TDESKTOP_API_ID=<(api_id)',
+      'TDESKTOP_API_HASH=<(api_hash)',
       '<!@(python -c "for s in \'<(build_defines)\'.split(\',\'): print(s)")',
     ],
 
@@ -127,7 +129,7 @@
     'conditions': [
       [ '"<(official_build_target)" != ""', {
         'defines': [
-          'CUSTOM_API_ID',
+          'TDESKTOP_OFFICIAL_TARGET=<(official_build_target)',
         ],
         'dependencies': [
         ],
@@ -140,7 +142,7 @@
       }], [ 'build_macstore', {
         'mac_sandbox': 1,
         'mac_sandbox_development_team': '6N38VWS5BX',
-        'product_name': 'Telegram Desktop',
+        'product_name': 'Bettergram',
         'sources': [
           '../Telegram/Telegram Desktop.entitlements',
         ],

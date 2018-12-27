@@ -4,6 +4,10 @@
 
 Choose a folder for the future build, for example **/Users/user/TBuild**. It will be named ***BuildPath*** in the rest of this document. All commands will be launched from Terminal.
 
+### Obtain your API credentials
+
+You will require **api_id** and **api_hash** to access the Telegram API servers. To learn how to obtain them [click here][api_credentials].
+
 ### Download libraries
 
 Download [**xz-5.0.5**](http://tukaani.org/xz/xz-5.0.5.tar.gz) and unpack to ***BuildPath*/Libraries/xz-5.0.5**
@@ -59,7 +63,7 @@ Go to ***BuildPath*** and run
 
     git clone https://github.com/xiph/opus
     cd opus
-    git checkout v1.2.1
+    git checkout v1.3
     ./autogen.sh
     CFLAGS="-mmacosx-version-min=10.8" CPPFLAGS="-mmacosx-version-min=10.8" LDFLAGS="-mmacosx-version-min=10.8" ./configure
     make -j4
@@ -86,8 +90,10 @@ Go to ***BuildPath*** and run
     cd ..
 
     git clone git://repo.or.cz/openal-soft.git
-    cd openal-soft/build
-    cmake -D LIBTYPE:STRING=STATIC -D CMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.8 ..
+    cd openal-soft
+    git checkout openal-soft-1.19.1
+    cd build
+    LDFLAGS='-stdlib=libc++' cmake -D ALSOFT_EXAMPLES=OFF -D LIBTYPE:STRING=STATIC -D CMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.8 ..
     make -j4
     sudo make install
     cd ../..
@@ -214,3 +220,5 @@ To verify signing:
 Check that the app binary is sandboxed:
 
 `$ codesign -dvvv --entitlements :- executable_path`
+
+[api_credentials]: api_credentials.md

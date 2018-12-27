@@ -11,12 +11,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "auth_session.h"
 #include "apiwrap.h"
 #include "messenger.h"
+#include "ui/image/image.h"
 #include "export/export_controller.h"
 #include "export/view/export_view_panel_controller.h"
 #include "window/notifications_manager.h"
 #include "history/history.h"
 #include "history/history_item_components.h"
-#include "history/history_media.h"
+#include "history/media/history_media.h"
 #include "history/view/history_view_element.h"
 #include "inline_bots/inline_bot_layout_item.h"
 #include "storage/localstorage.h"
@@ -30,6 +31,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_web_page.h"
 #include "data/data_game.h"
 #include "mainwidget.h"
+#include "data/data_poll.h"
 
 namespace Data {
 namespace {
@@ -57,10 +59,10 @@ void UpdateImage(ImagePtr &old, ImagePtr now) {
 	}
 	if (old->isNull()) {
 		old = now;
-	} else if (const auto delayed = old->toDelayedStorageImage()) {
+	} else if (old->isDelayedStorageImage()) {
 		const auto location = now->location();
 		if (!location.isNull()) {
-			delayed->setStorageLocation(Data::FileOrigin(), location);
+			old->setDelayedStorageLocation(Data::FileOrigin(), location);
 		}
 	}
 }
@@ -293,6 +295,14 @@ void Session::requestDocumentViewRepaint(
 	if (i != end(_documentItems)) {
 		for (const auto item : i->second) {
 			requestItemRepaint(item);
+		}
+	}
+}
+
+void Session::requestPollViewRepaint(not_null<const PollData*> poll) {
+	if (const auto i = _pollViews.find(poll); i != _pollViews.end()) {
+		for (const auto view : i->second) {
+			requestViewResize(view);
 		}
 	}
 }
@@ -808,9 +818,9 @@ not_null<PhotoData*> Session::photo(const MTPDphoto &data) {
 not_null<PhotoData*> Session::photo(
 		const MTPPhoto &data,
 		const PreparedPhotoThumbs &thumbs) {
-	auto thumb = (const QPixmap*)nullptr;
-	auto medium = (const QPixmap*)nullptr;
-	auto full = (const QPixmap*)nullptr;
+	auto thumb = (const QImage*)nullptr;
+	auto medium = (const QImage*)nullptr;
+	auto full = (const QImage*)nullptr;
 	auto thumbLevel = -1;
 	auto mediumLevel = -1;
 	auto fullLevel = -1;
@@ -844,9 +854,9 @@ not_null<PhotoData*> Session::photo(
 			data.c_photo().vaccess_hash.v,
 			data.c_photo().vfile_reference.v,
 			data.c_photo().vdate.v,
-			ImagePtr(*thumb, "JPG"),
-			ImagePtr(*medium, "JPG"),
-			ImagePtr(*full, "JPG"));
+			Images::Create(base::duplicate(*thumb), "JPG"),
+			Images::Create(base::duplicate(*medium), "JPG"),
+			Images::Create(base::duplicate(*full), "JPG"));
 
 	case mtpc_photoEmpty:
 		return photo(data.c_photoEmpty().vid.v);
@@ -906,20 +916,24 @@ void Session::photoConvert(
 
 PhotoData *Session::photoFromWeb(
 		const MTPWebDocument &data,
-		ImagePtr thumb) {
-	const auto full = ImagePtr(data);
+		ImagePtr thumb,
+		bool willBecomeNormal) {
+	const auto full = Images::Create(data);
 	if (full->isNull()) {
 		return nullptr;
 	}
-	const auto width = full->width();
-	const auto height = full->height();
-	if (thumb->isNull()) {
-		auto thumbsize = shrinkToKeepAspect(width, height, 100, 100);
-		thumb = ImagePtr(thumbsize.width(), thumbsize.height());
-	}
+	auto medium = ImagePtr();
+	if (willBecomeNormal) {
+		const auto width = full->width();
+		const auto height = full->height();
+		if (thumb->isNull()) {
+			auto thumbsize = shrinkToKeepAspect(width, height, 100, 100);
+			thumb = Images::Create(thumbsize.width(), thumbsize.height());
+		}
 
-	auto mediumsize = shrinkToKeepAspect(width, height, 320, 320);
-	auto medium = ImagePtr(mediumsize.width(), mediumsize.height());
+		auto mediumsize = shrinkToKeepAspect(width, height, 320, 320);
+		medium = Images::Create(mediumsize.width(), mediumsize.height());
+	}
 
 	return photo(
 		rand_value<PhotoId>(),
@@ -942,7 +956,7 @@ void Session::photoApplyFields(
 void Session::photoApplyFields(
 		not_null<PhotoData*> photo,
 		const MTPDphoto &data) {
-		auto thumb = (const MTPPhotoSize*)nullptr;
+	auto thumb = (const MTPPhotoSize*)nullptr;
 	auto medium = (const MTPPhotoSize*)nullptr;
 	auto full = (const MTPPhotoSize*)nullptr;
 	auto thumbLevel = -1;
@@ -1044,7 +1058,7 @@ not_null<DocumentData*> Session::document(const MTPDdocument &data) {
 
 not_null<DocumentData*> Session::document(
 		const MTPdocument &data,
-		const QPixmap &thumb) {
+		QImage &&thumb) {
 	switch (data.type()) {
 	case mtpc_documentEmpty:
 		return document(data.c_documentEmpty().vid.v);
@@ -1058,7 +1072,7 @@ not_null<DocumentData*> Session::document(
 			fields.vdate.v,
 			fields.vattributes.v,
 			qs(fields.vmime_type),
-			ImagePtr(thumb, "JPG"),
+			Images::Create(std::move(thumb), "JPG"),
 			fields.vdc_id.v,
 			fields.vsize.v,
 			StorageImageLocation());
@@ -1286,7 +1300,7 @@ not_null<WebPageData*> Session::webpage(const MTPDwebPagePending &data) {
 	const auto result = webpage(data.vid.v);
 	webpageApplyFields(
 		result,
-		QString(),
+		WebPageType::Article,
 		QString(),
 		QString(),
 		QString(),
@@ -1294,6 +1308,7 @@ not_null<WebPageData*> Session::webpage(const MTPDwebPagePending &data) {
 		TextWithEntities(),
 		nullptr,
 		nullptr,
+		WebPageCollage(),
 		0,
 		QString(),
 		data.vdate.v
@@ -1308,7 +1323,7 @@ not_null<WebPageData*> Session::webpage(
 		const TextWithEntities &content) {
 	return webpage(
 		id,
-		qsl("article"),
+		WebPageType::Article,
 		QString(),
 		QString(),
 		siteName,
@@ -1316,6 +1331,7 @@ not_null<WebPageData*> Session::webpage(
 		content,
 		nullptr,
 		nullptr,
+		WebPageCollage(),
 		0,
 		QString(),
 		TimeId(0));
@@ -1323,7 +1339,7 @@ not_null<WebPageData*> Session::webpage(
 
 not_null<WebPageData*> Session::webpage(
 		WebPageId id,
-		const QString &type,
+		WebPageType type,
 		const QString &url,
 		const QString &displayUrl,
 		const QString &siteName,
@@ -1331,6 +1347,7 @@ not_null<WebPageData*> Session::webpage(
 		const TextWithEntities &description,
 		PhotoData *photo,
 		DocumentData *document,
+		WebPageCollage &&collage,
 		int duration,
 		const QString &author,
 		TimeId pendingTill) {
@@ -1345,6 +1362,7 @@ not_null<WebPageData*> Session::webpage(
 		description,
 		photo,
 		document,
+		std::move(collage),
 		duration,
 		author,
 		pendingTill);
@@ -1370,7 +1388,7 @@ void Session::webpageApplyFields(
 	const auto pendingTill = TimeId(0);
 	webpageApplyFields(
 		page,
-		data.has_type() ? qs(data.vtype) : qsl("article"),
+		ParseWebPageType(data),
 		qs(data.vurl),
 		qs(data.vdisplay_url),
 		siteName,
@@ -1378,6 +1396,7 @@ void Session::webpageApplyFields(
 		description,
 		data.has_photo() ? photo(data.vphoto).get() : nullptr,
 		data.has_document() ? document(data.vdocument).get() : nullptr,
+		WebPageCollage(data),
 		data.has_duration() ? data.vduration.v : 0,
 		data.has_author() ? qs(data.vauthor) : QString(),
 		pendingTill);
@@ -1385,7 +1404,7 @@ void Session::webpageApplyFields(
 
 void Session::webpageApplyFields(
 		not_null<WebPageData*> page,
-		const QString &type,
+		WebPageType type,
 		const QString &url,
 		const QString &displayUrl,
 		const QString &siteName,
@@ -1393,6 +1412,7 @@ void Session::webpageApplyFields(
 		const TextWithEntities &description,
 		PhotoData *photo,
 		DocumentData *document,
+		WebPageCollage &&collage,
 		int duration,
 		const QString &author,
 		TimeId pendingTill) {
@@ -1406,6 +1426,7 @@ void Session::webpageApplyFields(
 		description,
 		photo,
 		document,
+		std::move(collage),
 		duration,
 		author,
 		pendingTill);
@@ -1510,6 +1531,59 @@ void Session::gameApplyFields(
 	notifyGameUpdateDelayed(game);
 }
 
+not_null<PollData*> Session::poll(PollId id) {
+	auto i = _polls.find(id);
+	if (i == _polls.cend()) {
+		i = _polls.emplace(id, std::make_unique<PollData>(id)).first;
+	}
+	return i->second.get();
+}
+
+not_null<PollData*> Session::poll(const MTPPoll &data) {
+	return data.match([&](const MTPDpoll &data) {
+		const auto id = data.vid.v;
+		const auto result = poll(id);
+		const auto changed = result->applyChanges(data);
+		if (changed) {
+			notifyPollUpdateDelayed(result);
+		}
+		return result;
+	});
+}
+
+not_null<PollData*> Session::poll(const MTPDmessageMediaPoll &data) {
+	const auto result = poll(data.vpoll);
+	const auto changed = result->applyResults(data.vresults);
+	if (changed) {
+		requestPollViewRepaint(result);
+	}
+	return result;
+}
+
+void Session::applyPollUpdate(const MTPDupdateMessagePoll &update) {
+	const auto updated = [&] {
+		const auto i = _polls.find(update.vpoll_id.v);
+		return (i == end(_polls))
+			? nullptr
+			: update.has_poll()
+			? poll(update.vpoll).get()
+			: i->second.get();
+	}();
+	if (updated && updated->applyResults(update.vresults)) {
+		requestPollViewRepaint(updated);
+	}
+}
+
+not_null<LocationData*> Session::location(const LocationCoords &coords) {
+	auto i = _locations.find(coords);
+	if (i == _locations.cend()) {
+		i = _locations.emplace(
+			coords,
+			std::make_unique<LocationData>(coords)).first;
+	}
+	return i->second.get();
+}
+
 void Session::registerPhotoItem(
 		not_null<const PhotoData*> photo,
 		not_null<HistoryItem*> item) {
@@ -1596,6 +1670,24 @@ void Session::unregisterGameView(
 		auto &items = i->second;
 		if (items.remove(view) && items.empty()) {
 			_gameViews.erase(i);
+		}
+	}
+}
+
+void Session::registerPollView(
+		not_null<const PollData*> poll,
+		not_null<ViewElement*> view) {
+	_pollViews[poll].insert(view);
+}
+
+void Session::unregisterPollView(
+		not_null<const PollData*> poll,
+		not_null<ViewElement*> view) {
+	const auto i = _pollViews.find(poll);
+	if (i != _pollViews.end()) {
+		auto &items = i->second;
+		if (items.remove(view) && items.empty()) {
+			_pollViews.erase(i);
 		}
 	}
 }
@@ -1724,23 +1816,37 @@ QString Session::findContactPhone(UserId contactId) const {
 	return QString();
 }
 
+bool Session::hasPendingWebPageGamePollNotification() const {
+	return !_webpagesUpdated.empty()
+		|| !_gamesUpdated.empty()
+		|| !_pollsUpdated.empty();
+}
+
 void Session::notifyWebPageUpdateDelayed(not_null<WebPageData*> page) {
-	const auto invoke = _webpagesUpdated.empty() && _gamesUpdated.empty();
+	const auto invoke = !hasPendingWebPageGamePollNotification();
 	_webpagesUpdated.insert(page);
 	if (invoke) {
-		crl::on_main(_session, [=] { sendWebPageGameNotifications(); });
+		crl::on_main(_session, [=] { sendWebPageGamePollNotifications(); });
 	}
 }
 
 void Session::notifyGameUpdateDelayed(not_null<GameData*> game) {
-	const auto invoke = _webpagesUpdated.empty() && _gamesUpdated.empty();
+	const auto invoke = !hasPendingWebPageGamePollNotification();
 	_gamesUpdated.insert(game);
 	if (invoke) {
-		crl::on_main(_session, [=] { sendWebPageGameNotifications(); });
+		crl::on_main(_session, [=] { sendWebPageGamePollNotifications(); });
 	}
 }
 
-void Session::sendWebPageGameNotifications() {
+void Session::notifyPollUpdateDelayed(not_null<PollData*> poll) {
+	const auto invoke = !hasPendingWebPageGamePollNotification();
+	_pollsUpdated.insert(poll);
+	if (invoke) {
+		crl::on_main(_session, [=] { sendWebPageGamePollNotifications(); });
+	}
+}
+
+void Session::sendWebPageGamePollNotifications() {
 	for (const auto page : base::take(_webpagesUpdated)) {
 		const auto i = _webpageViews.find(page);
 		if (i != _webpageViews.end()) {
@@ -1751,6 +1857,13 @@ void Session::sendWebPageGameNotifications() {
 	}
 	for (const auto game : base::take(_gamesUpdated)) {
 		if (const auto i = _gameViews.find(game); i != _gameViews.end()) {
+			for (const auto view : i->second) {
+				requestViewResize(view);
+			}
+		}
+	}
+	for (const auto poll : base::take(_pollsUpdated)) {
+		if (const auto i = _pollViews.find(poll); i != _pollViews.end()) {
 			for (const auto view : i->second) {
 				requestViewResize(view);
 			}
@@ -1823,7 +1936,9 @@ void Session::requestNotifySettings(not_null<PeerData*> peer) {
 	if (defaultNotifySettings(peer).settingsUnknown()) {
 		_session->api().requestNotifySettings(peer->isUser()
 			? MTP_inputNotifyUsers()
-			: MTP_inputNotifyChats());
+			: (peer->isChat() || peer->isMegagroup())
+			? MTP_inputNotifyChats()
+			: MTP_inputNotifyBroadcasts());
 	}
 }
 
@@ -1850,13 +1965,28 @@ void Session::applyNotifySetting(
 		if (_defaultChatNotifySettings.change(settings)) {
 			_defaultChatNotifyUpdates.fire({});
 
-			App::enumerateChatsChannels([&](not_null<PeerData*> peer) {
+			App::enumerateGroups([&](not_null<PeerData*> peer) {
 				if (!peer->notifySettingsUnknown()
 					&& ((!peer->notifyMuteUntil()
 						&& _defaultChatNotifySettings.muteUntil())
 						|| (!peer->notifySilentPosts()
 							&& _defaultChatNotifySettings.silentPosts()))) {
 					updateNotifySettingsLocal(peer);
+				}
+			});
+		}
+	} break;
+	case mtpc_notifyBroadcasts: {
+		if (_defaultBroadcastNotifySettings.change(settings)) {
+			_defaultBroadcastNotifyUpdates.fire({});
+
+			App::enumerateChannels([&](not_null<ChannelData*> channel) {
+				if (!channel->notifySettingsUnknown()
+					&& ((!channel->notifyMuteUntil()
+						&& _defaultBroadcastNotifySettings.muteUntil())
+						|| (!channel->notifySilentPosts()
+							&& _defaultBroadcastNotifySettings.silentPosts()))) {
+					updateNotifySettingsLocal(channel);
 				}
 			});
 		}
@@ -1955,11 +2085,17 @@ rpl::producer<> Session::defaultChatNotifyUpdates() const {
 	return _defaultChatNotifyUpdates.events();
 }
 
+rpl::producer<> Session::defaultBroadcastNotifyUpdates() const {
+	return _defaultBroadcastNotifyUpdates.events();
+}
+
 rpl::producer<> Session::defaultNotifyUpdates(
 		not_null<const PeerData*> peer) const {
 	return peer->isUser()
 		? defaultUserNotifyUpdates()
-		: defaultChatNotifyUpdates();
+		: (peer->isChat() || peer->isMegagroup())
+		? defaultChatNotifyUpdates()
+		: defaultBroadcastNotifyUpdates();
 }
 
 void Session::serviceNotification(
@@ -1994,6 +2130,14 @@ void Session::serviceNotification(
 	} else {
 		insertCheckedServiceNotification(message, media, date);
 	}
+}
+
+void Session::checkNewAuthorization() {
+	_newAuthorizationChecks.fire({});
+}
+
+rpl::producer<> Session::newAuthorizationChecks() const {
+	return _newAuthorizationChecks.events();
 }
 
 void Session::insertCheckedServiceNotification(
@@ -2031,15 +2175,6 @@ void Session::insertCheckedServiceNotification(
 			NewMessageUnread);
 	}
 	sendHistoryChangeNotifications();
-}
-
-void Session::forgetMedia() {
-	for (const auto &[id, photo] : _photos) {
-		photo->forget();
-	}
-	for (const auto &[id, document] : _documents) {
-		document->forget();
-	}
 }
 
 void Session::setMimeForwardIds(MessageIdsList &&list) {

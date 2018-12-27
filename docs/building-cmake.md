@@ -4,6 +4,10 @@
 
 Choose an empty folder for the future build, for example **/home/user/TBuild**. It will be named ***BuildPath*** in the rest of this document.
 
+### Obtain your API credentials
+
+You will require **api_id** and **api_hash** to access the Telegram API servers. To learn how to obtain them [click here][api_credentials].
+
 ### Install software and required packages
 
 You will need GCC 7.2 and CMake 3.2 installed. To install them and all the required dependencies run
@@ -66,7 +70,7 @@ Go to ***BuildPath*** and run
 
     git clone https://github.com/xiph/opus
     cd opus
-    git checkout v1.2.1
+    git checkout v1.3
     ./autogen.sh
     ./configure
     make $MAKE_THREADS_CNT
@@ -107,9 +111,13 @@ Go to ***BuildPath*** and run
 
     git clone git://repo.or.cz/openal-soft.git
     cd openal-soft
-    git checkout v1.18
+    git checkout openal-soft-1.19.1
     cd build
+    if [ `uname -p` == "i686" ]; then
+    cmake -D LIBTYPE:STRING=STATIC -D ALSOFT_UTILS:BOOL=OFF ..
+    else
     cmake -D LIBTYPE:STRING=STATIC ..
+    fi
     make $MAKE_THREADS_CNT
     sudo make install
     cd ../..
@@ -142,6 +150,7 @@ Go to ***BuildPath*** and run
     cd qtbase/src/plugins/platforminputcontexts
     git clone https://github.com/telegramdesktop/fcitx.git
     git clone https://github.com/telegramdesktop/hime.git
+    git clone https://github.com/telegramdesktop/nimf.git
     cd ../../../..
 
     OPENSSL_LIBS='-L/usr/local/ssl/lib -lssl -lcrypto' ./configure -prefix "/usr/local/tdesktop/Qt-5.6.2" -release -force-debug-info -opensource -confirm-license -qt-zlib -qt-libpng -qt-libjpeg -qt-freetype -qt-harfbuzz -qt-pcre -qt-xcb -qt-xkbcommon-x11 -no-opengl -no-gtkstyle -static -openssl-linked -nomake examples -nomake tests
@@ -175,9 +184,9 @@ Go to ***BuildPath*** and run
 
 ### Building the project
 
-Go to ***BuildPath*/bettergram/Telegram** and run
+Go to ***BuildPath*/bettergram/Telegram** and run (using [your **api_id** and **api_hash**](#obtain-your-api-credentials))
 
-    gyp/refresh.sh
+    gyp/refresh.sh --api-id YOUR_API_ID --api-hash YOUR_API_HASH
 
 To make Debug version go to ***BuildPath*/bettergram/out/Debug** and run
 
@@ -204,3 +213,5 @@ To build the project from Visual Studio Code you should do the following command
 
 You can also use `Docker` in order to build the project for Linux.
 To do that fetch the new code from this repository, open `Telegram/build/linux/ubuntu 16.04/` directory at your terminal and run the `build_release_with_docker.sh` script. After success you will see `bettergram-linux.zip` arcive into the `Telegram/build/linux/ubuntu 16.04/release` directory.
+
+[api_credentials]: api_credentials.md

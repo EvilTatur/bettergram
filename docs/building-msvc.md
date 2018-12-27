@@ -28,6 +28,10 @@ Create a ***BuildPath*\\TelegramPrivate** folder. Obtain a copy of **custom_api_
 
 All commands will be launched from **x86 Native Tools Command Prompt for VS 2017.bat** (should be in **Start Menu > Visual Studio 2017** menu folder). Pay attention not to use any other Command Prompt.
 
+### Obtain your API credentials
+
+You will require **api_id** and **api_hash** to access the Telegram API servers. To learn how to obtain them [click here][api_credentials].
+
 ## Install third party software
 
 * **†** is used to demarcate software that can only be installed once on your system that you might not want to install under ***BuildPath*\\ThirdParty** as directed. You may have good reason to install this software to a more common location. This is just fine as long as the software is added to the PATH, and a junction to the proper path of the software is created in the ***BuildPath*\\ThirdParty** folder.
@@ -97,3 +101,5 @@ For better debugging you may want to install Qt Visual Studio Tools:
 * Go to **Online** tab
 * Search for **Qt**
 * Install **Qt Visual Studio Tools** extension
+
+[api_credentials]: api_credentials.md

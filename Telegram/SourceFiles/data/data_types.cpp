@@ -17,6 +17,8 @@ namespace {
 
 constexpr auto kDocumentCacheTag = 0x0000000000000100ULL;
 constexpr auto kDocumentCacheMask = 0x00000000000000FFULL;
+constexpr auto kDocumentThumbCacheTag = 0x0000000000000200ULL;
+constexpr auto kDocumentThumbCacheMask = 0x00000000000000FFULL;
 constexpr auto kStorageCacheTag = 0x0000010000000000ULL;
 constexpr auto kStorageCacheMask = 0x000000FFFFFFFFFFULL;
 constexpr auto kWebDocumentCacheTag = 0x0000020000000000ULL;
@@ -31,6 +33,14 @@ constexpr auto kGeoPointCacheMask = 0x000000FFFFFFFFFFULL;
 Storage::Cache::Key DocumentCacheKey(int32 dcId, uint64 id) {
 	return Storage::Cache::Key{
 		Data::kDocumentCacheTag | (uint64(dcId) & Data::kDocumentCacheMask),
+		id
+	};
+}
+
+Storage::Cache::Key DocumentThumbCacheKey(int32 dcId, uint64 id) {
+	const auto part = (uint64(dcId) & Data::kDocumentThumbCacheMask);
+	return Storage::Cache::Key{
+		Data::kDocumentThumbCacheTag | part,
 		id
 	};
 }
@@ -122,4 +132,39 @@ HistoryItem *FileClickHandler::getActionItem() const {
 	return context()
 		? App::histItemById(context())
 		: nullptr;
+}
+
+PeerId PeerFromMessage(const MTPmessage &message) {
+	return message.match([](const MTPDmessageEmpty &) {
+		return PeerId(0);
+	}, [](const auto &message) {
+		auto from_id = message.has_from_id() ? peerFromUser(message.vfrom_id) : 0;
+		auto to_id = peerFromMTP(message.vto_id);
+		auto out = message.is_out();
+		return (out || !peerIsUser(to_id)) ? to_id : from_id;
+	});
+}
+
+MTPDmessage::Flags FlagsFromMessage(const MTPmessage &message) {
+	return message.match([](const MTPDmessageEmpty &) {
+		return MTPDmessage::Flags(0);
+	}, [](const MTPDmessage &message) {
+		return message.vflags.v;
+	}, [](const MTPDmessageService &message) {
+		return mtpCastFlags(message.vflags.v);
+	});
+}
+
+MsgId IdFromMessage(const MTPmessage &message) {
+	return message.match([](const auto &message) {
+		return message.vid.v;
+	});
+}
+
+TimeId DateFromMessage(const MTPmessage &message) {
+	return message.match([](const MTPDmessageEmpty &) {
+		return TimeId(0);
+	}, [](const auto &message) {
+		return message.vdate.v;
+	});
 }
