@@ -77,7 +77,7 @@ echo ""
 
 git clone https://github.com/xiph/opus \
   && cd opus \
-  && git checkout v1.2.1 \
+  && git checkout v1.3 \
   && ./autogen.sh \
   && ./configure \
   && make $MAKE_THREADS_CNT \
@@ -236,9 +236,13 @@ echo ""
 
 git clone git://repo.or.cz/openal-soft.git \
   && cd openal-soft \
-  && git checkout v1.18 \
+  && git checkout openal-soft-1.19.1 \
   && cd build \
-  && cmake -D LIBTYPE:STRING=STATIC .. \
+  && if [ `uname -p` == "i686" ]; then \
+  cmake -D LIBTYPE:STRING=STATIC -D ALSOFT_UTILS:BOOL=OFF .. \
+  ;else \
+  cmake -D LIBTYPE:STRING=STATIC .. \
+  ;fi \
   && make $MAKE_THREADS_CNT \
   && $SUDO make install \
   && cd ../..

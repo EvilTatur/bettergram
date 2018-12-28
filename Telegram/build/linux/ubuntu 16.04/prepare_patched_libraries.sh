@@ -72,6 +72,7 @@ git clone git://code.qt.io/qt/qt5.git qt5_6_2 \
   && cd qtbase/src/plugins/platforminputcontexts \
   && git clone https://github.com/telegramdesktop/fcitx.git \
   && git clone https://github.com/telegramdesktop/hime.git \
+  && git clone https://github.com/telegramdesktop/nimf.git \
   && cd ../../../.. \
   && OPENSSL_LIBS='-L/usr/local/ssl/lib -lssl -lcrypto' \
   && ./configure \
