@@ -7,11 +7,12 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "chat_helpers/bettergram_tabbed_panel.h"
 
 #include "ui/widgets/shadow.h"
-#include "styles/style_chat_helpers.h"
+#include "ui/image/image_prepare.h"
 #include "chat_helpers/bettergram_tabbed_selector.h"
 #include "window/window_controller.h"
 #include "mainwindow.h"
 #include "messenger.h"
+#include "styles/style_chat_helpers.h"
 
 namespace ChatHelpers {
 namespace {
@@ -36,9 +37,22 @@ BettergramTabbedPanel::BettergramTabbedPanel(
 	object_ptr<BettergramTabbedSelector> selector)
 : RpWidget(parent)
 , _controller(controller)
-, _selector(std::move(selector)) {
+, _selector(std::move(selector))
+, _heightRatio(st::emojiPanHeightRatio)
+, _minContentHeight(st::emojiPanMinHeight)
+, _maxContentHeight(st::emojiPanMaxHeight) {
 	_selector->setParent(this);
 	_selector->setRoundRadius(st::buttonRadius);
+	_selector->setAfterShownCallback([this](SelectorTab tab) {
+		if (tab == SelectorTab::Gifs) {
+			_controller->enableGifPauseReason(Window::GifPauseReason::SavedGifs);
+		}
+	});
+	_selector->setBeforeHidingCallback([this](SelectorTab tab) {
+		if (tab == SelectorTab::Gifs) {
+			_controller->disableGifPauseReason(Window::GifPauseReason::SavedGifs);
+		}
+	});
 	_selector->showRequests(
 	) | rpl::start_with_next([this] {
 		this->showFromSelector();
@@ -54,32 +68,50 @@ BettergramTabbedPanel::BettergramTabbedPanel(
 
 	_hideTimer.setCallback([this] { hideByTimerOrLeave(); });
 
-	connect(_selector, &BettergramTabbedSelector::checkForHide, this, [this] {
+	_selector->checkForHide(
+	) | rpl::start_with_next([=] {
 		if (!rect().contains(mapFromGlobal(QCursor::pos()))) {
 			_hideTimer.callOnce(kDelayedHideTimeoutMs);
 		}
-	});
-	connect(_selector, &BettergramTabbedSelector::cancelled, this, [this] {
+	}, lifetime());
+
+	_selector->cancelled(
+	) | rpl::start_with_next([=] {
 		hideAnimated();
-	});
-	connect(_selector, &BettergramTabbedSelector::slideFinished, this, [this] {
-		InvokeQueued(this, [this] {
+	}, lifetime());
+
+	_selector->slideFinished(
+	) | rpl::start_with_next([=] {
+		InvokeQueued(this, [=] {
 			if (_hideAfterSlide) {
 				startOpacityAnimation(true);
 			}
 		});
-	});
+	}, lifetime());
 
 	if (cPlatform() == dbipMac || cPlatform() == dbipMacOld) {
-		connect(App::wnd()->windowHandle(), SIGNAL(activeChanged()), this, SLOT(onWndActiveChanged()));
+		connect(App::wnd()->windowHandle(), &QWindow::activeChanged, this, [=] {
+			windowActiveChanged();
+		});
 	}
 	setAttribute(Qt::WA_OpaquePaintEvent, false);
 
 	hideChildren();
 }
 
-void BettergramTabbedPanel::moveBottom(int bottom) {
+void BettergramTabbedPanel::moveBottomRight(int bottom, int right) {
 	_bottom = bottom;
+	_right = right;
+	updateContentHeight();
+}
+
+void BettergramTabbedPanel::setDesiredHeightValues(
+		float64 ratio,
+		int minHeight,
+		int maxHeight) {
+	_heightRatio = ratio;
+	_minContentHeight = minHeight;
+	_maxContentHeight = maxHeight;
 	updateContentHeight();
 }
 
@@ -91,8 +123,11 @@ void BettergramTabbedPanel::updateContentHeight() {
 	auto addedHeight = innerPadding().top() + innerPadding().bottom();
 	auto marginsHeight = _selector->marginTop() + _selector->marginBottom();
 	auto availableHeight = _bottom - marginsHeight;
-	auto wantedContentHeight = qRound(st::emojiPanHeightRatio * availableHeight) - addedHeight;
-	auto contentHeight = marginsHeight + snap(wantedContentHeight, st::emojiPanMinHeight, st::emojiPanMaxHeight);
+	auto wantedContentHeight = qRound(_heightRatio * availableHeight) - addedHeight;
+	auto contentHeight = marginsHeight + snap(
+			wantedContentHeight,
+			_minContentHeight,
+			_maxContentHeight);
 	auto resultTop = _bottom - addedHeight - contentHeight;
 	if (contentHeight == _contentHeight) {
 		move(x(), resultTop);
@@ -110,7 +145,7 @@ void BettergramTabbedPanel::updateContentHeight() {
 	update();
 }
 
-void BettergramTabbedPanel::onWndActiveChanged() {
+void BettergramTabbedPanel::windowActiveChanged() {
 	if (!App::wnd()->windowHandle()->isActive() && !isHidden() && !preventAutoHide()) {
 		hideAnimated();
 	}
@@ -150,7 +185,8 @@ void BettergramTabbedPanel::paintEvent(QPaintEvent *e) {
 }
 
 void BettergramTabbedPanel::moveByBottom() {
-	moveToRight(0, y());
+	const auto right = std::max(parentWidget()->width() - _right, 0);
+	moveToRight(right, y());
 	updateContentHeight();
 }
 
@@ -350,6 +386,7 @@ void BettergramTabbedPanel::showStarted() {
 	if (isHidden()) {
 		_selector->showStarted();
 		moveByBottom();
+		raise();
 		show();
 		startShowAnimation();
 	} else if (_hiding) {
@@ -385,14 +422,6 @@ style::margins BettergramTabbedPanel::innerPadding() const {
 
 QRect BettergramTabbedPanel::innerRect() const {
 	return rect().marginsRemoved(innerPadding());
-}
-
-QRect BettergramTabbedPanel::horizontalRect() const {
-	return innerRect().marginsRemoved(style::margins(0, st::buttonRadius, 0, st::buttonRadius));
-}
-
-QRect BettergramTabbedPanel::verticalRect() const {
-	return innerRect().marginsRemoved(style::margins(st::buttonRadius, 0, st::buttonRadius, 0));
 }
 
 bool BettergramTabbedPanel::overlaps(const QRect &globalRect) const {
