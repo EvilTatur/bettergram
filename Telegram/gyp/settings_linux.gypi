@@ -70,6 +70,7 @@
         '<@(linux_common_flags)',
         '-std=c++1z',
         '-Wno-register',
+        '-Wno-class-memaccess',
       ],
       'make_global_settings': [
         ['AR', '/usr/bin/gcc-ar'],
