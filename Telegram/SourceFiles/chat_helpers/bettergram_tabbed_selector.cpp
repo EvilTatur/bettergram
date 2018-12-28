@@ -145,6 +145,18 @@ bool BettergramTabbedSelector::full() const {
 	return (_mode == Mode::Full);
 }
 
+rpl::producer<> BettergramTabbedSelector::cancelled() const {
+    return rpl::never<>();
+}
+
+rpl::producer<> BettergramTabbedSelector::checkForHide() const {
+    return rpl::never<>();
+}
+
+rpl::producer<> BettergramTabbedSelector::slideFinished() const {
+    return _slideFinished.events();
+}
+
 void BettergramTabbedSelector::resizeEvent(QResizeEvent *e) {
 	if (full()) {
 		_tabsSlider->resizeToWidth(width());

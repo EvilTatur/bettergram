@@ -88,6 +88,7 @@
               'Xfixes',
               'ICE',
               'fontconfig',
+              'uuid',
               'expat',
               'freetype',
               'z',
