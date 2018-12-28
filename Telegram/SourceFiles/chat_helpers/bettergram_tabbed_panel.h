@@ -28,12 +28,13 @@ namespace ChatHelpers {
 
 class BettergramTabbedSelector;
 
-class BettergramTabbedPanel : public Ui::RpWidget{
-	Q_OBJECT
-
+class BettergramTabbedPanel : public Ui::RpWidget {
 public:
 	BettergramTabbedPanel(QWidget *parent, not_null<Window::Controller*> controller);
-	BettergramTabbedPanel(QWidget *parent, not_null<Window::Controller*> controller, object_ptr<BettergramTabbedSelector> selector);
+	BettergramTabbedPanel(
+		QWidget *parent,
+		not_null<Window::Controller*> controller,
+		object_ptr<BettergramTabbedSelector> selector);
 
 	object_ptr<BettergramTabbedSelector> takeSelector();
 	QPointer<BettergramTabbedSelector> getSelector() const;
@@ -65,9 +66,6 @@ protected:
 	void paintEvent(QPaintEvent *e) override;
 	bool eventFilter(QObject *obj, QEvent *e) override;
 
-private slots:
-	void onWndActiveChanged();
-
 private:
 	void hideByTimerOrLeave();
 	void moveByBottom();
@@ -75,6 +73,7 @@ private:
 		return !_selector;
 	}
 	void showFromSelector();
+	void windowActiveChanged();
 
 	style::margins innerPadding() const;
 

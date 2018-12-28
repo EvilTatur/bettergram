@@ -3913,7 +3913,7 @@ void HistoryWidget::moveFieldControls() {
 		_inlineResults->moveBottom(_field->y() - st::historySendPadding);
 	}
 	if (_bettergramTabbedPanel) {
-		_bettergramTabbedPanel->moveBottom(buttonsBottom);
+		_bettergramTabbedPanel->moveBottomRight(buttonsBottom, width());
 	}
 	if (_tabbedPanel) {
 		_tabbedPanel->moveBottomRight(buttonsBottom, width());

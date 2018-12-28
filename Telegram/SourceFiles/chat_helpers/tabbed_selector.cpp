@@ -6,7 +6,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #include "chat_helpers/tabbed_selector.h"
 
-#include "chat_helpers/prices_list_widget.h"
 #include "chat_helpers/emoji_list_widget.h"
 #include "chat_helpers/stickers_list_widget.h"
 #include "chat_helpers/gifs_list_widget.h"

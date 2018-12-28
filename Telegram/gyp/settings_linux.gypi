@@ -71,6 +71,8 @@
         '-std=c++1z',
         '-Wno-register',
         '-Wno-class-memaccess',
+        '-Wno-parentheses',
+        '-Wno-format',
       ],
       'make_global_settings': [
         ['AR', '/usr/bin/gcc-ar'],

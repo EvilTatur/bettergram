@@ -43,16 +43,6 @@ BettergramTabbedPanel::BettergramTabbedPanel(
 , _maxContentHeight(st::emojiPanMaxHeight) {
 	_selector->setParent(this);
 	_selector->setRoundRadius(st::buttonRadius);
-	_selector->setAfterShownCallback([this](SelectorTab tab) {
-		if (tab == SelectorTab::Gifs) {
-			_controller->enableGifPauseReason(Window::GifPauseReason::SavedGifs);
-		}
-	});
-	_selector->setBeforeHidingCallback([this](SelectorTab tab) {
-		if (tab == SelectorTab::Gifs) {
-			_controller->disableGifPauseReason(Window::GifPauseReason::SavedGifs);
-		}
-	});
 	_selector->showRequests(
 	) | rpl::start_with_next([this] {
 		this->showFromSelector();

@@ -628,11 +628,6 @@ void MainWidget::notify_historyMuteUpdated(History *history) {
 	_dialogs->notify_historyMuteUpdated(history);
 }
 
-void MainWidget::clearHider(not_null<Window::HistoryHider*> instance) {
-	if (_hider != instance) {
-		return;
-	}
-	_hider.release();
 void MainWidget::markAsRead(Dialogs::EntryTypes type)
 {
 	_dialogs->markAsRead(type);
@@ -643,6 +638,11 @@ bool MainWidget::isBettergramTabsShowed() const
 	return _history && _history->isBettergramTabsShowed();
 }
 
+void MainWidget::clearHider(not_null<Window::HistoryHider*> instance) {
+	if (_hider != instance) {
+		return;
+	}
+	_hider.release();
 	if (Adaptive::OneColumn()) {
 		if (_mainSection || (_history->peer() && _history->peer()->id)) {
 			auto animationParams = ([=] {
