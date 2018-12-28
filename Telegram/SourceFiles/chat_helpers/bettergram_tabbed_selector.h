@@ -16,6 +16,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "tabbed_selector.h"
 
 namespace ChatHelpers {
+
 enum class BettergramSelectorTab {
 	Prices,
 	News,
@@ -24,11 +25,28 @@ enum class BettergramSelectorTab {
 	Resources
 };
 
+class PricesListWidget;
+class RssWidget;
+class VideosWidget;
+class ResourcesWidget;
+
 class BettergramTabbedSelector : public Ui::RpWidget, private base::Subscriber {
 	Q_OBJECT
 
 public:
-	BettergramTabbedSelector(QWidget *parent, not_null<Window::Controller*> controller);
+	enum class Mode {
+		Full,
+		PricesOnly
+	};
+
+	BettergramTabbedSelector(
+			QWidget *parent,
+			not_null<Window::Controller*> controller,
+			Mode mode = Mode::Full);
+
+	rpl::producer<> cancelled() const;
+	rpl::producer<> checkForHide() const;
+	rpl::producer<> slideFinished() const;
 
 	void setRoundRadius(int radius);
 
@@ -39,6 +57,7 @@ public:
 
 	int marginTop() const;
 	int marginBottom() const;
+	int scrollTop() const;
 
 	bool preventAutoHide() const;
 	bool isSliding() const {
@@ -66,14 +85,6 @@ protected:
 	void paintEvent(QPaintEvent *e) override;
 	void resizeEvent(QResizeEvent *e) override;
 
-private slots:
-	void onScroll();
-
-signals:
-	void cancelled();
-	void slideFinished();
-	void checkForHide();
-
 private:
 	class Tab {
 	public:
@@ -87,7 +98,7 @@ private:
 		BettergramSelectorTab type() const {
 			return _type;
 		}
-		not_null<TabbedSelector::Inner*> widget() const {
+		TabbedSelector::Inner* widget() const {
 			return _weak;
 		}
 		not_null<TabbedSelector::InnerFooter*> footer() const {
@@ -110,10 +121,16 @@ private:
 		int _scrollTop = 0;
 	};
 
+	bool full() const;
+	Tab createTab(
+		BettergramSelectorTab type,
+		not_null<Window::Controller*> controller);
+
 	void paintSlideFrame(Painter &p, TimeMs ms);
 	void paintContent(Painter &p);
 
 	void updateRestrictedLabelGeometry();
+	void handleScroll();
 
 	QImage grabForAnimation();
 
@@ -138,6 +155,7 @@ private:
 		return getTab(_currentTabType);
 	}
 
+	Mode _mode = Mode::Full;
 	int _roundRadius = 0;
 	int _footerTop = 0;
 
@@ -156,6 +174,7 @@ private:
 	Fn<void(BettergramSelectorTab)> _beforeHidingCallback;
 
 	rpl::event_stream<> _showRequests;
+	rpl::event_stream<> _slideFinished;
 };
 
 } // namespace ChatHelpers
