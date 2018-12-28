@@ -54,9 +54,6 @@ public:
 
 	void beforeHiding();
 	void afterShown();
-	void setCancelledCallback(Fn<void()> callback) {
-		_cancelledCallback = std::move(callback);
-	}
 
 	object_ptr<BettergramTabbedSelector> takeSelector();
 	QPointer<BettergramTabbedSelector> getSelector() const;
@@ -82,7 +79,6 @@ protected:
 
 private:
 	object_ptr<BettergramTabbedSelector> _selector;
-	Fn<void()> _cancelledCallback;
 	Fn<void(object_ptr<BettergramTabbedSelector>)> _returnMethod;
 };
 

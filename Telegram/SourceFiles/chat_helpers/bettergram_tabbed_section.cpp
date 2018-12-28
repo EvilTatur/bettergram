@@ -61,13 +61,8 @@ BettergramTabbedSection::BettergramTabbedSection(
 	_selector->setGeometry(rect());
 	_selector->showStarted();
 	_selector->show();
-	connect(_selector, &BettergramTabbedSelector::cancelled, this, [this] {
-		if (_cancelledCallback) {
-			_cancelledCallback();
-		}
-	});
-	_selector->setAfterShownCallback(Fn<void(BettergramSelectorTab)>());
-	_selector->setBeforeHidingCallback(Fn<void(BettergramSelectorTab)>());
+	_selector->setAfterShownCallback(nullptr);
+	_selector->setBeforeHidingCallback(nullptr);
 
 	setAttribute(Qt::WA_OpaquePaintEvent, true);
 }
