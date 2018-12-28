@@ -6,7 +6,7 @@
 	{
 		"label": "gyp refresh",
 		"type": "shell",
-		"command": "${workspaceRoot}/Telegram/gyp/refresh.sh",
+		"command": "${workspaceRoot}/Telegram/gyp/refresh_bettergram.sh",
 		"group": "build",
 		"presentation": {
 			"reveal": "always",

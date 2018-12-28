@@ -55,7 +55,7 @@ echo "Trying to rebuild Bettergram application..."
 echo ""
 
 rm -rf out/Release \
-  && Telegram/gyp/refresh.sh \
+  && Telegram/gyp/refresh_bettergram.sh \
   && cd out/Release \
   && make $MAKE_THREADS_CNT \
   && strip Bettergram

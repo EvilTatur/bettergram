@@ -188,6 +188,10 @@ Go to ***BuildPath*/bettergram/Telegram** and run (using [your **api_id** and **
 
     gyp/refresh.sh --api-id YOUR_API_ID --api-hash YOUR_API_HASH
 
+or if you have `custom_api_id.h` file at the `TelegramPrivate` directory you can just call the script:
+
+    gyp/refresh_bettergram.sh
+
 To make Debug version go to ***BuildPath*/bettergram/out/Debug** and run
 
     make $MAKE_THREADS_CNT

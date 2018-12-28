@@ -5,8 +5,6 @@ pushd `dirname $0` > /dev/null
 FullScriptPath=`pwd`
 popd > /dev/null
 
-python $FullScriptPath/generate.py $1 $2 $3 $4 $5 $6
-
 BUILD_TARGET_GENERAL_DESCRIPTION="You can change the build target at the Telegram/build/target file."
 
 MAC_STORE_DESCRIPTION="It will make .app directory ready for Apple App Store.
@@ -66,5 +64,6 @@ To get more information please check the docs/building-xcode.md file."
     fi
   fi
 
+python $FullScriptPath/generate.py $1 $2 $3 $4 $5 $6
 
 exit
