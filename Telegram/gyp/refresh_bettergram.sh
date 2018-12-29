@@ -10,7 +10,7 @@ pushd `dirname $0` > /dev/null
 FULL_PATH=`pwd`
 popd > /dev/null
 
-TELEGRAM_PRIVATE_PATH=`realpath $FULL_PATH/../../../TelegramPrivate`
+TELEGRAM_PRIVATE_PATH=$FULL_PATH/../../../TelegramPrivate
 CUSTOM_API_ID_FILE_PATH=$TELEGRAM_PRIVATE_PATH/custom_api_id.h
 
 if [ ! -f $CUSTOM_API_ID_FILE_PATH ]
