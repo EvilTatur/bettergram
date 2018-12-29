@@ -74,6 +74,62 @@ if apiId == '' or apiHash == '':
 > if you deploy an app using those 'api_id' and 'api_hash'.""")
     finish(0)
 
+
+BuildTargetGeneralDescription="You can change the build target at the Telegram/build/target file."
+
+MacStoreDescription="""It will make .app directory ready for Apple App Store.
+You also need the following files:
+* TelegramPrivate/mac_development_team"""
+
+MacDmgDescription="""It will make and sign .app directory and .dmg file.
+You also need the following files:
+* TelegramPrivate/mac_certificate_identity
+* TelegramPrivate/mac_development_team
+* TelegramPrivate/BettergramDmg.json
+* TelegramPrivate/Bettergram.icns"""
+
+ChangeToMacStoreDescription="""
+If you want to deliver the application through the Apple App Store
+then just write the following content to the Telegram/build/target file: macstore
+""" + MacStoreDescription
+
+ChangeToMacDmgDescription="""
+If you want to deliver the application outside the Apple App Store
+then just write the following content to the Telegram/build/target file: macdmg
+""" + MacDmgDescription
+
+ChangeToEmptyDescription="""
+Or If you want just to build the application
+then clear the content of the Telegram/build/target file.
+To get more information please check the docs/building-xcode.md file."""
+
+if sys.platform == 'darwin':
+    if officialTarget != "":
+        print('Build target: ' + officialTarget)
+
+    if officialTarget == "macstore":
+        print('\n')
+        print(MacStoreDescription)
+        print('\n')
+        print(BuildTargetGeneralDescription)
+        print(ChangeToMacDmgDescription)
+        print(ChangeToEmptyDescription)
+    elif officialTarget == "macdmg":
+        print('\n')
+        print(MacDmgDescription)
+        print('\n')
+        print(BuildTargetGeneralDescription)
+        print(ChangeToMacStoreDescription)
+        print(ChangeToEmptyDescription)
+    else:
+        print('\n')
+        print('At macOS you can build the application for Apple App Store or deliver it though your site.')
+        print('\n')
+        print(BuildTargetGeneralDescription)
+        print(ChangeToMacStoreDescription)
+        print(ChangeToMacDmgDescription)
+        print(ChangeToEmptyDescription)
+
 gypScript = 'gyp'
 gypFormats = []
 gypArguments = []
