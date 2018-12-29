@@ -146,7 +146,7 @@ Go to ***BuildPath*** and run
 
 Go to ***BuildPath*/bettergram/Telegram** and run
 
-    gyp/refresh.sh
+    gyp/refresh_bettergram.sh
 
 Then launch Xcode, open ***BuildPath*/bettergram/Telegram/Telegram.xcodeproj** and build for Debug / Release.
 
