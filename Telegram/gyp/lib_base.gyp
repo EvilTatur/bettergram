@@ -4,6 +4,11 @@
 # https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 {
+  'conditions': [[ 'build_macstore', {
+    'xcode_settings': {
+      'SKIP_INSTALL': 'YES',
+    }
+  }]],
   'includes': [
     'common.gypi',
   ],
@@ -15,7 +20,6 @@
 	  'openssl.gypi',
       'qt.gypi',
       'telegram_win.gypi',
-      'telegram_mac.gypi',
       'telegram_linux.gypi',
       'pch.gypi',
     ],
