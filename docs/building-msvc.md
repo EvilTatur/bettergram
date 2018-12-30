@@ -10,7 +10,7 @@
 ## Install necessary software
 
 * Install Visual Studio 2017
-  * Currently Bettergram will not build with version 15.7, so you must install a previous version of Visual Studio. You can find previous versions here: https://docs.microsoft.com/en-us/visualstudio/productinfo/installing-an-earlier-release-of-vs2017 (this problem may be resolved in later builds as well)
+  * Currently it works with Visual Studio 15.9.4.
   * Make sure that under Workloads "Desktop development with C++" is selected
   * Make sure that under Individual Components -> Compilers, build tools and runtimes "Windows XP Support for C++" is selected as well as the V140 toolset for desktop
   * If Visual Studio is already installed, go to Tools -> Get Tools and Features... and make sure that the above options are installed. If they aren't, select them and click Modify
