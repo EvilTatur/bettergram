@@ -2,6 +2,8 @@
 #include "rsschannel.h"
 #include "imagefromsite.h"
 
+#include <logs.h>
+
 #include <QXmlStreamReader>
 
 namespace Bettergram {
@@ -78,7 +80,7 @@ QPixmap RssItem::image() const
 	}
 
 	if (!_channel) {
-		qWarning() << "RSS Channel is null";
+		LOG(("RSS Channel is null"));
 		return QPixmap();
 	}
 
@@ -133,7 +135,7 @@ void RssItem::tryToGetImageLink(const QString &text)
 void RssItem::markAllNewsAtSiteAsRead()
 {
 	if (!_channel) {
-		qWarning() << "RSS Channel is null";
+		LOG(("RSS Channel is null"));
 		return;
 	}
 
@@ -350,7 +352,7 @@ void RssItem::createImageFromSite()
 	}
 
 	if (!_channel) {
-		qWarning() << "RSS Channel is null";
+		LOG(("RSS Channel is null"));
 		return;
 	}
 
