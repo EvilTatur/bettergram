@@ -29,7 +29,7 @@ BaseArticlePreviewItem::BaseArticlePreviewItem(const QString &title,
 	connect(&_image, &RemoteImage::imageChanged, this, &BaseArticlePreviewItem::imageChanged);
 }
 
-QString BaseArticlePreviewItem::title() const
+const QString &BaseArticlePreviewItem::title() const
 {
 	return _title;
 }
@@ -39,7 +39,7 @@ void BaseArticlePreviewItem::setTitle(const QString &title)
 	_title = title;
 }
 
-QString BaseArticlePreviewItem::description() const
+const QString &BaseArticlePreviewItem::description() const
 {
 	return _description;
 }
@@ -49,7 +49,7 @@ void BaseArticlePreviewItem::setDescription(const QString &description)
 	_description = description;
 }
 
-QUrl BaseArticlePreviewItem::link() const
+const QUrl &BaseArticlePreviewItem::link() const
 {
 	return _link;
 }
@@ -59,7 +59,7 @@ void BaseArticlePreviewItem::setLink(const QUrl &link)
 	_link = link;
 }
 
-QDateTime BaseArticlePreviewItem::publishDate() const
+const QDateTime &BaseArticlePreviewItem::publishDate() const
 {
 	return _publishDate;
 }
@@ -74,7 +74,7 @@ void BaseArticlePreviewItem::setPublishDate(const QDateTime &publishDate)
 	}
 }
 
-QString BaseArticlePreviewItem::publishDateString() const
+const QString &BaseArticlePreviewItem::publishDateString() const
 {
 	return _publishDateString;
 }

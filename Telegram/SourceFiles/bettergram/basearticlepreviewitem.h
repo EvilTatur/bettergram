@@ -25,13 +25,13 @@ public:
 									int iconHeight,
 									QObject *parent = nullptr);
 
-	QString title() const;
-	QString description() const;
+	const QString &title() const;
+	const QString &description() const;
 
-	QUrl link() const;
+	const QUrl &link() const;
 
-	QDateTime publishDate() const;
-	QString publishDateString() const;
+	const QDateTime &publishDate() const;
+	const QString &publishDateString() const;
 
 	virtual QPixmap image() const;
 
