@@ -31,7 +31,7 @@ int RssChannelList::freq() const
 
 void RssChannelList::setFreq(int freq)
 {
-	if (freq == 0) {
+	if (freq <= 0) {
 		freq = _defaultFreq;
 	}
 

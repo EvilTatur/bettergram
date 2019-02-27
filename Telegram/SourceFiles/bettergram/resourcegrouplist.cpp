@@ -22,7 +22,7 @@ int ResourceGroupList::freq() const
 
 void ResourceGroupList::setFreq(int freq)
 {
-	if (freq == 0) {
+	if (freq <= 0) {
 		freq = _defaultFreq;
 	}
 

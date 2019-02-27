@@ -22,7 +22,7 @@ int PinnedNewsList::freq() const
 
 void PinnedNewsList::setFreq(int freq)
 {
-	if (freq == 0) {
+	if (freq <= 0) {
 		freq = _defaultFreq;
 	}
 
