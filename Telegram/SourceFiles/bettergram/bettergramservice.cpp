@@ -4,6 +4,7 @@
 #include "rsschannellist.h"
 #include "rsschannel.h"
 #include "resourcegrouplist.h"
+#include "pinnednewsitemlist.h"
 #include "aditem.h"
 
 #include <auth_session.h>
@@ -126,6 +127,7 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	_rssChannelList(new RssChannelList("news", st::newsPanImageWidth, st::newsPanImageHeight, this)),
 	_videoChannelList(new RssChannelList("videos", st::videosPanImageWidth, st::videosPanImageHeight, this)),
 	_resourceGroupList(new ResourceGroupList(this)),
+	_pinnedNewsList(new PinnedNewsItemList(this)),
 	_currentAd(new AdItem(this))
 {
 	_instance = this;
@@ -182,6 +184,7 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	}
 
 	getResourceGroupList();
+	getPinnedNewsList();
 
 	_cryptoPriceList->load();
 
@@ -306,6 +309,11 @@ RssChannelList *BettergramService::videoChannelList() const
 ResourceGroupList *BettergramService::resourceGroupList() const
 {
 	return _resourceGroupList;
+}
+
+PinnedNewsItemList *BettergramService::pinnedNewsList() const
+{
+	return _pinnedNewsList;
 }
 
 AdItem *BettergramService::currentAd() const
@@ -733,8 +741,7 @@ void BettergramService::getRssChannelList()
 		LOG(("Can not get RSS channel list due timeout"));
 	});
 
-	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onSslFailed);
+	connect(reply, &QNetworkReply::sslErrors, this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getVideoChannelList()
@@ -764,8 +771,7 @@ void BettergramService::getVideoChannelList()
 		LOG(("Can not get video channel list due timeout"));
 	});
 
-	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onSslFailed);
+	connect(reply, &QNetworkReply::sslErrors, this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::getResourceGroupList()
@@ -795,8 +801,37 @@ void BettergramService::getResourceGroupList()
 		LOG(("Can not get resource group list due timeout"));
 	});
 
-	connect(reply, &QNetworkReply::sslErrors,
-			this, &BettergramService::onSslFailed);
+	connect(reply, &QNetworkReply::sslErrors, this, &BettergramService::onSslFailed);
+}
+
+void BettergramService::getPinnedNewsList()
+{
+	QUrl url("https://api.bettergram.io/v1/pinned_news");
+
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
+	QNetworkRequest request;
+	request.setUrl(url);
+
+	QNetworkReply *reply = networkManager->get(request);
+
+	connect(reply, &QNetworkReply::finished,
+			this, &BettergramService::onGetPinnedNewsListFinished);
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not get pinned news list due timeout"));
+	});
+
+	connect(reply, &QNetworkReply::sslErrors, this, &BettergramService::onSslFailed);
 }
 
 void BettergramService::onGetCryptoPriceNamesFinished()
@@ -835,6 +870,23 @@ void BettergramService::onGetResourceGroupListFinished()
 		_resourceGroupList->parse(reply->readAll());
 	} else {
 		LOG(("Can not get resource group list. %1 (%2)")
+			.arg(reply->errorString())
+			.arg(reply->error()));
+	}
+}
+
+void BettergramService::onGetPinnedNewsListFinished()
+{
+	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+	if (isApiDeprecated(reply)) {
+		return;
+	}
+
+	if(reply->error() == QNetworkReply::NoError) {
+		_pinnedNewsList->parse(reply->readAll());
+	} else {
+		LOG(("Can not get pinned news list. %1 (%2)")
 			.arg(reply->errorString())
 			.arg(reply->error()));
 	}

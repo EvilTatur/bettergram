@@ -13,6 +13,7 @@ class CryptoPriceList;
 class RssChannelList;
 class RssChannel;
 class ResourceGroupList;
+class PinnedNewsItemList;
 class AdItem;
 
 /**
@@ -49,6 +50,7 @@ public:
 	RssChannelList *rssChannelList() const;
 	RssChannelList *videoChannelList() const;
 	ResourceGroupList *resourceGroupList() const;
+	PinnedNewsItemList *pinnedNewsList() const;
 	AdItem *currentAd() const;
 
 	bool isWindowActive() const;
@@ -85,6 +87,9 @@ public:
 
 	/// Download and parse resource group list
 	void getResourceGroupList();
+
+	/// Download and parse pinned news list
+	void getPinnedNewsList();
 
 public slots:
 
@@ -133,6 +138,7 @@ private:
 	RssChannelList *_rssChannelList = nullptr;
 	RssChannelList *_videoChannelList = nullptr;
 	ResourceGroupList *_resourceGroupList = nullptr;
+	PinnedNewsItemList *_pinnedNewsList = nullptr;
 	AdItem *_currentAd = nullptr;
 	int _checkForUpdatesTimerId = 0;
 	int _updateCryptoPriceNamesTimerId = 0;
@@ -201,6 +207,7 @@ private slots:
 	void onGetCryptoPriceNamesFinished();
 	void onGetNextAdFinished();
 	void onGetResourceGroupListFinished();
+	void onGetPinnedNewsListFinished();
 	void onGetRssChannelListFinished();
 	void onGetVideoChannelListFinished();
 
