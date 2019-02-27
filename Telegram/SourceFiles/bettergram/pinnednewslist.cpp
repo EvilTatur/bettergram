@@ -1,4 +1,4 @@
-#include "pinnednewsitemlist.h"
+#include "pinnednewslist.h"
 #include "pinnednewsitem.h"
 #include "bettergramservice.h"
 
@@ -9,18 +9,18 @@
 
 namespace Bettergram {
 
-PinnedNewsItemList::PinnedNewsItemList(QObject *parent)
+PinnedNewsList::PinnedNewsList(QObject *parent)
 	: QObject(parent),
 	  _freq(_defaultFreq)
 {
 }
 
-int PinnedNewsItemList::freq() const
+int PinnedNewsList::freq() const
 {
 	return _freq;
 }
 
-void PinnedNewsItemList::setFreq(int freq)
+void PinnedNewsList::setFreq(int freq)
 {
 	if (freq == 0) {
 		freq = _defaultFreq;
@@ -32,17 +32,17 @@ void PinnedNewsItemList::setFreq(int freq)
 	}
 }
 
-QList<QSharedPointer<PinnedNewsItem>> PinnedNewsItemList::news() const
+QList<QSharedPointer<PinnedNewsItem>> PinnedNewsList::news() const
 {
 	return _news;
 }
 
-QList<QSharedPointer<PinnedNewsItem>> PinnedNewsItemList::videos() const
+QList<QSharedPointer<PinnedNewsItem>> PinnedNewsList::videos() const
 {
 	return _videos;
 }
 
-bool PinnedNewsItemList::parse(const QByteArray &byteArray)
+bool PinnedNewsList::parse(const QByteArray &byteArray)
 {
 	// Update only if it has been changed
 	QByteArray hash = QCryptographicHash::hash(byteArray, QCryptographicHash::Sha256);
@@ -80,7 +80,7 @@ bool PinnedNewsItemList::parse(const QByteArray &byteArray)
 	return true;
 }
 
-bool PinnedNewsItemList::parse(const QJsonObject &json)
+bool PinnedNewsList::parse(const QJsonObject &json)
 {
 	if (json.isEmpty()) {
 		return false;
@@ -116,7 +116,7 @@ bool PinnedNewsItemList::parse(const QJsonObject &json)
 	return true;
 }
 
-bool PinnedNewsItemList::parseItemList(const QJsonArray &jsonArray,
+bool PinnedNewsList::parseItemList(const QJsonArray &jsonArray,
 									   QList<QSharedPointer<PinnedNewsItem>> &list,
 									   int iconWidth,
 									   int iconHeight)
@@ -156,7 +156,7 @@ bool PinnedNewsItemList::parseItemList(const QJsonArray &jsonArray,
 															   iconWidth,
 															   iconHeight));
 
-		connect(item.data(), &PinnedNewsItem::imageChanged, this, &PinnedNewsItemList::imageChanged);
+		connect(item.data(), &PinnedNewsItem::imageChanged, this, &PinnedNewsList::imageChanged);
 
 		list.push_back(item);
 	}

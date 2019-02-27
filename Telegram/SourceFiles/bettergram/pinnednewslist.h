@@ -7,13 +7,13 @@ namespace Bettergram {
 class PinnedNewsItem;
 
 /**
- * @brief The PinnedNewsItemList class contains list of pinned news and videos
+ * @brief The PinnedNewsList class contains list of pinned news and videos
  */
-class PinnedNewsItemList : public QObject {
+class PinnedNewsList : public QObject {
 	Q_OBJECT
 
 public:
-	PinnedNewsItemList(QObject *parent);
+	PinnedNewsList(QObject *parent);
 
 	int freq() const;
 	void setFreq(int freq);

@@ -13,7 +13,7 @@ class CryptoPriceList;
 class RssChannelList;
 class RssChannel;
 class ResourceGroupList;
-class PinnedNewsItemList;
+class PinnedNewsList;
 class AdItem;
 
 /**
@@ -50,7 +50,7 @@ public:
 	RssChannelList *rssChannelList() const;
 	RssChannelList *videoChannelList() const;
 	ResourceGroupList *resourceGroupList() const;
-	PinnedNewsItemList *pinnedNewsList() const;
+	PinnedNewsList *pinnedNewsList() const;
 	AdItem *currentAd() const;
 
 	bool isWindowActive() const;
@@ -138,7 +138,7 @@ private:
 	RssChannelList *_rssChannelList = nullptr;
 	RssChannelList *_videoChannelList = nullptr;
 	ResourceGroupList *_resourceGroupList = nullptr;
-	PinnedNewsItemList *_pinnedNewsList = nullptr;
+	PinnedNewsList *_pinnedNewsList = nullptr;
 	AdItem *_currentAd = nullptr;
 	int _checkForUpdatesTimerId = 0;
 	int _updateCryptoPriceNamesTimerId = 0;

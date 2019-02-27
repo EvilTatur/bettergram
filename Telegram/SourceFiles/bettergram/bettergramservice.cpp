@@ -4,7 +4,7 @@
 #include "rsschannellist.h"
 #include "rsschannel.h"
 #include "resourcegrouplist.h"
-#include "pinnednewsitemlist.h"
+#include "pinnednewslist.h"
 #include "aditem.h"
 
 #include <auth_session.h>
@@ -127,7 +127,7 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	_rssChannelList(new RssChannelList("news", st::newsPanImageWidth, st::newsPanImageHeight, this)),
 	_videoChannelList(new RssChannelList("videos", st::videosPanImageWidth, st::videosPanImageHeight, this)),
 	_resourceGroupList(new ResourceGroupList(this)),
-	_pinnedNewsList(new PinnedNewsItemList(this)),
+	_pinnedNewsList(new PinnedNewsList(this)),
 	_currentAd(new AdItem(this))
 {
 	_instance = this;
@@ -311,7 +311,7 @@ ResourceGroupList *BettergramService::resourceGroupList() const
 	return _resourceGroupList;
 }
 
-PinnedNewsItemList *BettergramService::pinnedNewsList() const
+PinnedNewsList *BettergramService::pinnedNewsList() const
 {
 	return _pinnedNewsList;
 }
