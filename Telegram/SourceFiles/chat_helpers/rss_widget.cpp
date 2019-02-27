@@ -265,7 +265,7 @@ void RssWidget::timerEvent(QTimerEvent *event)
 void RssWidget::startRssTimer()
 {
 	if (!_timerId) {
-		_timerId = startTimer(_rssChannelList->freq() * 1000);
+		_timerId = startTimer(_rssChannelList->freq() * 1000, Qt::VeryCoarseTimer);
 
 		if (!_timerId) {
 			LOG(("Can not start timer for %1 ms")

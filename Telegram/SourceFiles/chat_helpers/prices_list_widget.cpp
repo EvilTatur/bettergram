@@ -240,7 +240,8 @@ void PricesListWidget::timerEvent(QTimerEvent *event)
 void PricesListWidget::startPriceListTimer()
 {
 	if (!_timerId) {
-		_timerId = startTimer(BettergramService::instance()->cryptoPriceList()->freq() * 1000);
+		_timerId = startTimer(BettergramService::instance()->cryptoPriceList()->freq() * 1000,
+							  Qt::VeryCoarseTimer);
 
 		if (!_timerId) {
 			LOG(("Can not start timer for %1 ms")

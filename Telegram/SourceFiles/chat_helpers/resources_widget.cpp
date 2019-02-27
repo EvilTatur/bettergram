@@ -124,7 +124,8 @@ void ResourcesWidget::timerEvent(QTimerEvent *event)
 void ResourcesWidget::startResourcesTimer()
 {
 	if (!_timerId) {
-		_timerId = startTimer(BettergramService::instance()->resourceGroupList()->freq() * 1000);
+		_timerId = startTimer(BettergramService::instance()->resourceGroupList()->freq() * 1000,
+							  Qt::VeryCoarseTimer);
 
 		if (!_timerId) {
 			LOG(("Can not start timer for %1 ms")
