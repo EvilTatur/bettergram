@@ -7,6 +7,8 @@ BaseArticlePreviewItem::BaseArticlePreviewItem(int iconWidth, int iconHeight)
 	: QObject(nullptr),
 	  _image(iconWidth, iconHeight, nullptr)
 {
+	createPublishDateString();
+
 	connect(&_image, &RemoteImage::imageChanged, this, &BaseArticlePreviewItem::imageChanged);
 }
 
@@ -23,6 +25,28 @@ BaseArticlePreviewItem::BaseArticlePreviewItem(const QString &title,
 	  _publishDate(publishDate),
 	  _image(iconWidth, iconHeight, nullptr)
 {
+	createPublishDateString();
+
+	connect(&_image, &RemoteImage::imageChanged, this, &BaseArticlePreviewItem::imageChanged);
+}
+
+BaseArticlePreviewItem::BaseArticlePreviewItem(const QString &title,
+											   const QString &description,
+											   const QUrl &link,
+											   const QUrl &imageLink,
+											   bool isNeedDownloadIcon,
+											   const QDateTime &publishDate,
+											   int iconWidth,
+											   int iconHeight)
+	: QObject(nullptr),
+	  _title(title),
+	  _description(description),
+	  _link(link),
+	  _publishDate(publishDate),
+	  _image(imageLink, iconWidth, iconHeight, isNeedDownloadIcon, nullptr)
+{
+	createPublishDateString();
+
 	connect(&_image, &RemoteImage::imageChanged, this, &BaseArticlePreviewItem::imageChanged);
 }
 
@@ -66,8 +90,7 @@ void BaseArticlePreviewItem::setPublishDate(const QDateTime &publishDate)
 	if (_publishDate != publishDate) {
 		_publishDate = publishDate;
 
-		_publishDateString =
-				BettergramService::generateLastUpdateString(_publishDate.toLocalTime(), false);
+		createPublishDateString();
 	}
 }
 
@@ -107,6 +130,12 @@ void BaseArticlePreviewItem::setIsRead(bool isRead)
 		_isRead = isRead;
 		emit isReadChanged();
 	}
+}
+
+void BaseArticlePreviewItem::createPublishDateString()
+{
+	_publishDateString =
+			BettergramService::generateLastUpdateString(_publishDate.toLocalTime(), false);
 }
 
 void BaseArticlePreviewItem::markAsRead()

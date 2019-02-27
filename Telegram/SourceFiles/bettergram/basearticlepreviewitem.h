@@ -22,6 +22,15 @@ public:
 									int iconWidth,
 									int iconHeight);
 
+	explicit BaseArticlePreviewItem(const QString &title,
+									const QString &description,
+									const QUrl &link,
+									const QUrl &imageLink,
+									bool isNeedDownloadIcon,
+									const QDateTime &publishDate,
+									int iconWidth,
+									int iconHeight);
+
 	const QString &title() const;
 	const QString &description() const;
 
@@ -74,6 +83,7 @@ private:
 	bool _isRead = false;
 
 	void setIsRead(bool isRead);
+	void createPublishDateString();
 };
 
 } // namespace Bettergram
