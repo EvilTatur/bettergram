@@ -1,7 +1,6 @@
 #include "rssitem.h"
 #include "rsschannel.h"
 #include "imagefromsite.h"
-#include "bettergramservice.h"
 
 #include <QXmlStreamReader>
 
@@ -10,15 +9,12 @@ namespace Bettergram {
 const qint64 RssItem::_maxLastHoursInMs = 24 * 60 * 60 * 1000;
 
 RssItem::RssItem(RssChannel *channel) :
-	QObject(channel),
-	_channel(channel),
-	_image(_channel->iconWidth(), _channel->iconHeight())
+	BaseArticlePreviewItem(channel->iconWidth(), channel->iconHeight(), channel),
+	_channel(channel)
 {
 	if (!_channel) {
 		throw std::invalid_argument("RSS Channel is null");
 	}
-
-	connect(&_image, &RemoteImage::imageChanged, this, &RssItem::imageChanged);
 }
 
 RssItem::RssItem(const QString &guid,
@@ -30,38 +26,27 @@ RssItem::RssItem(const QString &guid,
 				 const QUrl &commentsLink,
 				 const QDateTime &publishDate,
 				 RssChannel *channel) :
-	QObject(channel),
+	BaseArticlePreviewItem(title,
+						   description,
+						   link,
+						   publishDate,
+						   channel->iconWidth(),
+						   channel->iconHeight(),
+						   channel),
 	_channel(channel),
 	_guid(guid),
-	_title(title),
-	_description(description),
 	_author(author),
 	_categoryList(categoryList),
-	_link(link),
-	_commentsLink(commentsLink),
-	_publishDate(publishDate),
-	_image(_channel->iconWidth(), _channel->iconHeight())
+	_commentsLink(commentsLink)
 {
 	if (!_channel) {
 		throw std::invalid_argument("RSS Channel is null");
 	}
-
-	connect(&_image, &RemoteImage::imageChanged, this, &RssItem::imageChanged);
 }
 
 const QString &RssItem::guid() const
 {
 	return _guid;
-}
-
-const QString &RssItem::title() const
-{
-	return _title;
-}
-
-const QString &RssItem::description() const
-{
-	return _description;
 }
 
 const QString &RssItem::author() const
@@ -74,30 +59,15 @@ const QStringList &RssItem::categoryList() const
 	return _categoryList;
 }
 
-const QUrl &RssItem::link() const
-{
-	return _link;
-}
-
 const QUrl &RssItem::commentsLink() const
 {
 	return _commentsLink;
 }
 
-const QDateTime &RssItem::publishDate() const
+QPixmap RssItem::image() const
 {
-	return _publishDate;
-}
-
-const QString RssItem::publishDateString() const
-{
-	return _publishDateString;
-}
-
-const QPixmap &RssItem::image() const
-{
-	if (!_image.isNull()) {
-		return _image.image();
+	if (!BaseArticlePreviewItem::image().isNull()) {
+		return BaseArticlePreviewItem::image();
 	}
 
 	if (_imageFromSite && !_imageFromSite->isNull()) {
@@ -111,32 +81,14 @@ const QPixmap &RssItem::image() const
 	return _channel->icon();
 }
 
-bool RssItem::isValid() const
-{
-	return !_link.isEmpty() && !_title.isEmpty() && !_publishDate.isNull();
-}
-
 bool RssItem::isOld(const QDateTime &now) const
 {
-	return now.msecsTo(_publishDate) < -_maxLastHoursInMs;
-}
-
-bool RssItem::isRead() const
-{
-	return _isRead;
-}
-
-void RssItem::setIsRead(bool isRead)
-{
-	if (_isRead != isRead) {
-		_isRead = isRead;
-		emit isReadChanged();
-	}
+	return now.msecsTo(publishDate()) < -_maxLastHoursInMs;
 }
 
 void RssItem::tryToGetImageLink(const QString &text)
 {
-	if (_image.link().isValid()) {
+	if (isImageLinkValid()) {
 		return;
 	}
 
@@ -170,13 +122,8 @@ void RssItem::tryToGetImageLink(const QString &text)
 	QUrl url(urlString);
 
 	if (url.isValid()) {
-		_image.setLink(url);
+		setImageLink(url);
 	}
-}
-
-void RssItem::markAsRead()
-{
-	setIsRead(true);
 }
 
 void RssItem::markAllNewsAtSiteAsRead()
@@ -186,11 +133,6 @@ void RssItem::markAllNewsAtSiteAsRead()
 	}
 
 	_channel->markAsRead();
-}
-
-void RssItem::markAsUnRead()
-{
-	setIsRead(false);
 }
 
 bool RssItem::isExistAtLastFeeds() const
@@ -205,21 +147,17 @@ void RssItem::setIsExistAtLastFeeds(bool isExistAtLastFeeds)
 
 bool RssItem::equalsTo(const QSharedPointer<RssItem> &item)
 {
-	return _link == item->link();
+	return equalsToBaseItem(item);
 }
 
 void RssItem::update(const QSharedPointer<RssItem> &item)
 {
+	updateBaseItem(item);
+
 	_guid = item->_guid;
-	_title = item->_title;
-	_description = item->_description;
 	_author = item->_author;
 	_categoryList = item->_categoryList;
-	_link = item->_link;
 	_commentsLink = item->_commentsLink;
-	_publishDate = item->_publishDate;
-	_publishDateString = item->_publishDateString;
-	_image.setLink(item->_image.link());
 
 	if (_imageFromSite && item->_imageFromSite) {
 		_imageFromSite->setLink(item->_imageFromSite->link());
@@ -259,31 +197,29 @@ void RssItem::parse(QXmlStreamReader &xml)
 
 			tryToGetImageLink(elementText);
 
-			_title = removeHtmlTags(elementText);
+			setTitle(removeHtmlTags(elementText));
 		} else if (xmlName == QLatin1String("description")) {
 			const QString elementText = xml.readElementText();
 
 			tryToGetImageLink(elementText);
 
-			_description = removeHtmlTags(elementText);
+			setDescription(removeHtmlTags(elementText));
 		} else if (xmlName == QLatin1String("author")) {
 			_author = xml.readElementText();
 		} else if (xmlName == QLatin1String("category")) {
 			_categoryList.push_back(xml.readElementText());
 		} else if (xmlName == QLatin1String("link")) {
-			_link = xml.readElementText();
+			setLink(xml.readElementText());
 		} else if (xmlName == QLatin1String("comments")) {
 			_commentsLink = xml.readElementText();
 		} else if (xmlName == QLatin1String("pubDate")) {
-			_publishDate = QDateTime::fromString(xml.readElementText(), Qt::RFC2822Date);
-			_publishDateString =
-					BettergramService::generateLastUpdateString(_publishDate.toLocalTime(), false);
+			setPublishDate(QDateTime::fromString(xml.readElementText(), Qt::RFC2822Date));
 		} else if (xmlName == QLatin1String("enclosure")) {
 			QUrl url = QUrl(xml.attributes().value("url").toString());
 
 			if (url.isValid()) {
 				if (xml.attributes().value("type").contains("image")) {
-					_image.setLink(url);
+					setImageLink(url);
 				}
 			}
 			xml.skipCurrentElement();
@@ -292,9 +228,9 @@ void RssItem::parse(QXmlStreamReader &xml)
 		}
 	}
 
-	if (!_image.link().isValid()) {
+	if (!isImageLinkValid()) {
 		createImageFromSite();
-		_imageFromSite->setLink(_link);
+		_imageFromSite->setLink(link());
 	}
 }
 
@@ -310,27 +246,23 @@ void RssItem::parseAtom(QXmlStreamReader &xml)
 			if (xmlName == QLatin1String("id")) {
 				_guid = xml.readElementText();
 			} else if (xmlName == QLatin1String("title")) {
-				_title = removeHtmlTags(xml.readElementText());
+				setTitle(removeHtmlTags(xml.readElementText()));
 			} else if (xmlName == QLatin1String("category")) {
 				_categoryList.push_back(xml.attributes().value("term").toString());
 				xml.skipCurrentElement();
 			} else if (xmlName == QLatin1String("link")) {
-				_link = QUrl(xml.attributes().value("href").toString());
+				setLink(QUrl(xml.attributes().value("href").toString()));
 				xml.skipCurrentElement();
 			} else if (xmlName == QLatin1String("category")) {
 				_categoryList.push_back(xml.attributes().value("term").toString());
 			} else if (xmlName == QLatin1String("published")) {
-				if (_publishDate.isValid()) {
+				if (publishDate().isValid()) {
 					xml.skipCurrentElement();
 				} else {
-					_publishDate = QDateTime::fromString(xml.readElementText(), Qt::ISODate);
-					_publishDateString =
-							BettergramService::generateLastUpdateString(_publishDate.toLocalTime(), false);
+					setPublishDate(QDateTime::fromString(xml.readElementText(), Qt::ISODate));
 				}
 			} else if (xmlName == QLatin1String("updated")) {
-				_publishDate = QDateTime::fromString(xml.readElementText(), Qt::ISODate);
-				_publishDateString =
-						BettergramService::generateLastUpdateString(_publishDate.toLocalTime(), false);
+				setPublishDate(QDateTime::fromString(xml.readElementText(), Qt::ISODate));
 			} else {
 				xml.skipCurrentElement();
 			}
@@ -343,9 +275,9 @@ void RssItem::parseAtom(QXmlStreamReader &xml)
 		}
 	}
 
-	if (!_image.link().isValid()) {
+	if (!isImageLinkValid()) {
 		createImageFromSite();
-		_imageFromSite->setLink(_link);
+		_imageFromSite->setLink(link());
 	}
 }
 
@@ -361,9 +293,9 @@ void RssItem::parseAtomMediaGroup(QXmlStreamReader &xml)
 		}
 
 		if (xmlName == QLatin1String("description")) {
-			_description = xml.readElementText();
+			setDescription(xml.readElementText());
 		} else if (xmlName == QLatin1String("thumbnail")) {
-			_image.setLink(QUrl(xml.attributes().value("url").toString()));
+			setImageLink(QUrl(xml.attributes().value("url").toString()));
 			xml.skipCurrentElement();
 		} else {
 			xml.skipCurrentElement();
@@ -373,41 +305,30 @@ void RssItem::parseAtomMediaGroup(QXmlStreamReader &xml)
 
 void RssItem::load(QSettings &settings)
 {
+	BaseArticlePreviewItem::load(settings);
+
 	_guid =  settings.value("guid").toString();
-	_title = settings.value("title").toString();
-	_description = settings.value("description").toString();
 	_author =  settings.value("author").toString();
 	_categoryList = settings.value("categoryList").toStringList();
 
-	_link = settings.value("link").toUrl();
 	_commentsLink = settings.value("commentsLink").toUrl();
-	_publishDate = settings.value("publishDate").toDateTime();
-	_image.setLink(settings.value("imageLink").toString());
 
-	if (!_image.link().isValid() && _link.isValid()) {
+	if (!isImageLinkValid() && link().isValid()) {
 		createImageFromSite();
 
-		_imageFromSite->setLink(_link);
+		_imageFromSite->setLink(link());
 	}
-
-	setIsRead(settings.value("isRead").toBool());
 }
 
 void RssItem::save(QSettings &settings)
 {
+	BaseArticlePreviewItem::save(settings);
+
 	settings.setValue("guid", guid());
-	settings.setValue("title", title());
-	settings.setValue("description", description());
 	settings.setValue("author", author());
 	settings.setValue("categoryList", categoryList());
 
-	// We have to save QUrl as QString due bug on macOS
-	settings.setValue("link", link().toString());
 	settings.setValue("commentsLink", commentsLink().toString());
-	settings.setValue("publishDate", publishDate());
-	settings.setValue("imageLink", _image.link().toString());
-
-	settings.setValue("isRead", isRead());
 }
 
 QString RssItem::removeHtmlTags(const QString &text)
