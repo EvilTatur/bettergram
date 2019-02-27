@@ -4,6 +4,8 @@
 #include <bettergram/rsschannellist.h>
 #include <bettergram/rsschannel.h>
 #include <bettergram/rssitem.h>
+#include <bettergram/pinnednewslist.h>
+#include <bettergram/pinnednewsitem.h>
 
 #include <application.h>
 #include <ui/widgets/buttons.h>
@@ -246,13 +248,17 @@ object_ptr<TabbedSelector::InnerFooter> RssWidget::createFooter()
 void RssWidget::afterShown()
 {
 	startRssTimer();
+	startPinnedNewsTimer();
 
 	_rssChannelList->update();
+
+	BettergramService::instance()->getPinnedNewsList();
 }
 
 void RssWidget::beforeHiding()
 {
 	stopRssTimer();
+	stopPinnedNewsTimer();
 }
 
 void RssWidget::timerEvent(QTimerEvent *event)
@@ -279,6 +285,27 @@ void RssWidget::stopRssTimer()
 	if (_timerId) {
 		killTimer(_timerId);
 		_timerId = 0;
+	}
+}
+
+void RssWidget::startPinnedNewsTimer()
+{
+	if (!_pinnedNewsTimerId) {
+		_pinnedNewsTimerId = startTimer(BettergramService::instance()->pinnedNewsList()->freq() * 1000,
+										Qt::VeryCoarseTimer);
+
+		if (!_pinnedNewsTimerId) {
+			LOG(("Can not start timer for %1 ms")
+				.arg(BettergramService::instance()->pinnedNewsList()->freq()));
+		}
+	}
+}
+
+void RssWidget::stopPinnedNewsTimer()
+{
+	if (_pinnedNewsTimerId) {
+		killTimer(_pinnedNewsTimerId);
+		_pinnedNewsTimerId = 0;
 	}
 }
 

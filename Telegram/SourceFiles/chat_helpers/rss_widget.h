@@ -149,6 +149,7 @@ private:
 	ListRowArray<Row> _rows;
 
 	int _timerId = 0;
+	int _pinnedNewsTimerId = 0;
 	int _selectedRow = -1;
 	int _pressedRow = -1;
 	bool _isSortBySite = false;
@@ -185,6 +186,9 @@ private:
 
 	void startRssTimer();
 	void stopRssTimer();
+
+	void startPinnedNewsTimer();
+	void stopPinnedNewsTimer();
 
 	void fillRowsInSortByTimeMode();
 	void fillRowsInSortBySiteMode();
