@@ -8,8 +8,6 @@
 
 namespace Bettergram {
 
-const int ResourceGroupList::_defaultFreq = 5 * 60;
-
 ResourceGroupList::ResourceGroupList(QObject *parent) :
 	QObject(parent),
 	_freq(_defaultFreq),
@@ -140,6 +138,10 @@ bool ResourceGroupList::parse(const QJsonObject &json)
 {
 	if (json.isEmpty()) {
 		return false;
+	}
+
+	if (json.contains("freq")) {
+		setFreq(json.value("freq").toInt());
 	}
 
 	QJsonArray groupsJson;

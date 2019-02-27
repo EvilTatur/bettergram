@@ -48,8 +48,9 @@ signals:
 protected:
 
 private:
-	/// Default frequency of updates in seconds
-	static const int _defaultFreq;
+	/// Default frequency of updates in seconds.
+	/// Default value is 1 hour
+	static const int _defaultFreq = 60 * 60;
 
 	QList<QSharedPointer<ResourceGroup>> _list;
 
