@@ -13,9 +13,9 @@ class ImageFromSite : public QObject {
 	Q_OBJECT
 
 public:
-	explicit ImageFromSite(QObject *parent = nullptr);
-	explicit ImageFromSite(const QUrl &link, QObject *parent = nullptr);
-	explicit ImageFromSite(int scaledWidth, int scaledHeight, QObject *parent = nullptr);
+	explicit ImageFromSite(QObject *parent);
+	explicit ImageFromSite(const QUrl &link, QObject *parent);
+	explicit ImageFromSite(int scaledWidth, int scaledHeight, QObject *parent);
 
 	const QUrl &link() const;
 	void setLink(const QUrl &link);

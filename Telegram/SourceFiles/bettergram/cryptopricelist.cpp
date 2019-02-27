@@ -932,7 +932,7 @@ void CryptoPriceList::mergeCryptoPriceList(const QList<CryptoPrice> &priceList)
 		if (existedPrice) {
 			existedPrice->updateData(price);
 		} else {
-			QSharedPointer<CryptoPrice> newPrice(new CryptoPrice(price, this));
+			QSharedPointer<CryptoPrice> newPrice(new CryptoPrice(price));
 			newPrice->loadIsFavorite();
 
 			addPrivate(newPrice);
@@ -1188,8 +1188,7 @@ void CryptoPriceList::addTestData(const QUrl &url,
 												   currentPrice,
 												   changeFor24Hours,
 												   minuteDirection,
-												   true,
-												   this)));
+												   true)));
 }
 
 void CryptoPriceList::onIconChanged()

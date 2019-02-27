@@ -31,7 +31,7 @@ public:
 	typedef QList<QSharedPointer<CryptoPrice>>::const_iterator const_iterator;
 	typedef QList<QSharedPointer<CryptoPrice>>::iterator iterator;
 
-	explicit CryptoPriceList(QObject *parent = nullptr);
+	explicit CryptoPriceList(QObject *parent);
 
 	std::optional<double> marketCap() const;
 	const QString &marketCapString() const;

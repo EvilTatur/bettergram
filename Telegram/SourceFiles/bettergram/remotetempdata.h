@@ -12,9 +12,9 @@ class RemoteTempData : public AbstractRemoteFile {
 	Q_OBJECT
 
 public:
-	explicit RemoteTempData(QObject *parent = nullptr);
+	explicit RemoteTempData(QObject *parent);
 
-	explicit RemoteTempData(const QUrl &link, QObject *parent = nullptr);
+	explicit RemoteTempData(const QUrl &link, QObject *parent);
 
 public slots:
 

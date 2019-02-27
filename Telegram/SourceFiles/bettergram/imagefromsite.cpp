@@ -9,7 +9,9 @@ const int ImageFromSite::DEFAULT_WIDTH = 550;
 const int ImageFromSite::DEFAULT_HEIGHT = 310;
 
 ImageFromSite::ImageFromSite(QObject *parent) :
-	QObject(parent)
+	QObject(parent),
+	_siteContent(nullptr),
+	_image(nullptr)
 {
 	connect(&_siteContent, &RemoteTempData::downloaded,
 			this, &ImageFromSite::onSiteContentDownloaded);
@@ -20,7 +22,8 @@ ImageFromSite::ImageFromSite(QObject *parent) :
 
 ImageFromSite::ImageFromSite(const QUrl &link, QObject *parent) :
 	QObject(parent),
-	_siteContent(link)
+	_siteContent(link, nullptr),
+	_image(nullptr)
 {
 	connect(&_siteContent, &RemoteTempData::downloaded,
 			this, &ImageFromSite::onSiteContentDownloaded);
@@ -31,8 +34,8 @@ ImageFromSite::ImageFromSite(const QUrl &link, QObject *parent) :
 
 ImageFromSite::ImageFromSite(int scaledWidth, int scaledHeight, QObject *parent) :
 	QObject(parent),
-	_siteContent(),
-	_image(scaledWidth, scaledHeight)
+	_siteContent(nullptr),
+	_image(scaledWidth, scaledHeight, nullptr)
 {
 	connect(&_siteContent, &RemoteTempData::downloaded,
 			this, &ImageFromSite::onSiteContentDownloaded);

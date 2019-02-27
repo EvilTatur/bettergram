@@ -4,7 +4,6 @@ namespace Bettergram {
 
 PinnedNewsItemList::PinnedNewsItemList()
 {
-
 }
 
 } // namespace Bettergram

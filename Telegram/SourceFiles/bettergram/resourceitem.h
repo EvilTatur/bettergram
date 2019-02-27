@@ -13,13 +13,12 @@ class ResourceItem : public QObject {
 	Q_OBJECT
 
 public:
-	explicit ResourceItem(QObject *parent = nullptr);
+	explicit ResourceItem();
 
 	explicit ResourceItem(const QString &title,
 						  const QString &description,
 						  const QUrl &link,
-						  const QUrl &iconLink,
-						  QObject *parent = nullptr);
+						  const QUrl &iconLink);
 
 	const QString &title() const;
 	const QString &description() const;

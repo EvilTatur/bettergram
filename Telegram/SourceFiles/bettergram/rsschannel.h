@@ -22,12 +22,8 @@ public:
 
 	static void sort(QList<QSharedPointer<RssItem>> &items);
 
-	explicit RssChannel(int imageWidth, int imageHeight, QObject *parent = nullptr);
-
-	explicit RssChannel(const QUrl &feedLink,
-						int imageWidth,
-						int imageHeight,
-						QObject *parent = nullptr);
+	explicit RssChannel(int imageWidth, int imageHeight);
+	explicit RssChannel(const QUrl &feedLink, int imageWidth, int imageHeight);
 
 	const QString &title() const;
 	void setTitle(const QString &title);

@@ -19,7 +19,7 @@ public:
 	explicit RssChannelList(const QString &name,
 							int imageWidth,
 							int imageHeight,
-							QObject *parent = nullptr);
+							QObject *parent);
 
 	int freq() const;
 	void setFreq(int freq);

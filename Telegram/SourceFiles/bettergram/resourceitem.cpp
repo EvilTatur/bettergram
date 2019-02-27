@@ -4,9 +4,9 @@
 
 namespace Bettergram {
 
-ResourceItem::ResourceItem(QObject *parent) :
-	QObject(parent),
-	_icon(st::resourcesPanImageSize, st::resourcesPanImageSize)
+ResourceItem::ResourceItem() :
+	QObject(nullptr),
+	_icon(st::resourcesPanImageSize, st::resourcesPanImageSize, nullptr)
 {
 	connect(&_icon, &RemoteImage::imageChanged, this, &ResourceItem::iconChanged);
 }
@@ -14,13 +14,12 @@ ResourceItem::ResourceItem(QObject *parent) :
 ResourceItem::ResourceItem(const QString &title,
 						   const QString &description,
 						   const QUrl &link,
-						   const QUrl &iconLink,
-						   QObject *parent) :
-	QObject(parent),
+						   const QUrl &iconLink) :
+	QObject(nullptr),
 	_title(title),
 	_description(description),
 	_link(link),
-	_icon(iconLink, st::resourcesPanImageSize, st::resourcesPanImageSize, true)
+	_icon(iconLink, st::resourcesPanImageSize, st::resourcesPanImageSize, true, nullptr)
 {
 	connect(&_icon, &RemoteImage::imageChanged, this, &ResourceItem::iconChanged);
 }

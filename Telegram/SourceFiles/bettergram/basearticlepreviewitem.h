@@ -13,17 +13,14 @@ class BaseArticlePreviewItem : public QObject {
 	Q_OBJECT
 
 public:
-	explicit BaseArticlePreviewItem(int iconWidth,
-									int iconHeight,
-									QObject *parent = nullptr);
+	explicit BaseArticlePreviewItem(int iconWidth, int iconHeight);
 
 	explicit BaseArticlePreviewItem(const QString &title,
 									const QString &description,
 									const QUrl &link,
 									const QDateTime &publishDate,
 									int iconWidth,
-									int iconHeight,
-									QObject *parent = nullptr);
+									int iconHeight);
 
 	const QString &title() const;
 	const QString &description() const;

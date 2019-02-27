@@ -63,7 +63,7 @@ BettergramService *BettergramService::init()
 BettergramService *BettergramService::instance()
 {
 	if (!_instance) {
-		new BettergramService();
+		new BettergramService(nullptr);
 	}
 
 	return _instance;
@@ -1005,7 +1005,7 @@ bool BettergramService::parseNextAd(const QByteArray &byteArray)
 
 	int duration = adJson.value("duration").toInt(AdItem::defaultDuration());
 
-	AdItem adItem(id, text, url, duration);
+	AdItem adItem(id, text, url, duration, nullptr);
 
 	_currentAd->update(adItem);
 

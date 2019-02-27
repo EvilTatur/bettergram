@@ -3,11 +3,9 @@
 
 namespace Bettergram {
 
-BaseArticlePreviewItem::BaseArticlePreviewItem(int iconWidth,
-											   int iconHeight,
-											   QObject *parent)
-	: QObject(parent),
-	  _image(iconWidth, iconHeight)
+BaseArticlePreviewItem::BaseArticlePreviewItem(int iconWidth, int iconHeight)
+	: QObject(nullptr),
+	  _image(iconWidth, iconHeight, nullptr)
 {
 	connect(&_image, &RemoteImage::imageChanged, this, &BaseArticlePreviewItem::imageChanged);
 }
@@ -17,14 +15,13 @@ BaseArticlePreviewItem::BaseArticlePreviewItem(const QString &title,
 											   const QUrl &link,
 											   const QDateTime &publishDate,
 											   int iconWidth,
-											   int iconHeight,
-											   QObject *parent)
-	: QObject(parent),
+											   int iconHeight)
+	: QObject(nullptr),
 	  _title(title),
 	  _description(description),
 	  _link(link),
 	  _publishDate(publishDate),
-	  _image(iconWidth, iconHeight)
+	  _image(iconWidth, iconHeight, nullptr)
 {
 	connect(&_image, &RemoteImage::imageChanged, this, &BaseArticlePreviewItem::imageChanged);
 }

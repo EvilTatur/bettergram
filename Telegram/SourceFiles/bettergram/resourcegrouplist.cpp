@@ -162,7 +162,7 @@ bool ResourceGroupList::parse(const QJsonObject &json)
 			continue;
 		}
 
-		QSharedPointer<ResourceGroup> group(new ResourceGroup(this));
+		QSharedPointer<ResourceGroup> group(new ResourceGroup());
 
 		connect(group.data(), &ResourceGroup::iconChanged, this, &ResourceGroupList::iconChanged);
 

@@ -11,7 +11,7 @@ class PinnedNewsItem : public BaseArticlePreviewItem {
 	Q_OBJECT
 
 public:
-	explicit PinnedNewsItem(QObject *parent = nullptr);
+	explicit PinnedNewsItem();
 };
 
 } // namespace Bettergram

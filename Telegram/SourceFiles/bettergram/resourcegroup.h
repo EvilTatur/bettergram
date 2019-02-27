@@ -16,7 +16,7 @@ public:
 	typedef QList<QSharedPointer<ResourceItem>>::const_iterator const_iterator;
 	typedef QList<QSharedPointer<ResourceItem>>::iterator iterator;
 
-	explicit ResourceGroup(QObject *parent = nullptr);
+	explicit ResourceGroup();
 
 	const QString &title() const;
 

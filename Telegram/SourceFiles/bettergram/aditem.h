@@ -14,13 +14,13 @@ class AdItem : public QObject {
 public:
 	static int defaultDuration();
 
-	explicit AdItem(QObject *parent = nullptr);
+	explicit AdItem(QObject *parent);
 
 	explicit AdItem(const QString &id,
 					const QString &text,
 					const QUrl &url,
 					int duration,
-					QObject *parent = nullptr);
+					QObject *parent);
 
 	QString id() const;
 	QString text() const;

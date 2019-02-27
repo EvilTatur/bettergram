@@ -6,8 +6,8 @@
 
 namespace Bettergram {
 
-ResourceGroup::ResourceGroup(QObject *parent) :
-	QObject(parent)
+ResourceGroup::ResourceGroup() :
+	QObject(nullptr)
 {
 }
 
@@ -64,7 +64,7 @@ void ResourceGroup::parse(const QJsonObject &json)
 			continue;
 		}
 
-		QSharedPointer<ResourceItem> item(new ResourceItem(this));
+		QSharedPointer<ResourceItem> item(new ResourceItem());
 
 		connect(item.data(), &ResourceItem::iconChanged, this, &ResourceGroup::iconChanged);
 

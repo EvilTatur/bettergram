@@ -19,17 +19,17 @@ bool RssChannel::compare(const QSharedPointer<RssItem> &a, const QSharedPointer<
 	return a->publishDate() > b->publishDate();
 }
 
-RssChannel::RssChannel(int imageWidth, int imageHeight, QObject *parent) :
-	QObject(parent),
-	_icon(imageWidth, imageHeight)
+RssChannel::RssChannel(int imageWidth, int imageHeight) :
+	QObject(nullptr),
+	_icon(imageWidth, imageHeight, nullptr)
 {
 	connect(&_icon, &RemoteImage::imageChanged, this, &RssChannel::iconChanged);
 }
 
-RssChannel::RssChannel(const QUrl &feedLink, int imageWidth, int imageHeight, QObject *parent) :
-	QObject(parent),
+RssChannel::RssChannel(const QUrl &feedLink, int imageWidth, int imageHeight) :
+	QObject(nullptr),
 	_feedLink(feedLink),
-	_icon(imageWidth, imageHeight)
+	_icon(imageWidth, imageHeight, nullptr)
 {
 	connect(&_icon, &RemoteImage::imageChanged, this, &RssChannel::iconChanged);
 }
@@ -495,8 +495,6 @@ void RssChannel::parseItem(QXmlStreamReader &xml)
 			.arg(_feedLink.toString())
 			.arg(xml.errorString())
 			.arg(xml.error()));
-
-		item->deleteLater();
 	} else {
 		merge(item);
 	}
@@ -512,8 +510,6 @@ void RssChannel::parseAtomEntry(QXmlStreamReader &xml)
 			.arg(_feedLink.toString())
 			.arg(xml.errorString())
 			.arg(xml.error()));
-
-		item->deleteLater();
 	} else {
 		merge(item);
 	}

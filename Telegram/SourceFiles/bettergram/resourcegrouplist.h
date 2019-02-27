@@ -16,7 +16,7 @@ class ResourceGroupList : public QObject {
 public:
 	typedef QList<QSharedPointer<ResourceGroup>>::const_iterator const_iterator;
 
-	explicit ResourceGroupList(QObject *parent = nullptr);
+	explicit ResourceGroupList(QObject *parent);
 
 	int freq() const;
 	void setFreq(int freq);

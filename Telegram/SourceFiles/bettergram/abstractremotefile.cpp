@@ -13,6 +13,12 @@ AbstractRemoteFile::AbstractRemoteFile(QObject *parent) :
 {
 }
 
+AbstractRemoteFile::AbstractRemoteFile(const QUrl &link, QObject *parent) :
+	QObject(parent),
+	_link(link)
+{
+}
+
 AbstractRemoteFile::AbstractRemoteFile(const QUrl &link, bool isNeedDownload, QObject *parent) :
 	QObject(parent),
 	_link(link)

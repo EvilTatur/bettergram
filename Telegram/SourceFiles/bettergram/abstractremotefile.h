@@ -11,8 +11,9 @@ class AbstractRemoteFile : public QObject {
 	Q_OBJECT
 
 public:
-	explicit AbstractRemoteFile(QObject *parent = nullptr);
-	explicit AbstractRemoteFile(const QUrl &link, bool isNeedDownload, QObject *parent = nullptr);
+	explicit AbstractRemoteFile(QObject *parent);
+	explicit AbstractRemoteFile(const QUrl &link, QObject *parent);
+	explicit AbstractRemoteFile(const QUrl &link, bool isNeedDownload, QObject *parent);
 
 	const QUrl &link() const;
 	void setLink(const QUrl &link);

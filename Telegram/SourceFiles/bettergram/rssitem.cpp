@@ -9,12 +9,14 @@ namespace Bettergram {
 const qint64 RssItem::_maxLastHoursInMs = 24 * 60 * 60 * 1000;
 
 RssItem::RssItem(RssChannel *channel) :
-	BaseArticlePreviewItem(channel->iconWidth(), channel->iconHeight(), channel),
+	BaseArticlePreviewItem(channel->iconWidth(), channel->iconHeight()),
 	_channel(channel)
 {
 	if (!_channel) {
 		throw std::invalid_argument("RSS Channel is null");
 	}
+
+	connect(_channel, &RssChannel::destroyed, this, &RssItem::onChannelDestroyed);
 }
 
 RssItem::RssItem(const QString &guid,
@@ -31,8 +33,7 @@ RssItem::RssItem(const QString &guid,
 						   link,
 						   publishDate,
 						   channel->iconWidth(),
-						   channel->iconHeight(),
-						   channel),
+						   channel->iconHeight()),
 	_channel(channel),
 	_guid(guid),
 	_author(author),
@@ -42,6 +43,8 @@ RssItem::RssItem(const QString &guid,
 	if (!_channel) {
 		throw std::invalid_argument("RSS Channel is null");
 	}
+
+	connect(_channel, &RssChannel::destroyed, this, &RssItem::onChannelDestroyed);
 }
 
 const QString &RssItem::guid() const
@@ -75,7 +78,8 @@ QPixmap RssItem::image() const
 	}
 
 	if (!_channel) {
-		throw std::invalid_argument("RSS Channel is null");
+		qWarning() << "RSS Channel is null";
+		return QPixmap();
 	}
 
 	return _channel->icon();
@@ -129,7 +133,8 @@ void RssItem::tryToGetImageLink(const QString &text)
 void RssItem::markAllNewsAtSiteAsRead()
 {
 	if (!_channel) {
-		throw std::invalid_argument("RSS Channel is null");
+		qWarning() << "RSS Channel is null";
+		return;
 	}
 
 	_channel->markAsRead();
@@ -345,12 +350,18 @@ void RssItem::createImageFromSite()
 	}
 
 	if (!_channel) {
-		throw std::invalid_argument("RSS Channel is null");
+		qWarning() << "RSS Channel is null";
+		return;
 	}
 
 	_imageFromSite = new ImageFromSite(_channel->iconWidth(), _channel->iconHeight(), this);
 
 	connect(_imageFromSite, &ImageFromSite::imageChanged, this, &RssItem::imageChanged);
+}
+
+void RssItem::onChannelDestroyed()
+{
+	_channel = nullptr;
 }
 
 } // namespace Bettergrams

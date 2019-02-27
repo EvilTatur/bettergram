@@ -11,19 +11,17 @@ class RemoteImage : public AbstractRemoteFile {
 	Q_OBJECT
 
 public:
-	explicit RemoteImage(QObject *parent = nullptr);
+	explicit RemoteImage(QObject *parent);
 
-	explicit RemoteImage(const QUrl &link, bool isNeedDownloadIcon, QObject *parent = nullptr);
+	explicit RemoteImage(const QUrl &link, bool isNeedDownloadIcon, QObject *parent);
 
 	explicit RemoteImage(const QUrl &link,
 						 int scaledWidth,
 						 int scaledHeight,
 						 bool isNeedDownloadIcon,
-						 QObject *parent = nullptr);
+						 QObject *parent);
 
-	explicit RemoteImage(int scaledWidth,
-						 int scaledHeight,
-						 QObject *parent = nullptr);
+	explicit RemoteImage(int scaledWidth, int scaledHeight, QObject *parent);
 
 	int scaledWidth() const;
 	void setScaledWidth(int scaledWidth);

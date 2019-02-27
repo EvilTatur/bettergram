@@ -124,10 +124,7 @@ void RssChannelList::add(const QUrl &channelLink)
 		return;
 	}
 
-	QSharedPointer<RssChannel> channel(new RssChannel(channelLink,
-													  _imageWidth,
-													  _imageHeight,
-													  nullptr));
+	QSharedPointer<RssChannel> channel(new RssChannel(channelLink, _imageWidth, _imageHeight));
 	add(channel);
 }
 
@@ -309,7 +306,7 @@ void RssChannelList::load()
 	int size = settings.beginReadArray("channels");
 
 	for (int i = 0; i < size; i++) {
-		QSharedPointer<RssChannel> channel(new RssChannel(_imageWidth, _imageHeight, this));
+		QSharedPointer<RssChannel> channel(new RssChannel(_imageWidth, _imageHeight));
 
 		settings.setArrayIndex(i);
 		channel->load(settings);

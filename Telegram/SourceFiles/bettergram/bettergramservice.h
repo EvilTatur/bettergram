@@ -150,7 +150,7 @@ private:
 	base::Observable<void> _isPaidObservable;
 	base::Observable<void> _billingPlanObservable;
 
-	explicit BettergramService(QObject *parent = nullptr);
+	explicit BettergramService(QObject *parent);
 
 	void portSettingsFiles(QSettings &oldSettings, QSettings &newSettings);
 

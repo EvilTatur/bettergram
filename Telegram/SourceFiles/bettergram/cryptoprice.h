@@ -29,8 +29,7 @@ public:
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
-						 bool isNeedDownloadIcon,
-						 QObject *parent = nullptr);
+						 bool isNeedDownloadIcon);
 
 	explicit CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
@@ -40,10 +39,9 @@ public:
 						 const std::optional<double> &currentPrice,
 						 const std::optional<double> &changeFor24Hours,
 						 Direction minuteDirection,
-						 bool isNeedDownloadIcon,
-						 QObject *parent = nullptr);
+						 bool isNeedDownloadIcon);
 
-	explicit CryptoPrice(const CryptoPrice &price, QObject *parent = nullptr);
+	explicit CryptoPrice(const CryptoPrice &price);
 
 	CryptoPrice &operator=(const CryptoPrice &price);
 

@@ -62,7 +62,7 @@ private:
 	/// Keep news only for the last hours
 	static const qint64 _maxLastHoursInMs;
 
-	RssChannel *const _channel;
+	RssChannel *_channel = nullptr;
 
 	QString _guid;
 	QString _author;
@@ -86,6 +86,9 @@ private:
 	void parseAtomMediaGroup(QXmlStreamReader &xml);
 
 	void createImageFromSite();
+
+private slots:
+	void onChannelDestroyed();
 };
 
 } // namespace Bettergram

@@ -15,14 +15,14 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 const QUrl &iconUrl,
 						 const QString &name,
 						 const QString &shortName,
-						 bool isNeedDownloadIcon,
-						 QObject *parent) :
-	QObject(parent),
+						 bool isNeedDownloadIcon) :
+	QObject(nullptr),
 	_url(url),
 	_icon(new RemoteImage(iconUrl,
 						  st::pricesPanTableImageSize,
 						  st::pricesPanTableImageSize,
-						  isNeedDownloadIcon)),
+						  isNeedDownloadIcon,
+						  nullptr)),
 	_name(name),
 	_shortName(shortName)
 {
@@ -40,14 +40,14 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 						 const std::optional<double> &currentPrice,
 						 const std::optional<double> &changeFor24Hours,
 						 Direction minuteDirection,
-						 bool isNeedDownloadIcon,
-						 QObject *parent) :
-	QObject(parent),
+						 bool isNeedDownloadIcon) :
+	QObject(nullptr),
 	_url(url),
 	_icon(new RemoteImage(iconUrl,
 						  st::pricesPanTableImageSize,
 						  st::pricesPanTableImageSize,
-						  isNeedDownloadIcon)),
+						  isNeedDownloadIcon,
+						  nullptr)),
 	_name(name),
 	_shortName(shortName),
 	_rank(rank),
@@ -62,8 +62,8 @@ CryptoPrice::CryptoPrice(const QUrl &url,
 	connect(_icon.data(), &RemoteImage::imageChanged, this, &CryptoPrice::iconChanged);
 }
 
-CryptoPrice::CryptoPrice(const CryptoPrice &price, QObject *parent) :
-	QObject(parent),
+CryptoPrice::CryptoPrice(const CryptoPrice &price) :
+	QObject(nullptr),
 	_url(price._url),
 	_icon(price._icon),
 	_name(price._name),

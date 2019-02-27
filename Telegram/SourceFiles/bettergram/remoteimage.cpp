@@ -8,7 +8,7 @@ RemoteImage::RemoteImage(QObject *parent) :
 }
 
 RemoteImage::RemoteImage(const QUrl &link, bool isNeedDownloadIcon, QObject *parent) :
-	AbstractRemoteFile(link, parent)
+	AbstractRemoteFile(link, isNeedDownloadIcon, parent)
 {
 }
 
@@ -17,7 +17,7 @@ RemoteImage::RemoteImage(const QUrl &link,
 						 int scaledHeight,
 						 bool isNeedDownloadIcon,
 						 QObject *parent) :
-	AbstractRemoteFile(link, parent),
+	AbstractRemoteFile(link, isNeedDownloadIcon, parent),
 	_scaledWidth(scaledWidth),
 	_scaledHeight(scaledHeight)
 {

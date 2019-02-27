@@ -2,8 +2,8 @@
 
 namespace Bettergram {
 
-PinnedNewsItem::PinnedNewsItem(QObject *parent)
-	: BaseArticlePreviewItem (0, 0, parent)
+PinnedNewsItem::PinnedNewsItem()
+	: BaseArticlePreviewItem (0, 0)
 {
 }
 
