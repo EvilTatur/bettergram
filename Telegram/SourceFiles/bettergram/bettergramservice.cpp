@@ -196,6 +196,8 @@ Bettergram::BettergramService::BettergramService(QObject *parent) :
 	_updateRssChannelListTimerId = startTimer(_updateRssChannelListPeriod, Qt::VeryCoarseTimer);
 	_updateVideoChannelListTimerId = startTimer(_updateVideoChannelListPeriod, Qt::VeryCoarseTimer);
 
+	_everyDayTimerId = startTimer(24 * 60 * 60 * 1000, Qt::VeryCoarseTimer);
+
 	connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { _cryptoPriceList->save(); });
 
 	QTimer::singleShot(_checkForFirstUpdatesDelay, Qt::VeryCoarseTimer,
@@ -1171,6 +1173,14 @@ void BettergramService::showDeprecatedApiMessage()
 	}));
 }
 
+void BettergramService::everyDayActions()
+{
+	// We should update these data every day and it is not matter we show related tabs or not
+
+	getPinnedNewsList();
+	getResourceGroupList();
+}
+
 void BettergramService::timerEvent(QTimerEvent *timerEvent)
 {
 	if (timerEvent->timerId() == _checkForUpdatesTimerId) {
@@ -1183,6 +1193,8 @@ void BettergramService::timerEvent(QTimerEvent *timerEvent)
 		getRssChannelList();
 	} else if (timerEvent->timerId() == _updateVideoChannelListTimerId) {
 		getVideoChannelList();
+	} else if (timerEvent->timerId() == _everyDayTimerId) {
+		everyDayActions();
 	}
 }
 

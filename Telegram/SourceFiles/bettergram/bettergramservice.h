@@ -145,6 +145,7 @@ private:
 	int _saveCryptoPricesTimerId = 0;
 	int _updateRssChannelListTimerId = 0;
 	int _updateVideoChannelListTimerId = 0;
+	int _everyDayTimerId = 0;
 	bool _isWindowActive = true;
 	std::function<void()> _isWindowActiveHandler = nullptr;
 
@@ -201,6 +202,9 @@ private:
 	void showDeprecatedApiMessage();
 
 private slots:
+	/// Call this method every 24 hours
+	void everyDayActions();
+
 	void onUpdateRssFeedsContent();
 	void onUpdateVideoFeedsContent();
 
