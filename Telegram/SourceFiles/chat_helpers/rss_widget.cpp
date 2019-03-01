@@ -148,6 +148,8 @@ RssWidget::RssWidget(QWidget* parent,
 	_sortModeLabel = new Ui::FlatLabel(this, st::newsPanSortModeLabel);
 	_isShowReadLabel = new Ui::FlatLabel(this, st::newsPanIsShowReadLabel);
 
+	_rows.setSpacing(2);
+
 	_rssChannelList->update();
 
 	createPinnedNewsGroupItem();
