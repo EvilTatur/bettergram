@@ -140,7 +140,7 @@ bool PinnedNewsList::parseItemList(const QJsonArray &jsonArray,
 		const QDateTime date = QDateTime::fromString(json.value("date").toString(), Qt::ISODate);
 		const QDateTime endDate = QDateTime::fromString(json.value("endDate").toString(), Qt::ISODate);
 
-		const int pos = json.value("pos").toInt();
+		const int position = json.value("pos").toInt();
 
 		if (title.isEmpty() || !url.isValid() || !imageUrl.isValid() || !date.isValid()) {
 			LOG(("Unable to parse pinned news item, because item is invalid"));
@@ -153,6 +153,7 @@ bool PinnedNewsList::parseItemList(const QJsonArray &jsonArray,
 															   imageUrl,
 															   date,
 															   endDate,
+															   position,
 															   iconWidth,
 															   iconHeight));
 

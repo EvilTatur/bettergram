@@ -720,7 +720,26 @@ void RssWidget::fillRowsInSortBySiteMode()
 
 void RssWidget::addPinnedNews()
 {
-	//TODO: realize RssWidget::addPinnedNews() method
+	switch(_rssChannelList->newsType()) {
+	case(RssChannelList::NewsType::News):
+		addPinnedNews(BettergramService::instance()->pinnedNewsList()->news());
+		break;
+	case (RssChannelList::NewsType::Videos):
+		addPinnedNews(BettergramService::instance()->pinnedNewsList()->videos());
+		break;
+	default:
+		LOG(("Unable to recognize news type '%1'")
+			.arg(static_cast<int>(_rssChannelList->newsType())));
+	}
+}
+
+void RssWidget::addPinnedNews(const QList<QSharedPointer<PinnedNewsItem>> &news)
+{
+	for (const QSharedPointer<PinnedNewsItem> &item : news) {
+		_rows.insert(item->position(),
+					 Row(item.staticCast<BaseArticlePreviewItem>(), true),
+					 _rowHeight);
+	}
 }
 
 void RssWidget::updateRows()

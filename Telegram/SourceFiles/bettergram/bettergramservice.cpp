@@ -14,7 +14,6 @@
 #include <core/update_checker.h>
 #include <core/click_handler_types.h>
 #include <lang/lang_keys.h>
-#include <styles/style_chat_helpers.h>
 #include <platform/platform_specific.h>
 #include <boxes/confirm_box.h>
 
@@ -124,8 +123,8 @@ void BettergramService::toggleBettergramTabs()
 Bettergram::BettergramService::BettergramService(QObject *parent) :
 	QObject(parent),
 	_cryptoPriceList(new CryptoPriceList(this)),
-	_rssChannelList(new RssChannelList("news", st::newsPanImageWidth, st::newsPanImageHeight, this)),
-	_videoChannelList(new RssChannelList("videos", st::videosPanImageWidth, st::videosPanImageHeight, this)),
+	_rssChannelList(new RssChannelList(RssChannelList::NewsType::News, this)),
+	_videoChannelList(new RssChannelList(RssChannelList::NewsType::Videos, this)),
 	_resourceGroupList(new ResourceGroupList(this)),
 	_pinnedNewsList(new PinnedNewsList(this)),
 	_currentAd(new AdItem(this))

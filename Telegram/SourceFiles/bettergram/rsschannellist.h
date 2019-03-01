@@ -14,12 +14,16 @@ class RssChannelList : public QObject {
 	Q_OBJECT
 
 public:
+	enum class NewsType {
+		News,
+		Videos
+	};
+
 	typedef QList<QSharedPointer<RssChannel>>::const_iterator const_iterator;
 
-	explicit RssChannelList(const QString &name,
-							int imageWidth,
-							int imageHeight,
-							QObject *parent);
+	explicit RssChannelList(NewsType newsType, QObject *parent);
+
+	NewsType newsType() const;
 
 	int freq() const;
 	void setFreq(int freq);
@@ -69,6 +73,8 @@ private:
 
 	QList<QSharedPointer<RssChannel>> _list;
 
+	const NewsType _newsType;
+
 	/// It is used for storing and loading data
 	const QString _name;
 
@@ -81,6 +87,10 @@ private:
 	QDateTime _lastUpdate;
 	QString _lastUpdateString;
 	QByteArray _lastSourceHash;
+
+	static QString getName(NewsType newsType);
+	static int getImageWidth(NewsType newsType);
+	static int getImageHeight(NewsType newsType);
 
 	void setLastUpdate(const QDateTime &lastUpdate);
 	void add(QSharedPointer<RssChannel> &channel);

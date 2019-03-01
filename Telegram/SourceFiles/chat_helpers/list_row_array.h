@@ -117,6 +117,11 @@ public:
 		_list.push_back(Row(userData, bottom() + _spacing, height));
 	}
 
+	void insert(int index, const TUserData &userData, int height)
+	{
+		_list.insert(index, Row(userData, bottom() + _spacing, height));
+	}
+
 private:
 	int _top = 0;
 	int _spacing = 0;

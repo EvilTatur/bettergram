@@ -17,6 +17,7 @@ namespace Bettergram {
 class BaseArticlePreviewItem;
 class RssChannel;
 class RssChannelList;
+class PinnedNewsItem;
 } // namespace Bettergram
 
 namespace ChatHelpers {
@@ -87,10 +88,16 @@ private:
 	class Row
 	{
 	public:
-		explicit Row(const QSharedPointer<Bettergram::BaseArticlePreviewItem> &item) : _item(item)
+		explicit Row(const QSharedPointer<Bettergram::BaseArticlePreviewItem> &item,
+					 bool isImportant = false)
+			: _item(item),
+			  _isImportant(isImportant)
 		{}
 
-		explicit Row(const QSharedPointer<Bettergram::RssChannel> &channel) : _channel(channel)
+		explicit Row(const QSharedPointer<Bettergram::RssChannel> &channel,
+					 bool isImportant = false)
+			: _channel(channel),
+			  _isImportant(isImportant)
 		{}
 
 		bool isItem() const
@@ -101,6 +108,11 @@ private:
 		bool isChannel() const
 		{
 			return !_channel.isNull();
+		}
+
+		bool isImportant() const
+		{
+			return _isImportant;
 		}
 
 		const QSharedPointer<Bettergram::BaseArticlePreviewItem> &item() const
@@ -116,6 +128,8 @@ private:
 	private:
 		QSharedPointer<Bettergram::BaseArticlePreviewItem> _item;
 		QSharedPointer<Bettergram::RssChannel> _channel;
+
+		bool _isImportant = false;
 	};
 
 	Bettergram::RssChannelList *const _rssChannelList;
@@ -194,6 +208,7 @@ private:
 	void fillRowsInSortBySiteMode();
 
 	void addPinnedNews();
+	void addPinnedNews(const QList<QSharedPointer<Bettergram::PinnedNewsItem>> &news);
 
 	void updateRows();
 

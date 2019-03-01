@@ -1,7 +1,8 @@
 #include "rsschannellist.h"
 #include "rsschannel.h"
+#include "bettergramservice.h"
 
-#include <bettergram/bettergramservice.h>
+#include <styles/style_chat_helpers.h>
 #include <logs.h>
 
 #include <QCryptographicHash>
@@ -11,17 +12,59 @@ namespace Bettergram {
 
 const int RssChannelList::_defaultFreq = 60;
 
-RssChannelList::RssChannelList(const QString &name,
-							   int imageWidth,
-							   int imageHeight,
-							   QObject *parent) :
+QString RssChannelList::getName(NewsType newsType)
+{
+	switch(newsType) {
+	case(NewsType::News):
+		return "news";
+	case (NewsType::Videos):
+		return "videos";
+	default:
+		LOG(("Unable to recognize news type '%1'").arg(static_cast<int>(newsType)));
+		return QString();
+	}
+}
+
+int RssChannelList::getImageWidth(NewsType newsType)
+{
+	switch(newsType) {
+	case(NewsType::News):
+		return st::newsPanImageWidth;
+	case (NewsType::Videos):
+		return st::videosPanImageWidth;
+	default:
+		LOG(("Unable to recognize news type '%1'").arg(static_cast<int>(newsType)));
+		return 0;
+	}
+}
+
+int RssChannelList::getImageHeight(NewsType newsType)
+{
+	switch(newsType) {
+	case(NewsType::News):
+		return st::newsPanImageHeight;
+	case (NewsType::Videos):
+		return st::videosPanImageHeight;
+	default:
+		LOG(("Unable to recognize news type '%1'").arg(static_cast<int>(newsType)));
+		return 0;
+	}
+}
+
+RssChannelList::RssChannelList(NewsType newsType, QObject *parent) :
 	QObject(parent),
-	_name(name),
-	_imageWidth(imageWidth),
-	_imageHeight(imageHeight),
+	_newsType(newsType),
+	_name(getName(newsType)),
+	_imageWidth(getImageWidth(newsType)),
+	_imageHeight(getImageHeight(newsType)),
 	_freq(_defaultFreq),
 	_lastUpdateString(BettergramService::defaultLastUpdateString())
 {
+}
+
+RssChannelList::NewsType RssChannelList::newsType() const
+{
+	return _newsType;
 }
 
 int RssChannelList::freq() const
