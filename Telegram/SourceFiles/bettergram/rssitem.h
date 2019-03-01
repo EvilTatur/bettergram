@@ -38,7 +38,7 @@ public:
 
 	bool isOld(const QDateTime &now = QDateTime::currentDateTime()) const;
 
-	void markAllNewsAtSiteAsRead();
+	void markAllNewsAtSiteAsRead() override;
 
 	bool isExistAtLastFeeds() const;
 	void setIsExistAtLastFeeds(bool isExistAtLastFeeds);

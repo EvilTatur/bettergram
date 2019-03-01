@@ -46,6 +46,8 @@ public:
 	void markAsRead();
 	void markAsUnRead();
 
+	virtual void markAllNewsAtSiteAsRead();
+
 	bool isValid() const;
 
 public slots:

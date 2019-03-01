@@ -161,7 +161,7 @@ RssWidget::RssWidget(QWidget* parent,
 	setMouseTracking(true);
 }
 
-const style::color &RssWidget::getNewsHeaderColor(const QSharedPointer<RssItem> &item) const
+const style::color &RssWidget::getNewsHeaderColor(const QSharedPointer<BaseArticlePreviewItem> &item) const
 {
 	if (item->isRead()) {
 		return _rowReadFg;
@@ -170,7 +170,7 @@ const style::color &RssWidget::getNewsHeaderColor(const QSharedPointer<RssItem> 
 	}
 }
 
-const style::color &RssWidget::getNewsBodyColor(const QSharedPointer<RssItem> &item) const
+const style::color &RssWidget::getNewsBodyColor(const QSharedPointer<BaseArticlePreviewItem> &item) const
 {
 	if (item->isRead()) {
 		return _rowReadFg;
@@ -690,7 +690,9 @@ void RssWidget::fillRowsInSortByTimeMode()
 
 	RssChannel::sort(items);
 
-	for (const QSharedPointer<RssItem> &item : items) {
+	// Do not use const reference here,
+	// because we convert item from QSharedPointer<RssItem> to QSharedPointer<BaseArticlePreviewItem>
+	for (const QSharedPointer<BaseArticlePreviewItem> item : items) {
 		_rows.add(Row(item), _rowHeight);
 	}
 }
@@ -708,10 +710,17 @@ void RssWidget::fillRowsInSortBySiteMode()
 			items = channel->getAllUnreadItems();
 		}
 
-		for (const QSharedPointer<RssItem> &item : items) {
+		// Do not use const reference here,
+		// because we convert item from QSharedPointer<RssItem> to QSharedPointer<BaseArticlePreviewItem>
+		for (const QSharedPointer<BaseArticlePreviewItem> item : items) {
 			_rows.add(Row(item), _rowHeight);
 		}
 	}
+}
+
+void RssWidget::addPinnedNews()
+{
+	//TODO: realize RssWidget::addPinnedNews() method
 }
 
 void RssWidget::updateRows()
@@ -724,6 +733,8 @@ void RssWidget::updateRows()
 	} else {
 		fillRowsInSortByTimeMode();
 	}
+
+	addPinnedNews();
 
 	update();
 }

@@ -148,6 +148,11 @@ void BaseArticlePreviewItem::markAsUnRead()
 	setIsRead(false);
 }
 
+void BaseArticlePreviewItem::markAllNewsAtSiteAsRead()
+{
+	// Do nothing here
+}
+
 bool BaseArticlePreviewItem::equalsToBaseItem(const QSharedPointer<BaseArticlePreviewItem> &item)
 {
 	return _link == item->link();

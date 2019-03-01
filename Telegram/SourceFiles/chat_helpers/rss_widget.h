@@ -14,7 +14,7 @@ class PopupMenu;
 } // namespace Ui
 
 namespace Bettergram {
-class RssItem;
+class BaseArticlePreviewItem;
 class RssChannel;
 class RssChannelList;
 } // namespace Bettergram
@@ -87,7 +87,7 @@ private:
 	class Row
 	{
 	public:
-		explicit Row(const QSharedPointer<Bettergram::RssItem> &item) : _item(item)
+		explicit Row(const QSharedPointer<Bettergram::BaseArticlePreviewItem> &item) : _item(item)
 		{}
 
 		explicit Row(const QSharedPointer<Bettergram::RssChannel> &channel) : _channel(channel)
@@ -103,7 +103,7 @@ private:
 			return !_channel.isNull();
 		}
 
-		const QSharedPointer<Bettergram::RssItem> &item() const
+		const QSharedPointer<Bettergram::BaseArticlePreviewItem> &item() const
 		{
 			return _item;
 		}
@@ -114,7 +114,7 @@ private:
 		}
 
 	private:
-		QSharedPointer<Bettergram::RssItem> _item;
+		QSharedPointer<Bettergram::BaseArticlePreviewItem> _item;
 		QSharedPointer<Bettergram::RssChannel> _channel;
 	};
 
@@ -161,8 +161,8 @@ private:
 	Footer *_footer = nullptr;
 	base::unique_qptr<Ui::PopupMenu> _menu = nullptr;
 
-	const style::color &getNewsHeaderColor(const QSharedPointer<Bettergram::RssItem> &item) const;
-	const style::color &getNewsBodyColor(const QSharedPointer<Bettergram::RssItem> &item) const;
+	const style::color &getNewsHeaderColor(const QSharedPointer<Bettergram::BaseArticlePreviewItem> &item) const;
+	const style::color &getNewsBodyColor(const QSharedPointer<Bettergram::BaseArticlePreviewItem> &item) const;
 
 	ClickHandlerPtr getSortModeClickHandler();
 	ClickHandlerPtr getIsShowReadClickHandler();
@@ -192,6 +192,8 @@ private:
 
 	void fillRowsInSortByTimeMode();
 	void fillRowsInSortBySiteMode();
+
+	void addPinnedNews();
 
 	void updateRows();
 
