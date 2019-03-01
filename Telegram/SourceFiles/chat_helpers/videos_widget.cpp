@@ -24,6 +24,8 @@ VideosWidget::VideosWidget(QWidget* parent, not_null<Window::Controller*> contro
 				st::videosPanSiteNameFg,
 				st::videosPanBg,
 				st::videosPanHover,
+				st::videosPanImportantBg,
+				st::videosPanImportantFg,
 				st::videosPanPadding,
 				st::videosPanHeader,
 				st::videosPanImageWidth,

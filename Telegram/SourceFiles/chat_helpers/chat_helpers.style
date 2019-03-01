@@ -269,6 +269,8 @@ newsPanDateHeight: 16px;
 newsPanImageWidth: 54px;
 newsPanImageHeight: 54px;
 newsPanHover: pricesPanHover; // background of selected row in news panel
+newsPanImportantBg: importantNewsBg; // background of important row in news panel
+newsPanImportantFg: importantNewsFg; // foreground of important row in news panel
 
 // Last update label at the RssWidget
 newsPanLastUpdateLabel: FlatLabel(defaultFlatLabel) {
@@ -312,6 +314,8 @@ videosPanDateHeight: 16px;
 videosPanImageWidth: 160px;
 videosPanImageHeight: 90px;
 videosPanHover: pricesPanHover; // background of selected row in videos panel
+videosPanImportantBg: newsPanImportantBg; // background of important row in videos panel
+videosPanImportantFg: newsPanImportantFg; // foreground of important row in videos panel
 
 resourcesPanPadding: pricesPanPadding;
 resourcesPanHeader: pricesPanHeader;

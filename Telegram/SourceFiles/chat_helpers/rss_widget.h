@@ -55,6 +55,8 @@ protected:
 			  const style::color &siteNameFg,
 			  const style::color &bg,
 			  const style::color &hover,
+			  const style::color &importantBg,
+			  const style::color &importantFg,
 			  int padding,
 			  int headerPadding,
 			  int imageWidth,
@@ -149,6 +151,8 @@ private:
 	const style::color _siteNameFg;
 	const style::color _bg;
 	const style::color _hover;
+	const style::color _importantBg;
+	const style::color _importantFg;
 
 	const int _padding;
 	const int _headerPadding;

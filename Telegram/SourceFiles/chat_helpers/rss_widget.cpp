@@ -76,6 +76,8 @@ RssWidget::RssWidget(QWidget* parent, not_null<Window::Controller*> controller)
 				st::newsPanSiteNameFg,
 				st::newsPanBg,
 				st::newsPanHover,
+				st::newsPanImportantBg,
+				st::newsPanImportantFg,
 				st::newsPanPadding,
 				st::newsPanHeader,
 				st::newsPanImageWidth,
@@ -104,6 +106,8 @@ RssWidget::RssWidget(QWidget* parent,
 					 const style::color &siteNameFg,
 					 const style::color &bg,
 					 const style::color &hover,
+					 const style::color &importantBg,
+					 const style::color &importantFg,
 					 int padding,
 					 int headerPadding,
 					 int imageWidth,
@@ -127,6 +131,8 @@ RssWidget::RssWidget(QWidget* parent,
 	  _siteNameFg(siteNameFg),
 	  _bg(bg),
 	  _hover(hover),
+	  _importantBg(importantBg),
+	  _importantFg(importantFg),
 	  _padding(padding),
 	  _headerPadding(headerPadding),
 	  _imageWidth(imageWidth),
@@ -593,8 +599,10 @@ void RssWidget::paintEvent(QPaintEvent *event) {
 			const QPixmap &image = row.userData().item()->image();
 
 			if (!image.isNull()) {
+				const int imageTop = row.top() + (row.height() - (image.height() >= _imageHeight ? _imageHeight : image.height())) / 2;
+
 				QRect targetRect(iconLeft,
-								 row.top() + (row.height() - (image.height() >= _imageHeight ? _imageHeight : image.height())) / 2,
+								 imageTop,
 								 _imageWidth,
 								 _imageHeight);
 
@@ -604,6 +612,30 @@ void RssWidget::paintEvent(QPaintEvent *event) {
 								 _imageHeight);
 
 				painter.drawPixmap(targetRect, image, sourceRect);
+
+				if (row.userData().isImportant()) {
+					// Draw important tag
+
+					const int importantTagSize = _imageHeight / 2;
+
+					QPainterPath path;
+					path.moveTo(iconLeft, imageTop);
+					path.lineTo(iconLeft, imageTop + importantTagSize);
+					path.lineTo(iconLeft + importantTagSize, imageTop);
+					path.lineTo(iconLeft, imageTop);
+
+					painter.fillPath(path, _importantBg);
+
+					painter.setPen(_importantFg);
+					painter.setFont(st::semiboldFont);
+					painter.drawTextLeft(iconLeft + importantTagSize / 4,
+										 imageTop + (_imageWidth == _imageHeight ? 0 : importantTagSize / 4),
+										 0,
+										 "!");
+
+					painter.setPen(_importantBg);
+					painter.drawRect(0, row.top(), width() - 1, row.height() - 1);
+				}
 			}
 		} else if (row.userData().isChannel()) {
 			painter.setFont(st::semiboldFont);
@@ -789,7 +821,9 @@ void RssWidget::createPinnedNewsGroupItem()
 				new BaseArticleGroupPreviewItem(RssChannelList::getImageWidth(_rssChannelList->newsType()),
 												RssChannelList::getImageHeight(_rssChannelList->newsType())));
 
-	_pinnedNewsGroupItem->setIcon(QPixmap(":/bettergram/important_news.png"));
+	if (_rssChannelList->newsType() == RssChannelList::NewsType::News) {
+		_pinnedNewsGroupItem->setIcon(QPixmap(":/bettergram/important_news.png"));
+	}
 
 	switch(_rssChannelList->newsType()) {
 	case(RssChannelList::NewsType::News):

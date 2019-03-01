@@ -581,3 +581,5 @@ tableHeaderFg: windowSubTextFg; // table header foreground
 tableColumnSortInactiveFg: #00000010 | dialogsMenuIconFg;
 
 bettergramNumericPageIndicatorBg: windowBg;
+importantNewsBg: #f2711c; // background of important row in news panel
+importantNewsFg: #ffffff; // foreground of important row in news panel
