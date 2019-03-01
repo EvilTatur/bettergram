@@ -1,8 +1,6 @@
 #pragma once
 
-#include "remoteimage.h"
-
-#include <QObject>
+#include "basearticlegrouppreviewitem.h"
 
 class QXmlStreamReader;
 
@@ -13,7 +11,7 @@ class RssItem;
 /**
  * @brief The RssChannel class contains information from a RSS channel.
  */
-class RssChannel : public QObject {
+class RssChannel : public BaseArticleGroupPreviewItem {
 	Q_OBJECT
 
 public:
@@ -24,12 +22,6 @@ public:
 
 	explicit RssChannel(int imageWidth, int imageHeight);
 	explicit RssChannel(const QUrl &feedLink, int imageWidth, int imageHeight);
-
-	const QString &title() const;
-	void setTitle(const QString &title);
-
-	const QString &description() const;
-	void setDescription(const QString &description);
 
 	const QString &language() const;
 	void setLanguage(const QString &language);
@@ -61,17 +53,6 @@ public:
 	const QUrl &feedLink() const;
 	void setFeedLink(const QUrl &link);
 
-	const QUrl &iconLink() const;
-	void setIconLink(const QUrl &iconLink);
-
-	const QUrl &link() const;
-	void setLink(const QUrl &link);
-
-	int iconWidth() const;
-	int iconHeight() const;
-
-	const QPixmap &icon() const;
-
 	bool isFetching() const;
 	bool isFailed() const;
 
@@ -88,7 +69,7 @@ public:
 
 	bool isMayFetchNewData() const;
 
-	void markAsRead();
+	void markAsRead() override;
 
 	void startFetching();
 	void fetchingSucceed(const QByteArray &source);
@@ -103,15 +84,12 @@ public:
 public slots:
 
 signals:
-	void iconChanged();
 	void isReadChanged();
 	void updated();
 
 protected:
 
 private:
-	QString _title;
-	QString _description;
 	QString _language;
 	QString _copyright;
 	QString _editorEmail;
@@ -127,9 +105,6 @@ private:
 	QString _skipDays;
 
 	QUrl _feedLink;
-	QUrl _link;
-
-	RemoteImage _icon;
 
 	QByteArray _source;
 	QByteArray _lastSourceHash;

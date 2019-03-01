@@ -87,6 +87,7 @@ RssWidget::RssWidget(QWidget* parent, not_null<Window::Controller*> controller)
 				false,
 				true)
 {
+	createPinnedNewsGroupItem();
 }
 
 RssWidget::RssWidget(QWidget* parent,
@@ -142,6 +143,8 @@ RssWidget::RssWidget(QWidget* parent,
 	_isShowReadLabel = new Ui::FlatLabel(this, st::newsPanIsShowReadLabel);
 
 	_rssChannelList->update();
+
+	createPinnedNewsGroupItem();
 
 	updateControlsGeometry();
 	updateLastUpdateLabel();
@@ -700,7 +703,11 @@ void RssWidget::fillRowsInSortByTimeMode()
 void RssWidget::fillRowsInSortBySiteMode()
 {
 	for (const QSharedPointer<RssChannel> &channel : *_rssChannelList) {
-		_rows.add(Row(channel), _channelRowHeight);
+		if (channel->title().isEmpty()) {
+			continue;
+		}
+
+		_rows.add(Row(channel.staticCast<BaseArticleGroupPreviewItem>()), _channelRowHeight);
 
 		QList<QSharedPointer<RssItem>> items;
 
@@ -713,6 +720,10 @@ void RssWidget::fillRowsInSortBySiteMode()
 		// Do not use const reference here,
 		// because we convert item from QSharedPointer<RssItem> to QSharedPointer<BaseArticlePreviewItem>
 		for (const QSharedPointer<BaseArticlePreviewItem> item : items) {
+			if (item->title().isEmpty()) {
+				continue;
+			}
+
 			_rows.add(Row(item), _rowHeight);
 		}
 	}
@@ -735,10 +746,24 @@ void RssWidget::addPinnedNews()
 
 void RssWidget::addPinnedNews(const QList<QSharedPointer<PinnedNewsItem>> &news)
 {
-	for (const QSharedPointer<PinnedNewsItem> &item : news) {
-		_rows.insert(item->position(),
-					 Row(item.staticCast<BaseArticlePreviewItem>(), true),
-					 _rowHeight);
+	if (_isSortBySite) {
+		_rows.insert(0, Row(_pinnedNewsGroupItem), _channelRowHeight);
+
+		// We should sort the news in descenging order
+		QList<QSharedPointer<PinnedNewsItem>> sortedNews = news;
+		std::sort(sortedNews.begin(), sortedNews.end(), [] (auto first, auto second) {
+			return first->position() >= second->position();
+		});
+
+		for (const QSharedPointer<PinnedNewsItem> &item : sortedNews) {
+			_rows.insert(1, Row(item.staticCast<BaseArticlePreviewItem>(), true), _rowHeight);
+		}
+	} else {
+		for (const QSharedPointer<PinnedNewsItem> &item : news) {
+			_rows.insert(item->position(),
+						 Row(item.staticCast<BaseArticlePreviewItem>(), true),
+						 _rowHeight);
+		}
 	}
 }
 
@@ -756,6 +781,27 @@ void RssWidget::updateRows()
 	addPinnedNews();
 
 	update();
+}
+
+void RssWidget::createPinnedNewsGroupItem()
+{
+	_pinnedNewsGroupItem = QSharedPointer<BaseArticleGroupPreviewItem>(
+				new BaseArticleGroupPreviewItem(RssChannelList::getImageWidth(_rssChannelList->newsType()),
+												RssChannelList::getImageHeight(_rssChannelList->newsType())));
+
+	_pinnedNewsGroupItem->setIcon(QPixmap(":/bettergram/important_news.png"));
+
+	switch(_rssChannelList->newsType()) {
+	case(RssChannelList::NewsType::News):
+		_pinnedNewsGroupItem->setTitle(lang(lng_news_important_news));
+		break;
+	case (RssChannelList::NewsType::Videos):
+		_pinnedNewsGroupItem->setTitle(lang(lng_videos_important_videos));
+		break;
+	default:
+		LOG(("Unable to recognize news type '%1'")
+			.arg(static_cast<int>(_rssChannelList->newsType())));
+	}
 }
 
 void RssWidget::onLastUpdateChanged()

@@ -1060,9 +1060,11 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 "lng_news_sort_by_time" = "Sort by time";
 "lng_news_show_all_news" = "Show all news";
 "lng_news_show_only_unread_news" = "Show only unread news";
+"lng_news_important_news" = "Important News";
 
 "lng_videos_show_all_videos" = "Show all videos";
 "lng_videos_show_only_unread_videos" = "Show only unread videos";
+"lng_videos_important_videos" = "Important Videos";
 
 "lng_resources_footer" = "Visit the Site";
 "lng_resources_last_update" = "%1";

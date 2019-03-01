@@ -21,6 +21,9 @@ public:
 
 	typedef QList<QSharedPointer<RssChannel>>::const_iterator const_iterator;
 
+	static int getImageWidth(NewsType newsType);
+	static int getImageHeight(NewsType newsType);
+
 	explicit RssChannelList(NewsType newsType, QObject *parent);
 
 	NewsType newsType() const;
@@ -89,8 +92,6 @@ private:
 	QByteArray _lastSourceHash;
 
 	static QString getName(NewsType newsType);
-	static int getImageWidth(NewsType newsType);
-	static int getImageHeight(NewsType newsType);
 
 	void setLastUpdate(const QDateTime &lastUpdate);
 	void add(QSharedPointer<RssChannel> &channel);

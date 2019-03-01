@@ -50,6 +50,19 @@ public:
 		return _list.empty() ? _top : _list.last().bottom();
 	}
 
+	int bottomAt(int index) const
+	{
+		if (_list.empty()) {
+			return _top;
+		} else if (index < 0) {
+			return _top;
+		} else if (index >= _list.size()) {
+			return _list.last().bottom();
+		} else {
+			return _list.at(index).bottom();
+		}
+	}
+
 	int height() const
 	{
 		return bottom() - top();
@@ -119,7 +132,8 @@ public:
 
 	void insert(int index, const TUserData &userData, int height)
 	{
-		_list.insert(index, Row(userData, bottom() + _spacing, height));
+		_list.insert(index, Row(userData, bottomAt(index) + _spacing, height));
+		updateGeometry();
 	}
 
 private:

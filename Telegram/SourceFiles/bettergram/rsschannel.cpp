@@ -20,38 +20,14 @@ bool RssChannel::compare(const QSharedPointer<RssItem> &a, const QSharedPointer<
 }
 
 RssChannel::RssChannel(int imageWidth, int imageHeight) :
-	QObject(nullptr),
-	_icon(imageWidth, imageHeight, nullptr)
+	BaseArticleGroupPreviewItem(imageWidth, imageHeight)
 {
-	connect(&_icon, &RemoteImage::imageChanged, this, &RssChannel::iconChanged);
 }
 
 RssChannel::RssChannel(const QUrl &feedLink, int imageWidth, int imageHeight) :
-	QObject(nullptr),
-	_feedLink(feedLink),
-	_icon(imageWidth, imageHeight, nullptr)
+	BaseArticleGroupPreviewItem(imageWidth, imageHeight),
+	_feedLink(feedLink)
 {
-	connect(&_icon, &RemoteImage::imageChanged, this, &RssChannel::iconChanged);
-}
-
-const QString &RssChannel::title() const
-{
-	return _title;
-}
-
-void RssChannel::setTitle(const QString &title)
-{
-	_title = title;
-}
-
-const QString &RssChannel::description() const
-{
-	return _description;
-}
-
-void RssChannel::setDescription(const QString &description)
-{
-	_description = description;
 }
 
 const QString &RssChannel::language() const
@@ -151,41 +127,6 @@ const QUrl &RssChannel::feedLink() const
 void RssChannel::setFeedLink(const QUrl &feedLink)
 {
 	_feedLink = feedLink;
-}
-
-const QUrl &RssChannel::iconLink() const
-{
-	return _icon.link();
-}
-
-void RssChannel::setIconLink(const QUrl &iconLink)
-{
-	_icon.setLink(iconLink);
-}
-
-const QUrl &RssChannel::link() const
-{
-	return _link;
-}
-
-void RssChannel::setLink(const QUrl &link)
-{
-	_link = link;
-}
-
-int RssChannel::iconWidth() const
-{
-	return _icon.scaledWidth();
-}
-
-int RssChannel::iconHeight() const
-{
-	return _icon.scaledHeight();
-}
-
-const QPixmap &RssChannel::icon() const
-{
-	return _icon.image();
 }
 
 bool RssChannel::isFetching() const

@@ -15,6 +15,7 @@ class PopupMenu;
 
 namespace Bettergram {
 class BaseArticlePreviewItem;
+class BaseArticleGroupPreviewItem;
 class RssChannel;
 class RssChannelList;
 class PinnedNewsItem;
@@ -94,7 +95,7 @@ private:
 			  _isImportant(isImportant)
 		{}
 
-		explicit Row(const QSharedPointer<Bettergram::RssChannel> &channel,
+		explicit Row(const QSharedPointer<Bettergram::BaseArticleGroupPreviewItem> &channel,
 					 bool isImportant = false)
 			: _channel(channel),
 			  _isImportant(isImportant)
@@ -120,19 +121,20 @@ private:
 			return _item;
 		}
 
-		const QSharedPointer<Bettergram::RssChannel> &channel() const
+		const QSharedPointer<Bettergram::BaseArticleGroupPreviewItem> &channel() const
 		{
 			return _channel;
 		}
 
 	private:
 		QSharedPointer<Bettergram::BaseArticlePreviewItem> _item;
-		QSharedPointer<Bettergram::RssChannel> _channel;
+		QSharedPointer<Bettergram::BaseArticleGroupPreviewItem> _channel;
 
 		bool _isImportant = false;
 	};
 
 	Bettergram::RssChannelList *const _rssChannelList;
+	QSharedPointer<Bettergram::BaseArticleGroupPreviewItem> _pinnedNewsGroupItem;
 
 	const QString _showOnlyUnreadTitle;
 	const QString _showAllTitle;
@@ -211,6 +213,7 @@ private:
 	void addPinnedNews(const QList<QSharedPointer<Bettergram::PinnedNewsItem>> &news);
 
 	void updateRows();
+	void createPinnedNewsGroupItem();
 
 private slots:
 	void onLastUpdateChanged();

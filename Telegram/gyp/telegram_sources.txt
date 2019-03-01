@@ -840,6 +840,8 @@
 <(src_loc)/bettergram/cryptopricelist.h
 <(src_loc)/bettergram/basearticlepreviewitem.cpp
 <(src_loc)/bettergram/basearticlepreviewitem.h
+<(src_loc)/bettergram/basearticlegrouppreviewitem.cpp
+<(src_loc)/bettergram/basearticlegrouppreviewitem.h
 <(src_loc)/bettergram/pinnednewsitem.cpp
 <(src_loc)/bettergram/pinnednewsitem.h
 <(src_loc)/bettergram/pinnednewslist.cpp
