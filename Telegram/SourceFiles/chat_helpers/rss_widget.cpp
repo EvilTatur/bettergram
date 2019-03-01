@@ -631,7 +631,7 @@ void RssWidget::paintEvent(QPaintEvent *event) {
 					painter.setPen(_importantFg);
 					painter.setFont(st::semiboldFont);
 					painter.drawTextLeft(iconLeft + importantTagSize / 4,
-										 imageTop + (_imageWidth == _imageHeight ? 0 : importantTagSize / 4),
+										 imageTop + (_imageWidth == _imageHeight ? 0 : importantTagSize / 6),
 										 0,
 										 "!");
 
