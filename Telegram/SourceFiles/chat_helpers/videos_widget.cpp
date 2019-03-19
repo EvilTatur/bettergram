@@ -13,6 +13,7 @@ VideosWidget::VideosWidget(QWidget* parent, not_null<Window::Controller*> contro
 	: RssWidget(parent,
 				controller,
 				BettergramService::instance()->videoChannelList(),
+				BettergramService::UrlSource::VideosTab,
 				lang(lng_videos_show_only_unread_videos),
 				lang(lng_videos_show_all_videos),
 				lang(lng_menu_videos_mark_as_watched),

@@ -304,7 +304,8 @@ void MainWindow::updateAdLabel()
 
 	_adLabel->setRichText(textcmdLink(1, text));
 	_adLabel->setLink(1, std::make_shared<LambdaClickHandler>([url] {
-		Bettergram::BettergramService::openUrl(url);
+		Bettergram::BettergramService::openUrl(Bettergram::BettergramService::UrlSource::AdTopBar,
+											   url);
 	}));
 
 	updateControlsGeometry();

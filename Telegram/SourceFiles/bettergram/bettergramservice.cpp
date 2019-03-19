@@ -102,7 +102,7 @@ QString BettergramService::generateLastUpdateString(const QDateTime &dateTime, b
 	}
 }
 
-void BettergramService::openUrl(const QUrl &url)
+void BettergramService::openUrl(UrlSource urlSource, const QUrl &url)
 {
 	QString urlString = url.toString();
 	UrlClickHandler::Open(urlString);

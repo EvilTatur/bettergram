@@ -27,7 +27,7 @@ using namespace Bettergram;
 class RssWidget::Footer : public TabbedSelector::InnerFooter
 {
 public:
-	Footer(not_null<RssWidget*> parent);
+	Footer(not_null<RssWidget*> parent, BettergramService::UrlSource urlSource);
 
 protected:
 	void processPanelHideFinished() override;
@@ -37,12 +37,14 @@ protected:
 private:
 	not_null<RssWidget*> _parent;
 	object_ptr<Ui::LinkButton> _link;
+	BettergramService::UrlSource _urlSource;
 };
 
-RssWidget::Footer::Footer(not_null<RssWidget*> parent)
+RssWidget::Footer::Footer(not_null<RssWidget*> parent, BettergramService::UrlSource urlSource)
 	:  InnerFooter(parent)
 	, _parent(parent)
 	, _link(object_ptr<Ui::LinkButton>(this, lang(lng_news_footer), st::largeLinkButton))
+	, _urlSource(urlSource)
 {
 	_link->setClickedCallback([this] { onFooterClicked(); });
 }
@@ -58,13 +60,14 @@ void RssWidget::Footer::processPanelHideFinished()
 
 void RssWidget::Footer::onFooterClicked()
 {
-	BettergramService::openUrl(QUrl("https://bettergram.io"));
+	BettergramService::openUrl(_urlSource, QUrl("https://bettergram.io"));
 }
 
 RssWidget::RssWidget(QWidget* parent, not_null<Window::Controller*> controller)
 	: RssWidget(parent,
 				controller,
 				BettergramService::instance()->rssChannelList(),
+				BettergramService::UrlSource::NewsTab,
 				lang(lng_news_show_only_unread_news),
 				lang(lng_news_show_all_news),
 				lang(lng_menu_news_mark_as_read),
@@ -95,6 +98,7 @@ RssWidget::RssWidget(QWidget* parent, not_null<Window::Controller*> controller)
 RssWidget::RssWidget(QWidget* parent,
 					 not_null<Window::Controller*> controller,
 					 RssChannelList *rssChannelList,
+					 BettergramService::UrlSource urlSource,
 					 const QString &showOnlyUnreadTitle,
 					 const QString &showAllTitle,
 					 const QString &markAsReadTitle,
@@ -120,6 +124,7 @@ RssWidget::RssWidget(QWidget* parent,
 					 bool isShowChannelIcons)
 	: Inner(parent, controller),
 	  _rssChannelList(rssChannelList),
+	  _urlSource(urlSource),
 	  _showOnlyUnreadTitle(showOnlyUnreadTitle),
 	  _showAllTitle(showAllTitle),
 	  _markAsReadTitle(markAsReadTitle),
@@ -250,7 +255,7 @@ object_ptr<TabbedSelector::InnerFooter> RssWidget::createFooter()
 {
 	Expects(_footer == nullptr);
 
-	auto res = object_ptr<Footer>(this);
+	auto res = object_ptr<Footer>(this, _urlSource);
 
 	_footer = res;
 	return std::move(res);
@@ -413,7 +418,7 @@ void RssWidget::mouseReleaseEvent(QMouseEvent *e)
 		}
 
 		if (!link.isEmpty()) {
-			BettergramService::openUrl(link);
+			BettergramService::openUrl(_urlSource, link);
 		}
 	}
 }

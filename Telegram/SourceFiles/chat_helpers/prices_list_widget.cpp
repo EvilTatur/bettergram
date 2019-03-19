@@ -59,7 +59,8 @@ void PricesListWidget::Footer::processPanelHideFinished()
 
 void PricesListWidget::Footer::onFooterClicked()
 {
-	BettergramService::openUrl(QUrl("https://www.livecoinwatch.com"));
+	BettergramService::openUrl(BettergramService::UrlSource::PricesTab,
+							   QUrl("https://www.livecoinwatch.com"));
 }
 
 PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*> controller)
@@ -68,7 +69,10 @@ PricesListWidget::PricesListWidget(QWidget* parent, not_null<Window::Controller*
 	_lastUpdateLabel = new Ui::FlatLabel(this, st::pricesPanLastUpdateLabel);
 
 	_siteName = new Ui::IconButton(this, st::pricesPanSiteNameIcon);
-	_siteName->setClickedCallback([] { BettergramService::openUrl(QUrl("https://www.livecoinwatch.com")); });
+	_siteName->setClickedCallback([] {
+		BettergramService::openUrl(BettergramService::UrlSource::PricesTab,
+								   QUrl("https://www.livecoinwatch.com"));
+	});
 
 	_marketCap = new Ui::FlatLabel(this, st::pricesPanMarketCapLabel);
 	_marketCap->setRichText(textcmdLink(1, lang(lng_prices_market_cap)));
@@ -456,7 +460,7 @@ void PricesListWidget::mouseReleaseEvent(QMouseEvent *e)
 		QUrl url = _pricesAtCurrentPage.at(_pressedRow)->url();
 
 		if (!url.isEmpty()) {
-			BettergramService::openUrl(url);
+			BettergramService::openUrl(BettergramService::UrlSource::PricesTab, url);
 		}
 	}
 }

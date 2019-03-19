@@ -2,6 +2,7 @@
 
 #include "tabbed_selector.h"
 #include "list_row_array.h"
+#include "bettergram/bettergramservice.h"
 
 namespace Window {
 class Controller;
@@ -44,6 +45,7 @@ protected:
 	RssWidget(QWidget* parent,
 			  not_null<Window::Controller*> controller,
 			  Bettergram::RssChannelList *rssChannelList,
+			  Bettergram::BettergramService::UrlSource urlSource,
 			  const QString &showOnlyUnreadTitle,
 			  const QString &showAllTitle,
 			  const QString &markAsReadTitle,
@@ -137,6 +139,7 @@ private:
 
 	Bettergram::RssChannelList *const _rssChannelList;
 	QSharedPointer<Bettergram::BaseArticleGroupPreviewItem> _pinnedNewsGroupItem;
+	Bettergram::BettergramService::UrlSource _urlSource;
 
 	const QString _showOnlyUnreadTitle;
 	const QString _showAllTitle;

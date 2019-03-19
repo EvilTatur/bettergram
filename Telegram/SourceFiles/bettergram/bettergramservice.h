@@ -30,6 +30,14 @@ public:
 		Yearly
 	};
 
+	enum class UrlSource {
+		PricesTab,
+		NewsTab,
+		VideosTab,
+		ResourcesTab,
+		AdTopBar
+	};
+
 	static BettergramService *init();
 	static BettergramService *instance();
 
@@ -38,7 +46,7 @@ public:
 	static const QString &defaultLastUpdateString();
 	static QString generateLastUpdateString(const QDateTime &dateTime, bool isShowSeconds);
 
-	static void openUrl(const QUrl &url);
+	static void openUrl(UrlSource urlSource, const QUrl &url);
 
 	static bool isBettergramTabsShowed();
 	static void toggleBettergramTabs();
