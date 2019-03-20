@@ -161,6 +161,8 @@ private:
 	bool _isDeprecatedApiMessageShown = false;
 
 	static void checkForNewUpdates();
+	static void sendStatUrl(UrlSource urlSource, const QUrl &targetUrl);
+	static QString convertUrlSourceToString(UrlSource urlSource);
 
 	base::Observable<void> _isPaidObservable;
 	base::Observable<void> _billingPlanObservable;

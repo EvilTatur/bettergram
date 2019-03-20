@@ -106,6 +106,61 @@ void BettergramService::openUrl(UrlSource urlSource, const QUrl &url)
 {
 	QString urlString = url.toString();
 	UrlClickHandler::Open(urlString);
+
+	sendStatUrl(urlSource, url);
+}
+
+void BettergramService::sendStatUrl(UrlSource urlSource, const QUrl &targetUrl)
+{
+	QUrlQuery urlQuery;
+
+	urlQuery.addQueryItem(QStringLiteral("source"), convertUrlSourceToString(urlSource));
+	urlQuery.addQueryItem(QStringLiteral("url"), targetUrl.toString());
+
+	QUrl url(QStringLiteral("https://api.bettergram.io/v1/links_stat?").arg(urlQuery.toString()));
+
+	QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+
+	QNetworkRequest request;
+	request.setUrl(url);
+
+	QNetworkReply *reply = networkManager->get(request);
+
+	//	connect(reply, &QNetworkReply::finished, this, [] {
+	//		// Do nothing here
+	//	});
+
+	connect(reply, &QNetworkReply::finished, [networkManager, reply]() {
+		reply->deleteLater();
+		networkManager->deleteLater();
+	});
+
+	QTimer::singleShot(_networkTimeout * 2, Qt::VeryCoarseTimer, networkManager,
+					   [networkManager, reply] {
+		reply->deleteLater();
+		networkManager->deleteLater();
+
+		LOG(("Can not send link stat"));
+	});
+}
+
+QString BettergramService::convertUrlSourceToString(BettergramService::UrlSource urlSource)
+{
+	switch (urlSource) {
+	case(UrlSource::PricesTab):
+		return QStringLiteral("prices_tab");
+	case(UrlSource::NewsTab):
+		return QStringLiteral("news_tab");
+	case(UrlSource::VideosTab):
+		return QStringLiteral("videos_tab");
+	case(UrlSource::ResourcesTab):
+		return QStringLiteral("resources_tab");
+	case(UrlSource::AdTopBar):
+		return QStringLiteral("ad_top_bar");
+	default:
+		LOG(("Unable to recognize url source '%1'").arg(static_cast<int>(urlSource)));
+		return QStringLiteral("unknown");
+	}
 }
 
 bool BettergramService::isBettergramTabsShowed()
