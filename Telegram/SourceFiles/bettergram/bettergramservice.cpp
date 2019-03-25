@@ -9,13 +9,13 @@
 
 #include <auth_session.h>
 #include <mainwidget.h>
-#include <messenger.h>
 #include <settings.h>
 #include <core/update_checker.h>
 #include <core/click_handler_types.h>
 #include <lang/lang_keys.h>
 #include <platform/platform_specific.h>
 #include <boxes/confirm_box.h>
+#include <data/data_user.h>
 
 #include <QCoreApplication>
 #include <QTimer>

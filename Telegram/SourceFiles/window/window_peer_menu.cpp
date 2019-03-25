@@ -229,7 +229,7 @@ void Filler::addPinToggle() {
 void Filler::addFavoriteToggle() {
 	auto peer = _peer;
 	auto isFavorite = false;
-	if (auto history = App::historyLoaded(peer)) {
+	if (auto history = Auth().data().historyLoaded(peer)) {
 		isFavorite = history->isFavoriteDialog();
 	}
 	auto favoriteText = [](bool isFavorite) {
@@ -238,7 +238,7 @@ void Filler::addFavoriteToggle() {
 			: lng_context_add_to_favorites);
 	};
 	auto favoriteToggle = [=] {
-		ToggleFavoriteDialog(App::history(peer));
+		ToggleFavoriteDialog(Auth().data().history(peer));
 	};
 	auto favoriteAction = _addAction(favoriteText(isFavorite), favoriteToggle);
 
@@ -246,7 +246,7 @@ void Filler::addFavoriteToggle() {
 		peer,
 		Notify::PeerUpdate::Flag::FavoriteChanged
 	) | rpl::start_with_next([peer, favoriteAction, favoriteText] {
-		auto isFavorite = App::history(peer)->isFavoriteDialog();
+		auto isFavorite = Auth().data().history(peer)->isFavoriteDialog();
 		favoriteAction->setText(favoriteText(isFavorite));
 	});
 

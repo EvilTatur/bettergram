@@ -7,7 +7,7 @@
 #include <bettergram/pinnednewslist.h>
 #include <bettergram/pinnednewsitem.h>
 
-#include <application.h>
+#include <core/application.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/popup_menu.h>
@@ -466,7 +466,7 @@ void RssWidget::contextMenuEvent(QContextMenuEvent *e)
 			return;
 		}
 
-		Application::clipboard()->setText(link);
+		QApplication::clipboard()->setText(link);
 	});
 
 	_menu->addAction(lang(lng_menu_news_copy_title), [row] {
@@ -481,7 +481,7 @@ void RssWidget::contextMenuEvent(QContextMenuEvent *e)
 			return;
 		}
 
-		Application::clipboard()->setText(title);
+		QApplication::clipboard()->setText(title);
 	});
 
 	if (row.userData().isItem()) {

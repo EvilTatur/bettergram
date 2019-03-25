@@ -16,6 +16,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "base/flags.h"
 #include "auth_session.h"
 #include "data/data_session.h"
+#include "data/data_user.h"
 #include "bettergram/bettergramservice.h"
 
 #include <QSettings>

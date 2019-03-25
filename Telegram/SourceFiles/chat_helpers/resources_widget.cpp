@@ -5,7 +5,7 @@
 #include <bettergram/resourcegroup.h>
 #include <bettergram/resourceitem.h>
 
-#include <application.h>
+#include <core/application.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/popup_menu.h>
@@ -265,11 +265,11 @@ void ResourcesWidget::contextMenuEvent(QContextMenuEvent *e)
 	_menu = base::make_unique_q<Ui::PopupMenu>(nullptr);
 
 	_menu->addAction(lang(lng_menu_resources_copy_link), [row] {
-		Application::clipboard()->setText(row.userData().item()->link().toString());
+		QApplication::clipboard()->setText(row.userData().item()->link().toString());
 	});
 
 	_menu->addAction(lang(lng_menu_resources_copy_title), [row] {
-		Application::clipboard()->setText(row.userData().item()->title());
+		QApplication::clipboard()->setText(row.userData().item()->title());
 	});
 
 	connect(_menu.get(), &QObject::destroyed, [this] {

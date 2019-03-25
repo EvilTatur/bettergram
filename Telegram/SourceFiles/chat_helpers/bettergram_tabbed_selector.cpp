@@ -222,7 +222,7 @@ void BettergramTabbedSelector::updateRestrictedLabelGeometry() {
 void BettergramTabbedSelector::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 
-	auto ms = getms();
+	auto ms = crl::now();
 
 	auto switching = (_slideAnimation != nullptr);
 	if (switching) {
@@ -237,7 +237,7 @@ void BettergramTabbedSelector::paintEvent(QPaintEvent *e) {
 	}
 }
 
-void BettergramTabbedSelector::paintSlideFrame(Painter &p, TimeMs ms) {
+void BettergramTabbedSelector::paintSlideFrame(Painter &p, crl::time ms) {
 	if (_roundRadius > 0) {
 		if (full()) {
 			auto topPart = QRect(0, 0, width(), _tabsSlider->height() + _roundRadius);
