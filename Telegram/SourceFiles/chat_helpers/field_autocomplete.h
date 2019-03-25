@@ -151,7 +151,6 @@ signals:
 
 public slots:
 	void onParentGeometryChanged();
-	void onUpdateSelected(bool force = false);
 
 private:
 	void paintEvent(QPaintEvent *e) override;
@@ -167,6 +166,7 @@ private:
 	void updateSelectedRow();
 	void setSel(int sel, bool scroll = false);
 	void showPreview();
+	void selectByMouse(QPoint global);
 
 	FieldAutocomplete *_parent = nullptr;
 	MentionRows *_mrows = nullptr;
@@ -177,8 +177,8 @@ private:
 	int _recentInlineBotsInRows = 0;
 	int _sel = -1;
 	int _down = -1;
-	bool _mouseSel = false;
-	QPoint _mousePos;
+	std::optional<QPoint> _lastMousePosition;
+	bool _mouseSelection = false;
 
 	bool _overDelete = false;
 

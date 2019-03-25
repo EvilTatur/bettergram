@@ -8,6 +8,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 #include "auth_session.h"
 #include "apiwrap.h"
+#include "data/data_session.h"
 #include "storage/storage_facade.h"
 #include "storage/storage_user_photos.h"
 
@@ -206,7 +207,7 @@ rpl::producer<UserPhotosSlice> UserPhotosViewer(
 				consumer.put_next(builder->snapshot());
 			}
 		};
-		auto requestPhotosAround = [user = App::user(key.userId)](
+		auto requestPhotosAround = [user = Auth().data().user(key.userId)](
 				PhotoId photoId) {
 			Auth().api().requestUserPhotos(user, photoId);
 		};

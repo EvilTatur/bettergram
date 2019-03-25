@@ -26,7 +26,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "ui/text_options.h"
 #include "ui/special_buttons.h"
 #include "data/data_document.h"
-#include "media/media_clip_reader.h"
+#include "media/clip/media_clip_reader.h"
 #include "window/window_controller.h"
 #include "layout.h"
 #include "styles/style_history.h"
@@ -36,8 +36,8 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 namespace {
 
 constexpr auto kMinPreviewWidth = 20;
-constexpr auto kShrinkDuration = TimeMs(150);
-constexpr auto kDragDuration = TimeMs(200);
+constexpr auto kShrinkDuration = crl::time(150);
+constexpr auto kDragDuration = crl::time(200);
 
 class SingleMediaPreview : public Ui::RpWidget {
 public:
@@ -122,7 +122,7 @@ public:
 		int top,
 		float64 shrinkProgress,
 		float64 moveProgress,
-		TimeMs ms);
+		crl::time ms);
 	void paintPhoto(Painter &p, int left, int top, int outerWidth);
 	void paintFile(Painter &p, int left, int top, int outerWidth);
 
@@ -290,7 +290,7 @@ void AlbumThumb::paintInAlbum(
 		int top,
 		float64 shrinkProgress,
 		float64 moveProgress,
-		TimeMs ms) {
+		crl::time ms) {
 	const auto shrink = anim::interpolate(0, _shrinkSize, shrinkProgress);
 	_suggestedMoveAnimation.step(ms);
 	_lastShrinkValue = shrink;
@@ -676,7 +676,7 @@ void SingleMediaPreview::preparePreview(
 void SingleMediaPreview::prepareAnimatedPreview(
 		const QString &animatedPreviewPath) {
 	if (!animatedPreviewPath.isEmpty()) {
-		auto callback = [this](Media::Clip::Notification notification) {
+		auto callback = [=](Media::Clip::Notification notification) {
 			clipCallback(notification);
 		};
 		_gifPreview = Media::Clip::MakeReader(
@@ -722,7 +722,7 @@ void SingleMediaPreview::paintEvent(QPaintEvent *e) {
 	if (_gifPreview && _gifPreview->started()) {
 		auto s = QSize(_previewWidth, _previewHeight);
 		auto paused = _controller->isGifPausedAtLeastFor(Window::GifPauseReason::Layer);
-		auto frame = _gifPreview->current(s.width(), s.height(), s.width(), s.height(), ImageRoundRadius::None, RectPart::None, paused ? 0 : getms());
+		auto frame = _gifPreview->current(s.width(), s.height(), s.width(), s.height(), ImageRoundRadius::None, RectPart::None, paused ? 0 : crl::now());
 		p.drawPixmap(_previewLeft, st::boxPhotoPadding.top(), frame);
 	} else {
 		p.drawPixmap(_previewLeft, st::boxPhotoPadding.top(), _preview);
@@ -895,10 +895,14 @@ rpl::producer<int> SingleFilePreview::desiredHeightValue() const {
 	return rpl::single(st::boxPhotoPadding.top() + h + st::msgShadow);
 }
 
-Fn<QString()> FieldPlaceholder(const Storage::PreparedList &list) {
-	return langFactory(list.files.size() > 1
-		? lng_photos_comment
-		: lng_photo_caption);
+Fn<QString()> FieldPlaceholder(
+		const Storage::PreparedList &list,
+		SendFilesWay way) {
+	const auto isAlbum = (way == SendFilesWay::Album);
+	const auto compressImages = (way != SendFilesWay::Files);
+	return langFactory(list.canAddCaption(isAlbum, compressImages)
+		? lng_photo_caption
+		: lng_photos_comment);
 }
 
 } // namespace
@@ -1182,7 +1186,7 @@ void SendFilesBox::AlbumPreview::paintEvent(QPaintEvent *e) {
 }
 
 void SendFilesBox::AlbumPreview::paintAlbum(Painter &p) const {
-	const auto ms = getms();
+	const auto ms = crl::now();
 	const auto shrink = _shrinkAnimation.current(
 		ms,
 		_draggedThumb ? 1. : 0.);
@@ -1338,7 +1342,7 @@ SendFilesBox::SendFilesBox(
 	this,
 	st::confirmCaptionArea,
 	Ui::InputField::Mode::MultiLine,
-	FieldPlaceholder(_list),
+	nullptr,
 	caption) {
 }
 
@@ -1352,7 +1356,7 @@ void SendFilesBox::initPreview(rpl::producer<int> desiredPreviewHeight) {
 		std::move(desiredPreviewHeight),
 		_footerHeight.value(),
 		_titleHeight + _1 + _2
-	) | rpl::start_with_next([this](int height) {
+	) | rpl::start_with_next([=](int height) {
 		setDimensions(
 			st::boxWideWidth,
 			std::min(st::sendMediaPreviewHeightMax, height));
@@ -1430,10 +1434,10 @@ void SendFilesBox::setupShadows(
 }
 
 void SendFilesBox::prepare() {
-	_send = addButton(langFactory(lng_send_button), [this] { send(); });
-	addButton(langFactory(lng_cancel), [this] { closeBox(); });
-	setupCaption();
+	_send = addButton(langFactory(lng_send_button), [=] { send(); });
+	addButton(langFactory(lng_cancel), [=] { closeBox(); });
 	initSendWay();
+	setupCaption();
 	preparePreview();
 	boxClosing() | rpl::start_with_next([=] {
 		if (!_confirmed && _cancelledCallback) {
@@ -1467,13 +1471,21 @@ void SendFilesBox::initSendWay() {
 			: SendFilesWay::Photos;
 	}();
 	_sendWay = std::make_shared<Ui::RadioenumGroup<SendFilesWay>>(value);
-	_sendWay->setChangedCallback([this](SendFilesWay value) {
+	_sendWay->setChangedCallback([=](SendFilesWay value) {
+		updateCaptionPlaceholder();
 		applyAlbumOrder();
 		if (_albumPreview) {
 			_albumPreview->setSendWay(value);
 		}
 		setInnerFocus();
 	});
+}
+
+void SendFilesBox::updateCaptionPlaceholder() {
+	if (_caption) {
+		const auto sendWay = _sendWay->value();
+		_caption->setPlaceholder(FieldPlaceholder(_list, sendWay));
+	}
 }
 
 void SendFilesBox::refreshAlbumMediaCount() {
@@ -1504,7 +1516,6 @@ void SendFilesBox::preparePreview() {
 void SendFilesBox::setupControls() {
 	setupTitleText();
 	setupSendWayControls();
-	_caption->setPlaceholder(FieldPlaceholder(_list));
 }
 
 void SendFilesBox::setupSendWayControls() {
@@ -1592,6 +1603,7 @@ void SendFilesBox::setupCaption() {
 		getDelegate()->outerContainer(),
 		_caption);
 
+	updateCaptionPlaceholder();
 	setupEmojiPanel();
 }
 
@@ -1804,18 +1816,20 @@ void SendFilesBox::updateControlsGeometry() {
 			bottom - _caption->height());
 		bottom -= st::boxPhotoCaptionSkip + _caption->height();
 
-		_emojiToggle->moveToLeft(
-			(st::boxPhotoPadding.left()
-				+ st::sendMediaPreviewSize
-				- _emojiToggle->width()),
-			_caption->y() + st::boxAttachEmojiTop);
+		if (_emojiToggle) {
+			_emojiToggle->moveToLeft(
+				(st::boxPhotoPadding.left()
+					+ st::sendMediaPreviewSize
+					- _emojiToggle->width()),
+				_caption->y() + st::boxAttachEmojiTop);
+		}
 	}
 	const auto pointers = {
 		_sendAlbum.data(),
 		_sendPhotos.data(),
 		_sendFiles.data()
 	};
-	for (auto pointer : base::reversed(pointers)) {
+	for (const auto pointer : ranges::view::reverse(pointers)) {
 		if (pointer) {
 			pointer->moveToLeft(
 				st::boxPhotoPadding.left(),

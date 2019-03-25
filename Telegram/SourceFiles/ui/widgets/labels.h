@@ -96,6 +96,7 @@ public:
 		const style::FlatLabel &st = st::defaultFlatLabel);
 
 	void setOpacity(float64 o);
+	void setTextColorOverride(std::optional<QColor> color);
 
 	void setText(const QString &text);
 	void setRichText(const QString &text);
@@ -176,6 +177,7 @@ private:
 
 	Text _text;
 	const style::FlatLabel &_st;
+	std::optional<QColor> _textColorOverride;
 	float64 _opacity = 1.;
 
 	int _allowedWidth = 0;

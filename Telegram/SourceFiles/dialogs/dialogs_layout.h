@@ -35,7 +35,7 @@ public:
 		bool active,
 		bool selected,
 		bool onlyBackground,
-		TimeMs ms);
+		crl::time ms);
 	static void paint(
 		Painter &p,
 		not_null<const FakeRow*> row,
@@ -43,7 +43,7 @@ public:
 		bool active,
 		bool selected,
 		bool onlyBackground,
-		TimeMs ms,
+		crl::time ms,
 		bool displayUnreadInfo);
 	static QRect sendActionAnimationRect(
 		int animationWidth,

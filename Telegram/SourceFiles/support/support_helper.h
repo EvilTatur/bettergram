@@ -38,6 +38,8 @@ class Helper : private MTP::Sender {
 public:
 	explicit Helper(not_null<AuthSession*> session);
 
+	static std::unique_ptr<Helper> Create(not_null<AuthSession*> session);
+
 	void registerWindow(not_null<Window::Controller*> controller);
 	void cloudDraftChanged(not_null<History*> history);
 

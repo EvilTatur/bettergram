@@ -58,7 +58,7 @@ private:
 	int _psCheckStatusIconLeft = 100;
 
 	QTimer _psUpdateIndicatorTimer;
-	TimeMs _psLastIndicatorUpdate = 0;
+	crl::time _psLastIndicatorUpdate = 0;
 
 };
 

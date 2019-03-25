@@ -15,7 +15,7 @@ public:
 		not_null<HistoryItem*> realParent,
 		not_null<DocumentData*> document);
 
-	void draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const override;
+	void draw(Painter &p, const QRect &r, TextSelection selection, crl::time ms) const override;
 	TextState textState(QPoint point, StateRequest request) const override;
 
 	[[nodiscard]] TextSelection adjustSelection(
@@ -41,7 +41,7 @@ public:
 		Painter &p,
 		const QRect &clip,
 		TextSelection selection,
-		TimeMs ms,
+		crl::time ms,
 		const QRect &geometry,
 		RectParts corners,
 		not_null<uint64*> cacheKey,
@@ -72,8 +72,15 @@ protected:
 	bool dataLoaded() const override;
 
 private:
-	QSize countOptimalSize() override;
-	QSize countCurrentSize(int newWidth) override;
+	[[nodiscard]] QSize countOptimalSize() override;
+	[[nodiscard]] QSize countCurrentSize(int newWidth) override;
+	[[nodiscard]] QSize countOptimalDimensions() const;
+	[[nodiscard]] bool downloadInCorner() const;
+
+	void drawCornerStatus(Painter &p, bool selected) const;
+	[[nodiscard]] TextState cornerStatusTextState(
+		QPoint point,
+		StateRequest request) const;
 
 	void validateGroupedCache(
 		const QRect &geometry,
@@ -82,10 +89,13 @@ private:
 		not_null<QPixmap*> cache) const;
 	void setStatusSize(int newSize) const;
 	void updateStatusText() const;
+	QSize sizeForAspectRatio() const;
 
 	not_null<DocumentData*> _data;
 	int _thumbw = 1;
 	int _thumbh = 1;
 	Text _caption;
+
+	QString _downloadSize;
 
 };

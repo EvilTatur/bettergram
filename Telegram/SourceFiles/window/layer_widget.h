@@ -7,6 +7,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #pragma once
 
 #include "ui/rp_widget.h"
+#include "data/data_file_origin.h"
 
 namespace Window {
 
@@ -167,6 +168,7 @@ private:
 	void updateLayerBoxes();
 	void fixOrder();
 	void sendFakeMouseEvent();
+	void clearClosingLayers();
 
 	LayerWidget *currentLayer() {
 		return _layers.empty() ? nullptr : _layers.back().get();
@@ -176,6 +178,7 @@ private:
 	}
 
 	std::vector<std::unique_ptr<LayerWidget>> _layers;
+	std::vector<std::unique_ptr<LayerWidget>> _closingLayers;
 
 	object_ptr<LayerWidget> _specialLayer = { nullptr };
 	object_ptr<MainMenu> _mainMenu = { nullptr };

@@ -42,7 +42,7 @@ public:
 	virtual bool elementUnderCursor(not_null<const Element*> view) = 0;
 	virtual void elementAnimationAutoplayAsync(
 		not_null<const Element*> element) = 0;
-	virtual TimeMs elementHighlightTime(
+	virtual crl::time elementHighlightTime(
 		not_null<const Element*> element) = 0;
 	virtual bool elementInSelectionMode() = 0;
 
@@ -120,6 +120,7 @@ public:
 
 	not_null<ElementDelegate*> delegate() const;
 	not_null<HistoryItem*> data() const;
+	not_null<History*> history() const;
 	HistoryMedia *media() const;
 	Context context() const;
 	void refreshDataId();
@@ -175,7 +176,7 @@ public:
 		Painter &p,
 		QRect clip,
 		TextSelection selection,
-		TimeMs ms) const = 0;
+		crl::time ms) const = 0;
 	[[nodiscard]] virtual PointState pointState(QPoint point) const = 0;
 	[[nodiscard]] virtual TextState textState(
 		QPoint point,

@@ -82,7 +82,8 @@ int MessagesList::addRangeItemsAndCountNew(
 		std::end(messages) };
 	auto slice = _slices.emplace(
 		std::move(sliceMessages),
-		noSkipRange);
+		noSkipRange
+	).first;
 	update.messages = &slice->messages;
 	update.range = slice->range;
 	return slice->messages.size();

@@ -12,6 +12,7 @@
       '<(res_loc)/qrc/telegram_emoji_3.qrc',
       '<(res_loc)/qrc/telegram_emoji_4.qrc',
       '<(res_loc)/qrc/telegram_emoji_5.qrc',
+      '<(res_loc)/qrc/telegram_emoji_preview.qrc',
       '<(res_loc)/qrc/telegram_sounds.qrc',
       '<(res_loc)/qrc/telegram_sounds.qrc',
       '<(res_loc)/qrc/bettergram.qrc',

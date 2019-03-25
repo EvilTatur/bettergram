@@ -81,6 +81,8 @@ public:
 		updateControlsVisibility(anim::type::instant);
 	}
 
+	void showSearch();
+
 protected:
 	int resizeGetHeight(int newWidth) override;
 	void paintEvent(QPaintEvent *e) override;

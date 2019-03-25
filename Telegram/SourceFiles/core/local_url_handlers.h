@@ -21,4 +21,8 @@ struct LocalUrlHandler {
 
 const std::vector<LocalUrlHandler> &LocalUrlHandlers();
 
+bool InternalPassportLink(const QString &url);
+
+bool StartUrlRequiresActivate(const QString &url);
+
 } // namespace Core

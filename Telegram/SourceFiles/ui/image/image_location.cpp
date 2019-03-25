@@ -9,7 +9,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "ui/image/image.h"
 #include "platform/platform_specific.h"
 
-ImagePtr::ImagePtr() : _data(Image::Blank().get()) {
+ImagePtr::ImagePtr() : _data(Image::Empty()) {
 }
 
 ImagePtr::ImagePtr(not_null<Image*> data) : _data(data) {

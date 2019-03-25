@@ -37,7 +37,7 @@ public:
 		Painter &p,
 		QRect clip,
 		TextSelection selection,
-		TimeMs ms) const override;
+		crl::time ms) const override;
 	PointState pointState(QPoint point) const override;
 	TextState textState(
 		QPoint point,

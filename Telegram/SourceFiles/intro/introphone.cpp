@@ -7,7 +7,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "intro/introphone.h"
 
 #include "lang/lang_keys.h"
-#include "application.h"
 #include "intro/introcode.h"
 #include "styles/style_intro.h"
 #include "ui/widgets/buttons.h"
@@ -17,7 +16,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "boxes/confirm_box.h"
 #include "base/qthelp_url.h"
 #include "platform/platform_specific.h"
-#include "messenger.h"
+#include "core/application.h"
 
 namespace Intro {
 namespace {
@@ -82,7 +81,7 @@ PhoneWidget::PhoneWidget(QWidget *parent, Widget::Data *data) : Step(parent, dat
 	}
 	_changed = false;
 
-	Messenger::Instance().destroyStaleAuthorizationKeys();
+	Core::App().destroyStaleAuthorizationKeys();
 }
 
 void PhoneWidget::resizeEvent(QResizeEvent *e) {
@@ -156,15 +155,16 @@ void PhoneWidget::submit() {
 	_checkRequest->start(1000);
 
 	_sentPhone = phone;
-	Messenger::Instance().mtp()->setUserPhone(_sentPhone);
+	Core::App().mtp()->setUserPhone(_sentPhone);
 	//_sentRequest = MTP::send(MTPauth_CheckPhone(MTP_string(_sentPhone)), rpcDone(&PhoneWidget::phoneCheckDone), rpcFail(&PhoneWidget::phoneSubmitFail));
 	_sentRequest = MTP::send(
 		MTPauth_SendCode(
-			MTP_flags(0),
 			MTP_string(_sentPhone),
-			MTPBool(),
 			MTP_int(ApiId),
-			MTP_string(ApiHash)),
+			MTP_string(ApiHash),
+			MTP_codeSettings(
+				MTP_flags(0),
+				MTPstring())),
 		rpcDone(&PhoneWidget::phoneSubmitDone),
 		rpcFail(&PhoneWidget::phoneSubmitFail));
 }

@@ -62,7 +62,7 @@ private:
 
 	not_null<Window::Controller*> _controller;
 	FullMsgId _msgId;
-	ImagePtr _thumbnailImage;
+	Image *_thumbnailImage = nullptr;
 	bool _thumbnailImageLoaded = false;
 	Fn<void()> _refreshThumbnail;
 	bool _animated = false;
@@ -85,6 +85,10 @@ private:
 	int _statusw = 0;
 	bool _isAudio = false;
 	bool _isImage = false;
+
+	int _gifw = 0;
+	int _gifh = 0;
+	int _gifx = 0;
 
 	bool _previewCancelled = false;
 	mtpRequestId _saveRequestId = 0;

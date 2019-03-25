@@ -11,7 +11,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "chat_helpers/tabbed_selector.h"
 #include "window/window_controller.h"
 #include "mainwindow.h"
-#include "messenger.h"
+#include "core/application.h"
 #include "styles/style_chat_helpers.h"
 
 namespace ChatHelpers {
@@ -154,7 +154,7 @@ void TabbedPanel::windowActiveChanged() {
 void TabbedPanel::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 
-	auto ms = getms();
+	auto ms = crl::now();
 
 	// This call can finish _a_show animation and destroy _showAnimation.
 	auto opacityAnimating = _a_opacity.animating(ms);
@@ -191,7 +191,7 @@ void TabbedPanel::moveByBottom() {
 }
 
 void TabbedPanel::enterEventHook(QEvent *e) {
-	Messenger::Instance().registerLeaveSubscription(this);
+	Core::App().registerLeaveSubscription(this);
 	showAnimated();
 }
 
@@ -203,11 +203,11 @@ bool TabbedPanel::preventAutoHide() const {
 }
 
 void TabbedPanel::leaveEventHook(QEvent *e) {
-	Messenger::Instance().unregisterLeaveSubscription(this);
+	Core::App().unregisterLeaveSubscription(this);
 	if (preventAutoHide()) {
 		return;
 	}
-	auto ms = getms();
+	auto ms = crl::now();
 	if (_a_show.animating(ms) || _a_opacity.animating(ms)) {
 		hideAnimated();
 	} else {
@@ -225,7 +225,7 @@ void TabbedPanel::otherLeave() {
 		return;
 	}
 
-	auto ms = getms();
+	auto ms = crl::now();
 	if (_a_opacity.animating(ms)) {
 		hideByTimerOrLeave();
 	} else {

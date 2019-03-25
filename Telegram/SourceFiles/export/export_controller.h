@@ -12,7 +12,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 namespace Export {
 
-class Controller;
+class ControllerObject;
 struct Settings;
 struct Environment;
 
@@ -108,9 +108,9 @@ using State = base::optional_variant<
 //
 //};
 
-class ControllerWrap {
+class Controller {
 public:
-	explicit ControllerWrap(const MTPInputPeer &peer);
+	explicit Controller(const MTPInputPeer &peer);
 
 	rpl::producer<State> state() const;
 
@@ -129,10 +129,11 @@ public:
 
 	rpl::lifetime &lifetime();
 
-	~ControllerWrap();
+	~Controller();
 
 private:
-	crl::object_on_queue<Controller> _wrapped;
+	using Implementation = ControllerObject;
+	crl::object_on_queue<Implementation> _wrapped;
 	rpl::lifetime _lifetime;
 
 };

@@ -13,7 +13,7 @@ namespace internal {
 namespace {
 
 constexpr auto kForceHttpPort = 80;
-constexpr auto kFullConnectionTimeout = TimeMs(8000);
+constexpr auto kFullConnectionTimeout = crl::time(8000);
 
 } // namespace
 
@@ -80,7 +80,7 @@ void HttpConnection::connectToServer(
 		).arg(protocolDcId
 		).arg(url().toDisplayString()));
 
-	_pingTime = getms();
+	_pingTime = crl::now();
 	sendData(std::move(buffer));
 }
 
@@ -175,7 +175,7 @@ void HttpConnection::requestFinished(QNetworkReply *reply) {
 							"HTTP-transport to %1 connected by pq-response"
 							).arg(_address));
 						_status = Status::Ready;
-						_pingTime = getms() - _pingTime;
+						_pingTime = crl::now() - _pingTime;
 						emit connected();
 					} else {
 						DEBUG_LOG(("Connection Error: "
@@ -199,11 +199,11 @@ void HttpConnection::requestFinished(QNetworkReply *reply) {
 	}
 }
 
-TimeMs HttpConnection::pingTime() const {
-	return isConnected() ? _pingTime : TimeMs(0);
+crl::time HttpConnection::pingTime() const {
+	return isConnected() ? _pingTime : crl::time(0);
 }
 
-TimeMs HttpConnection::fullConnectTimeout() const {
+crl::time HttpConnection::fullConnectTimeout() const {
 	return kFullConnectionTimeout;
 }
 

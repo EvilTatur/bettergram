@@ -11,7 +11,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "base/timer.h"
 
 class BoxContent;
-class MediaView;
 
 namespace Ui
 {

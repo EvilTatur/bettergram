@@ -8,7 +8,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 #include "mtproto/mtp_instance.h"
 #include "mtproto/rpc_sender.h"
-#include "mtproto/session.h"
 
 namespace MTP {
 
@@ -118,7 +117,7 @@ void ConcurrentSender::RequestBuilder::setToDC(ShiftedDcId dcId) noexcept {
 	_dcId = dcId;
 }
 
-void ConcurrentSender::RequestBuilder::setCanWait(TimeMs ms) noexcept {
+void ConcurrentSender::RequestBuilder::setCanWait(crl::time ms) noexcept {
 	_canWait = ms;
 }
 
@@ -179,11 +178,13 @@ void ConcurrentSender::senderRequestDone(
 		bytes::const_span result) {
 	if (auto handlers = _requests.take(requestId)) {
 		try {
-			std::move(handlers->done)(requestId, result);
+			handlers->done(requestId, result);
 		} catch (Exception &e) {
-			std::move(handlers->fail)(requestId, internal::rpcClientError(
-				"RESPONSE_PARSE_FAILED",
-				QString("exception text: ") + e.what()));
+			handlers->fail(
+				requestId,
+				RPCError::Local(
+					"RESPONSE_PARSE_FAILED",
+					QString("exception text: ") + e.what()));
 		}
 	}
 }
@@ -192,7 +193,7 @@ void ConcurrentSender::senderRequestFail(
 		mtpRequestId requestId,
 		RPCError &&error) {
 	if (auto handlers = _requests.take(requestId)) {
-		std::move(handlers->fail)(requestId, std::move(error));
+		handlers->fail(requestId, std::move(error));
 	}
 }
 

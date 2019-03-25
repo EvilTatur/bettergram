@@ -7,12 +7,13 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "platform/win/audio_win.h"
 
 #include "platform/win/windows_dlls.h"
-#include "media/media_audio.h"
+#include "media/audio/media_audio.h"
 
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 
-#include <wrl\client.h>
+#include <wrl/client.h>
+
 using namespace Microsoft::WRL;
 
 namespace Platform {

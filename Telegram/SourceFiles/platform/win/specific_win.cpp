@@ -22,16 +22,12 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include <shellapi.h>
 
 #include <roapi.h>
-#include <wrl\client.h>
-#include <wrl\implements.h>
+#include <wrl/client.h>
+#include "platform/win/wrapper_wrl_implements_h.h"
 #include <windows.ui.notifications.h>
 
-#pragma warning(push)
-#pragma warning(disable:4091)
 #include <dbghelp.h>
 #include <shlobj.h>
-#pragma warning(pop)
-
 #include <Shlwapi.h>
 #include <Strsafe.h>
 #include <Windowsx.h>
@@ -131,29 +127,6 @@ namespace {
 	}
 }
 
-namespace {
-
-TimeMs _lastUserAction = 0;
-
-} // namespace
-
-void psUserActionDone() {
-	_lastUserAction = getms(true);
-	EventFilter::getInstance()->setSessionLoggedOff(false);
-}
-
-bool psIdleSupported() {
-	LASTINPUTINFO lii;
-	lii.cbSize = sizeof(LASTINPUTINFO);
-	return GetLastInputInfo(&lii);
-}
-
-TimeMs psIdleTime() {
-	LASTINPUTINFO lii;
-	lii.cbSize = sizeof(LASTINPUTINFO);
-	return GetLastInputInfo(&lii) ? (GetTickCount() - lii.dwTime) : (getms(true) - _lastUserAction);
-}
-
 QStringList psInitLogs() {
     return _initLogs;
 }
@@ -204,12 +177,12 @@ void psDoCleanup() {
 namespace {
 
 QRect _monitorRect;
-TimeMs _monitorLastGot = 0;
+crl::time _monitorLastGot = 0;
 
 } // namespace
 
 QRect psDesktopRect() {
-	auto tnow = getms();
+	auto tnow = crl::now();
 	if (tnow > _monitorLastGot + 1000LL || tnow < _monitorLastGot) {
 		_monitorLastGot = tnow;
 		HMONITOR hMonitor = MonitorFromWindow(App::wnd()->psHwnd(), MONITOR_DEFAULTTONEAREST);
@@ -328,11 +301,11 @@ QString SystemCountry() {
 }
 
 bool IsApplicationActive() {
-	return static_cast<QApplication*>(QApplication::instance())->activeWindow() != nullptr;
+	return QApplication::activeWindow() != nullptr;
 }
 
 void SetApplicationIcon(const QIcon &icon) {
-	qApp->setWindowIcon(icon);
+	QApplication::setWindowIcon(icon);
 }
 
 QString CurrentExecutablePath(int argc, char *argv[]) {
@@ -351,6 +324,14 @@ QString CurrentExecutablePath(int argc, char *argv[]) {
 		return info.absoluteFilePath();
 	}
 	return QString();
+}
+
+std::optional<crl::time> LastUserInputTime() {
+	auto lii = LASTINPUTINFO{ 0 };
+	lii.cbSize = sizeof(LASTINPUTINFO);
+	return GetLastInputInfo(&lii)
+		? std::make_optional(crl::now() + lii.dwTime - GetTickCount())
+		: std::nullopt;
 }
 
 namespace {
@@ -651,9 +632,26 @@ void RequestPermission(PermissionType type, Fn<void(PermissionStatus)> resultCal
 }
 
 void OpenSystemSettingsForPermission(PermissionType type) {
-	if (type==PermissionType::Microphone) {
-		ShellExecute(NULL, L"open", L"ms-settings:privacy-microphone", NULL, NULL, SW_SHOWDEFAULT);
+	if (type == PermissionType::Microphone) {
+		crl::on_main([] {
+			ShellExecute(
+				nullptr,
+				L"open",
+				L"ms-settings:privacy-microphone",
+				nullptr,
+				nullptr,
+				SW_SHOWDEFAULT);
+		});
 	}
+}
+
+bool OpenSystemSettings(SystemSettingsType type) {
+	if (type == SystemSettingsType::Audio) {
+		crl::on_main([] {
+			WinExec("control.exe mmsys.cpl", SW_SHOW);
+		});
+	}
+	return true;
 }
 
 } // namespace Platform

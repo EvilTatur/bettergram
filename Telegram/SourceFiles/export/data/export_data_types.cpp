@@ -13,6 +13,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include <QtCore/QDateTime>
 #include <QtCore/QRegularExpression>
 #include <QtGui/QImageReader>
+#include <range/v3/algorithm/max_element.hpp>
 #include <range/v3/view/all.hpp>
 #include <range/v3/view/transform.hpp>
 #include <range/v3/to_container.hpp>
@@ -232,6 +233,8 @@ Image ParseMaxImage(
 	auto maxArea = int64(0);
 	for (const auto &size : data.v) {
 		size.match([](const MTPDphotoSizeEmpty &) {
+		}, [](const MTPDphotoStrippedSize &) {
+			// Max image size should not be a stripped image.
 		}, [&](const auto &data) {
 			const auto area = data.vw.v * int64(data.vh.v);
 			if (area > maxArea) {
@@ -402,6 +405,43 @@ QString DocumentFolder(const Document &data) {
 	return "files";
 }
 
+Image ParseDocumentThumb(
+		const QVector<MTPPhotoSize> &thumbs,
+		const QString &documentPath) {
+	const auto area = [](const MTPPhotoSize &size) {
+		return size.match([](const MTPDphotoSizeEmpty &) {
+			return 0;
+		}, [](const MTPDphotoStrippedSize &) {
+			return 0;
+		}, [](const auto &data) {
+			return data.vw.v * data.vh.v;
+		});
+	};
+	const auto i = ranges::max_element(thumbs, ranges::less(), area);
+	if (i == thumbs.end()) {
+		return Image();
+	}
+	return i->match([](const MTPDphotoSizeEmpty &) {
+		return Image();
+	}, [](const MTPDphotoStrippedSize &) {
+		return Image();
+	}, [&](const auto &data) {
+		auto result = Image();
+		result.width = data.vw.v;
+		result.height = data.vh.v;
+		result.file.location = ParseLocation(data.vlocation);
+		if constexpr (MTPDphotoCachedSize::Is<decltype(data)>()) {
+			result.file.content = data.vbytes.v;
+			result.file.size = result.file.content.size();
+		} else {
+			result.file.content = QByteArray();
+			result.file.size = data.vsize.v;
+		}
+		result.file.suggestedPath = documentPath + "_thumb.jpg";
+		return result;
+	});
+}
+
 Document ParseDocument(
 		ParseMediaContext &context,
 		const MTPDocument &data,
@@ -420,27 +460,13 @@ Document ParseDocument(
 			data.vid,
 			data.vaccess_hash,
 			data.vfile_reference);
-		const auto path = result.file.suggestedPath = suggestedFolder
+		result.file.suggestedPath = suggestedFolder
 			+ DocumentFolder(result) + '/'
 			+ CleanDocumentName(ComputeDocumentName(context, result, date));
 
-		result.thumb = data.vthumb.match([](const MTPDphotoSizeEmpty &) {
-			return Image();
-		}, [&](const auto &data) {
-			auto result = Image();
-			result.width = data.vw.v;
-			result.height = data.vh.v;
-			result.file.location = ParseLocation(data.vlocation);
-			if constexpr (MTPDphotoCachedSize::Is<decltype(data)>()) {
-				result.file.content = data.vbytes.v;
-				result.file.size = result.file.content.size();
-			} else {
-				result.file.content = QByteArray();
-				result.file.size = data.vsize.v;
-			}
-			result.file.suggestedPath = path + "_thumb.jpg";
-			return result;
-		});
+		result.thumb = ParseDocumentThumb(
+			data.vthumbs.v,
+			result.file.suggestedPath);
 	}, [&](const MTPDdocumentEmpty &data) {
 		result.id = data.vid.v;
 	});
@@ -1129,6 +1155,12 @@ Message ParseMessage(
 				}
 				return PeerId(0);
 			});
+			result.forwardedFromName = data.vfwd_from.match(
+			[](const MTPDmessageFwdHeader &data) {
+				return data.has_from_name()
+					? data.vfrom_name.v
+					: QByteArray();
+			});
 			result.forwardedDate = data.vfwd_from.match(
 			[](const MTPDmessageFwdHeader &data) {
 				return data.vdate.v;
@@ -1140,6 +1172,8 @@ Message ParseMessage(
 				}
 				return PeerId(0);
 			});
+			result.forwarded = result.forwardedFromId
+				|| !result.forwardedFromName.isEmpty();
 		}
 		if (data.has_post_author()) {
 			result.signature = ParseString(data.vpost_author);

@@ -27,10 +27,18 @@ enum class Command {
 	ChatNext,
 	ChatFirst,
 	ChatLast,
+	ChatSelf,
+	ChatPinned1,
+	ChatPinned2,
+	ChatPinned3,
+	ChatPinned4,
+	ChatPinned5,
 
 	SupportReloadTemplates,
 	SupportToggleMuted,
 	SupportScrollToCurrent,
+	SupportHistoryBack,
+	SupportHistoryForward,
 };
 
 [[nodiscard]] FnMut<bool()> RequestHandler(Command command);

@@ -6,7 +6,12 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #include "data/data_poll.h"
 
+#include "apiwrap.h"
+#include "auth_session.h"
+
 namespace {
+
+constexpr auto kShortPollTimeout = 30 * crl::time(1000);
 
 const PollAnswer *AnswerByOption(
 		const std::vector<PollAnswer> &list,
@@ -45,7 +50,9 @@ bool PollData::applyChanges(const MTPDpoll &poll) {
 			result.text = qs(answer.vtext);
 			return result;
 		});
-	}) | ranges::to_vector;
+	}) | ranges::view::take(
+		kMaxOptions
+	) | ranges::to_vector;
 
 	const auto changed1 = (question != newQuestion)
 		|| (closed != newClosed);
@@ -72,6 +79,8 @@ bool PollData::applyChanges(const MTPDpoll &poll) {
 
 bool PollData::applyResults(const MTPPollResults &results) {
 	return results.match([&](const MTPDpollResults &results) {
+		lastResultsUpdate = crl::now();
+
 		const auto newTotalVoters = results.has_total_voters()
 			? results.vtotal_voters.v
 			: totalVoters;
@@ -83,9 +92,23 @@ bool PollData::applyResults(const MTPPollResults &results) {
 				}
 			}
 		}
+		if (!changed) {
+			return false;
+		}
 		totalVoters = newTotalVoters;
+		++version;
 		return changed;
 	});
+}
+
+void PollData::checkResultsReload(not_null<HistoryItem*> item, crl::time now) {
+	if (lastResultsUpdate && lastResultsUpdate + kShortPollTimeout > now) {
+		return;
+	} else if (closed) {
+		return;
+	}
+	lastResultsUpdate = now;
+	Auth().api().reloadPollResults(item);
 }
 
 PollAnswer *PollData::answerByOption(const QByteArray &option) {

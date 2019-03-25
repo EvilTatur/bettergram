@@ -32,6 +32,10 @@ inline void ReInitOnTopPanel(QWidget *panel) {
 
 QString CurrentExecutablePath(int argc, char *argv[]);
 
+inline std::optional<crl::time> LastUserInputTime() {
+	return std::nullopt;
+}
+
 } // namespace Platform
 
 inline QString psServerPrefix() {
@@ -47,10 +51,6 @@ inline void psCheckLocalSocket(const QString &serverName) {
 void psWriteDump();
 
 void psDeleteDir(const QString &dir);
-
-void psUserActionDone();
-bool psIdleSupported();
-TimeMs psIdleTime();
 
 QStringList psInitLogs();
 void psClearInitLogs();

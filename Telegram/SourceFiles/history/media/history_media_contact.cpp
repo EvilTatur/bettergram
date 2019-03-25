@@ -9,16 +9,17 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "layout.h"
 #include "mainwindow.h"
-#include "auth_session.h"
 #include "boxes/add_contact_box.h"
 #include "history/history_item_components.h"
 #include "history/history_item.h"
+#include "history/history.h"
 #include "history/view/history_view_element.h"
 #include "history/view/history_view_cursor_state.h"
 #include "window/window_controller.h"
 #include "ui/empty_userpic.h"
 #include "ui/text_options.h"
 #include "data/data_session.h"
+#include "data/data_user.h"
 #include "data/data_media_types.h"
 #include "styles/style_history.h"
 
@@ -66,7 +67,7 @@ HistoryContact::HistoryContact(
 , _fname(first)
 , _lname(last)
 , _phone(App::formatPhone(phone)) {
-	Auth().data().registerContactView(userId, parent);
+	history()->owner().registerContactView(userId, parent);
 
 	_name.setText(
 		st::semiboldTextStyle,
@@ -76,14 +77,14 @@ HistoryContact::HistoryContact(
 }
 
 HistoryContact::~HistoryContact() {
-	Auth().data().unregisterContactView(_userId, _parent);
+	history()->owner().unregisterContactView(_userId, _parent);
 }
 
 void HistoryContact::updateSharedContactUserId(UserId userId) {
 	if (_userId != userId) {
-		Auth().data().unregisterContactView(_userId, _parent);
+		history()->owner().unregisterContactView(_userId, _parent);
 		_userId = userId;
-		Auth().data().registerContactView(_userId, _parent);
+		history()->owner().registerContactView(_userId, _parent);
 	}
 }
 
@@ -91,13 +92,18 @@ QSize HistoryContact::countOptimalSize() {
 	const auto item = _parent->data();
 	auto maxWidth = st::msgFileMinWidth;
 
-	_contact = _userId ? App::userLoaded(_userId) : nullptr;
+	_contact = _userId
+		? item->history()->owner().userLoaded(_userId)
+		: nullptr;
 	if (_contact) {
 		_contact->loadUserpic();
 	} else {
+		const auto full = _name.originalText();
 		_photoEmpty = std::make_unique<Ui::EmptyUserpic>(
-			Data::PeerUserpicColor(_userId ? _userId : _parent->data()->id),
-			_name.originalText());
+			Data::PeerUserpicColor(_userId
+				? peerFromUser(_userId)
+				: Data::FakePeerIdForJustName(full)),
+			full);
 	}
 	if (_contact
 		&& _contact->contactStatus() == UserData::ContactStatus::Contact) {
@@ -139,7 +145,7 @@ QSize HistoryContact::countOptimalSize() {
 	return { maxWidth, minHeight };
 }
 
-void HistoryContact::draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const {
+void HistoryContact::draw(Painter &p, const QRect &r, TextSelection selection, crl::time ms) const {
 	if (width() < st::msgPadding.left() + st::msgPadding.right() + 1) return;
 	auto paintx = 0, painty = 0, paintw = width(), painth = height();
 

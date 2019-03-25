@@ -6,7 +6,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #include "storage/storage_clear_legacy.h"
 
-#include <Windows.h>
+#include "platform/win/wrapper_windows_h.h"
 
 namespace Storage {
 namespace details {

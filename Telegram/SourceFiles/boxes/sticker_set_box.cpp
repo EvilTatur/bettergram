@@ -9,21 +9,21 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "data/data_document.h"
 #include "data/data_session.h"
 #include "lang/lang_keys.h"
-#include "mainwidget.h"
-#include "mainwindow.h"
 #include "chat_helpers/stickers.h"
 #include "boxes/confirm_box.h"
-#include "apiwrap.h"
+#include "core/application.h"
 #include "storage/localstorage.h"
 #include "dialogs/dialogs_layout.h"
-#include "styles/style_boxes.h"
-#include "styles/style_chat_helpers.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/scroll_area.h"
 #include "ui/image/image.h"
 #include "ui/emoji_config.h"
 #include "auth_session.h"
-#include "messenger.h"
+#include "apiwrap.h"
+#include "mainwidget.h"
+#include "mainwindow.h"
+#include "styles/style_boxes.h"
+#include "styles/style_chat_helpers.h"
 
 namespace {
 
@@ -83,6 +83,7 @@ private:
 	int32 _setHash = 0;
 	MTPDstickerSet::Flags _setFlags = 0;
 	TimeId _setInstallDate = TimeId(0);
+	ImagePtr _setThumbnail;
 
 	MTPInputStickerSet _input;
 
@@ -140,7 +141,7 @@ void StickerSetBox::addStickers() {
 }
 
 void StickerSetBox::shareStickers() {
-	auto url = Messenger::Instance().createInternalLinkFull(qsl("addstickers/") + _inner->shortName());
+	auto url = Core::App().createInternalLinkFull(qsl("addstickers/") + _inner->shortName());
 	QApplication::clipboard()->setText(url);
 	Ui::show(Box<InformBox>(lang(lng_stickers_copied)));
 }
@@ -194,64 +195,71 @@ void StickerSetBox::Inner::gotSet(const MTPmessages_StickerSet &set) {
 	_packOvers.clear();
 	_selected = -1;
 	setCursor(style::cur_default);
-	if (set.type() == mtpc_messages_stickerSet) {
-		auto &d = set.c_messages_stickerSet();
-		auto &v = d.vdocuments.v;
+	set.match([&](const MTPDmessages_stickerSet &data) {
+		const auto &v = data.vdocuments.v;
 		_pack.reserve(v.size());
 		_packOvers.reserve(v.size());
-		for (int i = 0, l = v.size(); i < l; ++i) {
-			auto doc = Auth().data().document(v.at(i));
-			if (!doc->sticker()) continue;
+		for (const auto &item : v) {
+			const auto document = Auth().data().processDocument(item);
+			if (!document->sticker()) continue;
 
-			_pack.push_back(doc);
-			_packOvers.push_back(Animation());
+			_pack.push_back(document);
+			_packOvers.emplace_back();
 		}
-		auto &packs = d.vpacks.v;
-		for (auto i = 0, l = packs.size(); i != l; ++i) {
-			if (packs.at(i).type() != mtpc_stickerPack) continue;
-			auto &pack = packs.at(i).c_stickerPack();
-			if (auto emoji = Ui::Emoji::Find(qs(pack.vemoticon))) {
-				emoji = emoji->original();
-				auto &stickers = pack.vdocuments.v;
+		for (const auto &pack : data.vpacks.v) {
+			pack.match([&](const MTPDstickerPack &pack) {
+				if (const auto emoji = Ui::Emoji::Find(qs(pack.vemoticon))) {
+					const auto original = emoji->original();
+					auto &stickers = pack.vdocuments.v;
 
-				Stickers::Pack p;
-				p.reserve(stickers.size());
-				for (auto j = 0, c = stickers.size(); j != c; ++j) {
-					auto doc = Auth().data().document(stickers[j].v);
-					if (!doc || !doc->sticker()) continue;
+					auto p = Stickers::Pack();
+					p.reserve(stickers.size());
+					for (auto j = 0, c = stickers.size(); j != c; ++j) {
+						auto doc = Auth().data().document(stickers[j].v);
+						if (!doc || !doc->sticker()) continue;
 
-					p.push_back(doc);
+						p.push_back(doc);
+					}
+					_emoji.insert(original, p);
 				}
-				_emoji.insert(emoji, p);
-			}
+			});
 		}
-		if (d.vset.type() == mtpc_stickerSet) {
-			auto &s = d.vset.c_stickerSet();
-			_setTitle = Stickers::GetSetTitle(s);
-			_setShortName = qs(s.vshort_name);
-			_setId = s.vid.v;
-			_setAccess = s.vaccess_hash.v;
-			_setCount = s.vcount.v;
-			_setHash = s.vhash.v;
-			_setFlags = s.vflags.v;
-			_setInstallDate = s.has_installed_date()
-				? s.vinstalled_date.v
+		data.vset.match([&](const MTPDstickerSet & set) {
+			_setTitle = Stickers::GetSetTitle(set);
+			_setShortName = qs(set.vshort_name);
+			_setId = set.vid.v;
+			_setAccess = set.vaccess_hash.v;
+			_setCount = set.vcount.v;
+			_setHash = set.vhash.v;
+			_setFlags = set.vflags.v;
+			_setInstallDate = set.has_installed_date()
+				? set.vinstalled_date.v
 				: TimeId(0);
+			_setThumbnail = set.has_thumb()
+				? App::image(set.vthumb)
+				: ImagePtr();
 			auto &sets = Auth().data().stickerSetsRef();
-			auto it = sets.find(_setId);
+			const auto it = sets.find(_setId);
 			if (it != sets.cend()) {
-				auto clientFlags = it->flags & (MTPDstickerSet_ClientFlag::f_featured | MTPDstickerSet_ClientFlag::f_not_loaded | MTPDstickerSet_ClientFlag::f_unread | MTPDstickerSet_ClientFlag::f_special);
+				using ClientFlag = MTPDstickerSet_ClientFlag;
+				const auto clientFlags = it->flags
+					& (ClientFlag::f_featured
+						| ClientFlag::f_not_loaded
+						| ClientFlag::f_unread
+						| ClientFlag::f_special);
 				_setFlags |= clientFlags;
 				it->flags = _setFlags;
 				it->installDate = _setInstallDate;
 				it->stickers = _pack;
 				it->emoji = _emoji;
+				it->thumbnail = _setThumbnail;
 			}
-		}
-	}
+		});
+	});
 
 	if (_pack.isEmpty()) {
 		Ui::show(Box<InformBox>(lang(lng_stickers_not_found)));
+		return;
 	} else {
 		int32 rows = _pack.size() / kStickersPanelPerRow + ((_pack.size() % kStickersPanelPerRow) ? 1 : 0);
 		resize(st::stickersPadding.left() + kStickersPanelPerRow * st::stickersSize.width(), st::stickersPadding.top() + rows * st::stickersSize.height() + st::stickersPadding.bottom());
@@ -305,7 +313,8 @@ void StickerSetBox::Inner::installDone(const MTPmessages_StickerSetInstallResult
 				_setCount,
 				_setHash,
 				_setFlags,
-				_setInstallDate));
+				_setInstallDate,
+				_setThumbnail));
 	} else {
 		it->flags = _setFlags;
 		it->installDate = _setInstallDate;
@@ -386,11 +395,12 @@ void StickerSetBox::Inner::mouseReleaseEvent(QMouseEvent *e) {
 		_previewTimer.cancel();
 		const auto index = stickerFromGlobalPos(e->globalPos());
 		if (index >= 0 && index < _pack.size() && !isMasksSet()) {
-			if (const auto main = App::main()) {
-				if (main->onSendSticker(_pack[index])) {
+			const auto sticker = _pack[index];
+			Core::App().postponeCall(crl::guard(App::main(), [=] {
+				if (App::main()->onSendSticker(sticker)) {
 					Ui::hideSettingsAndLayer();
 				}
-			}
+			}));
 		}
 	}
 }
@@ -449,7 +459,7 @@ void StickerSetBox::Inner::paintEvent(QPaintEvent *e) {
 
 	if (_pack.isEmpty()) return;
 
-	auto ms = getms();
+	auto ms = crl::now();
 	int32 rows = _pack.size() / kStickersPanelPerRow + ((_pack.size() % kStickersPanelPerRow) ? 1 : 0);
 	int32 from = qFloor(e->rect().top() / st::stickersSize.height()), to = qFloor(e->rect().bottom() / st::stickersSize.height()) + 1;
 
@@ -470,7 +480,7 @@ void StickerSetBox::Inner::paintEvent(QPaintEvent *e) {
 				p.setOpacity(1);
 
 			}
-			doc->checkStickerThumb();
+			doc->checkStickerSmall();
 
 			float64 coef = qMin((st::stickersSize.width() - st::buttonRadius * 2) / float64(doc->dimensions.width()), (st::stickersSize.height() - st::buttonRadius * 2) / float64(doc->dimensions.height()));
 			if (coef > 1) coef = 1;
@@ -478,7 +488,7 @@ void StickerSetBox::Inner::paintEvent(QPaintEvent *e) {
 			if (w < 1) w = 1;
 			if (h < 1) h = 1;
 			QPoint ppos = pos + QPoint((st::stickersSize.width() - w) / 2, (st::stickersSize.height() - h) / 2);
-			if (const auto image = doc->getStickerThumb()) {
+			if (const auto image = doc->getStickerSmall()) {
 				p.drawPixmapLeft(
 					ppos,
 					width(),

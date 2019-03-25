@@ -7,7 +7,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "intro/introcode.h"
 
 #include "lang/lang_keys.h"
-#include "application.h"
 #include "intro/introsignup.h"
 #include "intro/intropwdcheck.h"
 #include "core/update_checker.h"

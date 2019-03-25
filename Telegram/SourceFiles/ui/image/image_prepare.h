@@ -25,6 +25,8 @@ namespace Images {
 
 QPixmap PixmapFast(QImage &&image);
 
+QImage BlurLargeImage(QImage image, int radius);
+
 QImage prepareBlur(QImage image);
 void prepareRound(
 	QImage &image,

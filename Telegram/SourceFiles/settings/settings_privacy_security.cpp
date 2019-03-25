@@ -11,7 +11,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "boxes/peer_list_box.h"
 #include "boxes/edit_privacy_box.h"
 #include "boxes/passcode_box.h"
-#include "boxes/autolock_box.h"
+#include "boxes/auto_lock_box.h"
 #include "boxes/sessions_box.h"
 #include "boxes/confirm_box.h"
 #include "boxes/self_destruction_box.h"
@@ -139,6 +139,14 @@ void SetupPrivacy(not_null<Ui::VerticalLayout*> container) {
 		Privacy::Key::LastSeen,
 		[] { return std::make_unique<LastSeenPrivacyController>(); });
 	add(
+		lng_settings_forwards_privacy,
+		Privacy::Key::Forwards,
+		[] { return std::make_unique<ForwardsPrivacyController>(); });
+	add(
+		lng_settings_profile_photo_privacy,
+		Privacy::Key::ProfilePhoto,
+		[] { return std::make_unique<ProfilePhotoPrivacyController>(); });
+	add(
 		lng_settings_calls,
 		Privacy::Key::Calls,
 		[] { return std::make_unique<CallsPrivacyController>(); });
@@ -204,7 +212,7 @@ void SetupLocalPasscode(not_null<Ui::VerticalLayout*> container) {
 		Ui::show(Box<PasscodeBox>(true));
 	});
 
-	const auto label = psIdleSupported()
+	const auto label = Platform::LastUserInputTimeSupported()
 		? lng_passcode_autolock_away
 		: lng_passcode_autolock_inactive;
 	auto value = PasscodeChanges(
@@ -327,20 +335,23 @@ void SetupCloudPassword(not_null<Ui::VerticalLayout*> container) {
 	});
 	auto confirmation = rpl::single(
 		lang(lng_profile_loading)
-	) | rpl::then(base::duplicate(
+	) | rpl::then(rpl::duplicate(
 		pattern
 	) | rpl::filter([](const QString &pattern) {
 		return !pattern.isEmpty();
 	}) | rpl::map([](const QString &pattern) {
 		return lng_cloud_password_waiting_code(lt_email, pattern);
 	}));
-	auto unconfirmed = rpl::single(
-		true
-	) | rpl::then(base::duplicate(
+	auto unconfirmed = rpl::duplicate(
 		pattern
 	) | rpl::map([](const QString &pattern) {
 		return !pattern.isEmpty();
-	}));
+	});
+	auto noconfirmed = rpl::single(
+		true
+	) | rpl::then(rpl::duplicate(
+		unconfirmed
+	));
 	const auto label = container->add(
 		object_ptr<Ui::SlideWrap<Ui::FlatLabel>>(
 			container,
@@ -355,7 +366,7 @@ void SetupCloudPassword(not_null<Ui::VerticalLayout*> container) {
 				(st::settingsButton.height
 					- st::settingsCloudPasswordLabel.style.font->height
 					+ st::settingsButton.padding.bottom()))));
-	label->toggleOn(base::duplicate(unconfirmed))->setDuration(0);
+	label->toggleOn(base::duplicate(noconfirmed))->setDuration(0);
 
 	std::move(
 		confirmation
@@ -378,10 +389,10 @@ void SetupCloudPassword(not_null<Ui::VerticalLayout*> container) {
 				std::move(text),
 				st::settingsButton)));
 	change->toggleOn(rpl::duplicate(
-		unconfirmed
-	) | rpl::map([](bool unconfirmed) {
-		return !unconfirmed;
-	}))->setDuration(0);
+		noconfirmed
+	) | rpl::map(
+		!_1
+	))->setDuration(0);
 	change->entity()->addClickHandler([] {
 		if (CheckEditCloudPassword()) {
 			EditCloudPassword();
@@ -395,11 +406,16 @@ void SetupCloudPassword(not_null<Ui::VerticalLayout*> container) {
 				container,
 				Lang::Viewer(lng_cloud_password_confirm),
 				st::settingsButton)));
-	confirm->toggleOn(rpl::duplicate(
+	confirm->toggleOn(rpl::single(
+		false
+	) | rpl::then(rpl::duplicate(
 		unconfirmed
-	))->setDuration(0);
+	)))->setDuration(0);
 	confirm->entity()->addClickHandler([] {
 		const auto state = Auth().api().passwordStateCurrent();
+		if (!state) {
+			return;
+		}
 		auto validation = ConfirmRecoveryEmail(state->unconfirmedPattern);
 
 		std::move(
@@ -431,7 +447,7 @@ void SetupCloudPassword(not_null<Ui::VerticalLayout*> container) {
 				st::settingsButton)));
 	disable->toggleOn(rpl::combine(
 		rpl::duplicate(has),
-		rpl::duplicate(unconfirmed),
+		rpl::duplicate(noconfirmed),
 		_1 && !_2));
 	disable->entity()->addClickHandler(remove);
 
@@ -444,7 +460,7 @@ void SetupCloudPassword(not_null<Ui::VerticalLayout*> container) {
 				st::settingsAttentionButton)));
 	abort->toggleOn(rpl::combine(
 		rpl::duplicate(has),
-		rpl::duplicate(unconfirmed),
+		rpl::duplicate(noconfirmed),
 		_1 && _2));
 	abort->entity()->addClickHandler(remove);
 
@@ -454,8 +470,8 @@ void SetupCloudPassword(not_null<Ui::VerticalLayout*> container) {
 		}
 	};
 	QObject::connect(
-		qApp,
-		&QApplication::applicationStateChanged,
+		static_cast<QGuiApplication*>(QCoreApplication::instance()),
+		&QGuiApplication::applicationStateChanged,
 		label,
 		reloadOnActivation);
 

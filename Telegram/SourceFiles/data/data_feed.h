@@ -10,6 +10,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "data/data_messages.h"
 
 class ChannelData;
+class AuthSession;
 
 namespace Data {
 
@@ -33,13 +34,18 @@ public:
 	static constexpr auto kId = 1;
 	static constexpr auto kChannelsLimit = 1000;
 
-	Feed(FeedId id, not_null<Data::Session*> parent);
+	Feed(not_null<Data::Session*> owner, FeedId id);
+	Feed(const Feed &) = delete;
+	Feed &operator=(const Feed &) = delete;
+
+	Data::Session &owner() const;
+	AuthSession &session() const;
 
 	FeedId id() const;
 	void registerOne(not_null<ChannelData*> channel);
 	void unregisterOne(not_null<ChannelData*> channel);
 
-	void updateLastMessage(not_null<HistoryItem*> item);
+	void updateChatListMessage(not_null<HistoryItem*> item);
 	void messageRemoved(not_null<HistoryItem*> item);
 	void historyCleared(not_null<History*> history);
 
@@ -53,8 +59,6 @@ public:
 	MessagePosition unreadPosition() const;
 	rpl::producer<MessagePosition> unreadPositionChanges() const;
 
-	HistoryItem *lastMessage() const;
-	bool lastMessageKnown() const;
 	int unreadCount() const;
 	bool unreadCountKnown() const;
 
@@ -65,10 +69,12 @@ public:
 	int chatListUnreadNoMutedCount() const override;
 	bool chatListUnreadMark() const override;
 	bool chatListMutedBadge() const override;
-	HistoryItem *chatsListItem() const override;
-	const QString &chatsListName() const override;
-	const base::flat_set<QString> &chatsListNameWords() const override;
-	const base::flat_set<QChar> &chatsListFirstLetters() const override;
+	HistoryItem *chatListMessage() const override;
+	bool chatListMessageKnown() const override;
+	void requestChatListMessage() override;
+	const QString &chatListName() const override;
+	const base::flat_set<QString> &chatListNameWords() const override;
+	const base::flat_set<QChar> &chatListFirstLetters() const override;
 	void changedInChatListHook(Dialogs::Mode list, bool added) override;
 	Dialogs::EntryTypes getEntryType() const override { return Entry::getEntryType() | Dialogs::EntryType::Feed; }
 
@@ -87,10 +93,10 @@ public:
 
 private:
 	void indexNameParts();
-	void recountLastMessage();
-	void setLastMessageFromChannels();
-	bool justUpdateLastMessage(not_null<HistoryItem*> item);
-	void updateChatsListDate();
+	void recountChatListMessage();
+	void setChatListMessageFromChannels();
+	bool justUpdateChatListMessage(not_null<HistoryItem*> item);
+	void updateChatListDate();
 	void changeChannelsList(
 		const std::vector<not_null<ChannelData*>> &add,
 		const std::vector<not_null<ChannelData*>> &remove);
@@ -99,7 +105,7 @@ private:
 	void updateUnreadCounts(PerformUpdate &&performUpdate);
 
 	FeedId _id = 0;
-	not_null<Data::Session*> _parent;
+	not_null<Data::Session*> _owner;
 	std::vector<not_null<History*>> _channels;
 	bool _settingChannels = false;
 	bool _channelsLoaded = false;
@@ -107,7 +113,7 @@ private:
 	QString _name;
 	base::flat_set<QString> _nameWords;
 	base::flat_set<QChar> _nameFirstLetters;
-	std::optional<HistoryItem*> _lastMessage;
+	std::optional<HistoryItem*> _chatListMessage;
 
 	rpl::variable<MessagePosition> _unreadPosition;
 	std::optional<int> _unreadCount;

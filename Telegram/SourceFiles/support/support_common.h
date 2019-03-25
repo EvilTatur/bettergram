@@ -8,8 +8,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 namespace Support {
 
-bool ValidateAccount(const MTPUser &self);
-
 enum class SwitchSettings {
 	None,
 	Next,

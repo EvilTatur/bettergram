@@ -27,7 +27,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 namespace {
 
-constexpr auto kSessionsShortPollTimeout = 60 * TimeMs(1000);
+constexpr auto kSessionsShortPollTimeout = 60 * crl::time(1000);
 
 } // namespace
 

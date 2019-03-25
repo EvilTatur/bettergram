@@ -7,6 +7,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #pragma once
 
 #include "ui/rp_widget.h"
+#include "ui/effects/animations.h"
 #include "styles/style_widgets.h"
 
 class UserData;
@@ -40,6 +41,7 @@ enum class InputSubmitSettings {
 };
 
 class FlatInput : public TWidgetHelper<QLineEdit>, private base::Subscriber {
+	// The Q_OBJECT meta info is used for qobject_cast!
 	Q_OBJECT
 
 public:
@@ -108,8 +110,8 @@ private:
 
 	bool _focused = false;
 	bool _placeholderVisible = true;
-	Animation _a_placeholderFocused;
-	Animation _a_placeholderVisible;
+	Animations::Simple _a_placeholderFocused;
+	Animations::Simple _a_placeholderVisible;
 	bool _lastPreEditTextNotEmpty = false;
 
 	const style::FlatInput &_st;
@@ -223,22 +225,11 @@ public:
 	void setInstantReplaces(const InstantReplaces &replaces);
 	void setInstantReplacesEnabled(rpl::producer<bool> enabled);
 	void setMarkdownReplacesEnabled(rpl::producer<bool> enabled);
-	void commitInstantReplacement(
-		int from,
-		int till,
-		const QString &with,
-		std::optional<QString> checkOriginal = std::nullopt);
-	bool commitMarkdownReplacement(
-		int from,
-		int till,
-		const QString &tag,
-		const QString &edge = QString());
+	void commitInstantReplacement(int from, int till, const QString &with);
 	void commitMarkdownLinkEdit(
 		EditLinkSelection selection,
 		const QString &text,
 		const QString &link);
-	void toggleSelectionMarkdown(const QString &tag);
-	void clearSelectionMarkdown();
 	static bool IsValidMarkdownLink(const QString &link);
 
 	const QString &getLastText() const {
@@ -340,7 +331,6 @@ private:
 
 	void handleContentsChanged();
 	bool viewportEventInner(QEvent *e);
-	QVariant loadResource(int type, const QUrl &name);
 	void handleTouchEvent(QTouchEvent *e);
 
 	void updatePalette();
@@ -406,6 +396,20 @@ private:
 	EditLinkData selectionEditLinkData(EditLinkSelection selection) const;
 	EditLinkSelection editLinkSelection(QContextMenuEvent *e) const;
 	void editMarkdownLink(EditLinkSelection selection);
+
+	void commitInstantReplacement(
+		int from,
+		int till,
+		const QString &with,
+		std::optional<QString> checkOriginal,
+		bool checkIfInMonospace);
+	bool commitMarkdownReplacement(
+		int from,
+		int till,
+		const QString &tag,
+		const QString &edge = QString());
+	void toggleSelectionMarkdown(const QString &tag);
+	void clearSelectionMarkdown();
 
 	bool revertFormatReplace();
 
@@ -493,6 +497,7 @@ private:
 class MaskedInputField
 	: public RpWidgetWrap<QLineEdit>
 	, private base::Subscriber {
+	// The Q_OBJECT meta info is used for qobject_cast!
 	Q_OBJECT
 
 	using Parent = RpWidgetWrap<QLineEdit>;
@@ -574,14 +579,14 @@ protected:
 	}
 	void setCorrectedText(QString &now, int &nowCursor, const QString &newText, int newPos);
 
-	virtual void paintAdditionalPlaceholder(Painter &p, TimeMs ms) {
+	virtual void paintAdditionalPlaceholder(Painter &p, crl::time ms) {
 	}
 
 	style::font phFont() {
 		return _st.font;
 	}
 
-	void placeholderAdditionalPrepare(Painter &p, TimeMs ms);
+	void placeholderAdditionalPrepare(Painter &p, crl::time ms);
 	QRect placeholderRect() const;
 
 	void setTextMargins(const QMargins &mrg);
@@ -679,7 +684,7 @@ protected:
 		int wasCursor,
 		QString &now,
 		int &nowCursor) override;
-	void paintAdditionalPlaceholder(Painter &p, TimeMs ms) override;
+	void paintAdditionalPlaceholder(Painter &p, crl::time ms) override;
 
 private:
 	QVector<int> _pattern;
@@ -731,7 +736,7 @@ protected:
 		int wasCursor,
 		QString &now,
 		int &nowCursor) override;
-	void paintAdditionalPlaceholder(Painter &p, TimeMs ms) override;
+	void paintAdditionalPlaceholder(Painter &p, crl::time ms) override;
 
 private:
 	QString _linkPlaceholder;
@@ -752,7 +757,7 @@ protected:
 		int wasCursor,
 		QString &now,
 		int &nowCursor) override;
-	void paintAdditionalPlaceholder(Painter &p, TimeMs ms) override;
+	void paintAdditionalPlaceholder(Painter &p, crl::time ms) override;
 
 private:
 	QVector<int> _pattern;

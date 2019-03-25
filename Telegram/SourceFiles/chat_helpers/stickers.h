@@ -33,7 +33,8 @@ struct Set {
 		int count,
 		int32 hash,
 		MTPDstickerSet::Flags flags,
-		TimeId installDate)
+		TimeId installDate,
+		ImagePtr thumbnail)
 	: id(id)
 	, access(access)
 	, title(title)
@@ -41,7 +42,8 @@ struct Set {
 	, count(count)
 	, hash(hash)
 	, flags(flags)
-	, installDate(installDate) {
+	, installDate(installDate)
+	, thumbnail(thumbnail) {
 	}
 	uint64 id = 0;
 	uint64 access = 0;
@@ -50,6 +52,7 @@ struct Set {
 	int32 hash = 0;
 	MTPDstickerSet::Flags flags;
 	TimeId installDate = 0;
+	ImagePtr thumbnail;
 	Pack stickers;
 	std::vector<TimeId> dates;
 	Pack covers;
@@ -93,6 +96,7 @@ std::optional<std::vector<not_null<EmojiPtr>>> GetEmojiListFromSet(
 
 Set *FeedSet(const MTPDstickerSet &data);
 Set *FeedSetFull(const MTPmessages_StickerSet &data);
+void NewSetReceived(const MTPmessages_StickerSet &data);
 
 QString GetSetTitle(const MTPDstickerSet &s);
 

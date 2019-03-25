@@ -10,7 +10,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "storage/localstorage.h"
 #include "platform/win/windows_dlls.h"
 #include "lang/lang_keys.h"
-#include "messenger.h"
+#include "core/application.h"
 #include "core/crash_reports.h"
 
 #include <Shlwapi.h>

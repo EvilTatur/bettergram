@@ -7,7 +7,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "intro/introstart.h"
 
 #include "lang/lang_keys.h"
-#include "application.h"
 #include "intro/introphone.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/labels.h"

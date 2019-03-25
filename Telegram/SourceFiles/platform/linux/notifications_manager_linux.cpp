@@ -152,7 +152,7 @@ private:
 			Libs::notify_notification_set_hint_string(_data, "x-canonical-append", "true");
 		}
 
-		Libs::notify_notification_set_hint_string(_data, "desktop-entry", "telegramdesktop");
+		Libs::notify_notification_set_hint_string(_data, "desktop-entry", "bettergram");
 
 		auto signalReceiver = Libs::g_object_cast(_data);
 		auto signalHandler = G_CALLBACK(NotificationData::notificationClosed);

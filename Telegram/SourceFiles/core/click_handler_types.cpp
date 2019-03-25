@@ -7,9 +7,11 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "core/click_handler_types.h"
 
 #include "lang/lang_keys.h"
-#include "messenger.h"
+#include "core/application.h"
+#include "core/local_url_handlers.h"
+#include "core/file_utilities.h"
 #include "mainwidget.h"
-#include "application.h"
+#include "auth_session.h"
 #include "platform/platform_specific.h"
 #include "history/view/history_view_element.h"
 #include "history/history_item.h"
@@ -18,7 +20,8 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "base/qthelp_url.h"
 #include "storage/localstorage.h"
 #include "ui/widgets/tooltip.h"
-#include "core/file_utilities.h"
+#include "data/data_user.h"
+#include "data/data_session.h"
 
 namespace {
 
@@ -42,7 +45,7 @@ QString tryConvertUrlToLocal(QString url) {
 			return qsl("tg://msg_url?") + shareUrlMatch->captured(1);
 		} else if (auto confirmPhoneMatch = regex_match(qsl("^confirmphone/?\\?(.+)"), query, matchOptions)) {
 			return qsl("tg://confirmphone?") + confirmPhoneMatch->captured(1);
-		} else if (auto ivMatch = regex_match(qsl("iv/?\\?(.+)(#|$)"), query, matchOptions)) {
+		} else if (auto ivMatch = regex_match(qsl("^iv/?\\?(.+)(#|$)"), query, matchOptions)) {
 			//
 			// We need to show our t.me page, not the url directly.
 			//
@@ -53,10 +56,13 @@ QString tryConvertUrlToLocal(QString url) {
 			//	return previewedUrl;
 			//}
 			return url;
-		} else if (auto socksMatch = regex_match(qsl("socks/?\\?(.+)(#|$)"), query, matchOptions)) {
+		} else if (auto socksMatch = regex_match(qsl("^socks/?\\?(.+)(#|$)"), query, matchOptions)) {
 			return qsl("tg://socks?") + socksMatch->captured(1);
-		} else if (auto proxyMatch = regex_match(qsl("proxy/?\\?(.+)(#|$)"), query, matchOptions)) {
+		} else if (auto proxyMatch = regex_match(qsl("^proxy/?\\?(.+)(#|$)"), query, matchOptions)) {
 			return qsl("tg://proxy?") + proxyMatch->captured(1);
+		} else if (auto bgMatch = regex_match(qsl("^bg/([a-zA-Z0-9\\.\\_\\-]+)(\\?(.+)?)?$"), query, matchOptions)) {
+			const auto params = bgMatch->captured(3);
+			return qsl("tg://bg?slug=") + bgMatch->captured(1) + (params.isEmpty() ? QString() : '&' + params);
 		} else if (auto usernameMatch = regex_match(qsl("^([a-zA-Z0-9\\.\\_]+)(/?\\?|/?$|/(\\d+)/?(?:\\?|$))"), query, matchOptions)) {
 			auto params = query.mid(usernameMatch->captured(0).size()).toString();
 			auto postParam = QString();
@@ -110,7 +116,7 @@ QString UrlClickHandler::url() const {
 
 void UrlClickHandler::Open(QString url, QVariant context) {
 	url = tryConvertUrlToLocal(url);
-	if (InternalPassportLink(url)) {
+	if (Core::InternalPassportLink(url)) {
 		return;
 	}
 
@@ -118,7 +124,7 @@ void UrlClickHandler::Open(QString url, QVariant context) {
 	if (isEmail(url)) {
 		File::OpenEmailLink(url);
 	} else if (url.startsWith(qstr("tg://"), Qt::CaseInsensitive)) {
-		Messenger::Instance().openLocalUrl(url, context);
+		Core::App().openLocalUrl(url, context);
 	} else if (!url.isEmpty()) {
 		QDesktopServices::openUrl(url);
 	}
@@ -146,7 +152,7 @@ TextWithEntities UrlClickHandler::getExpandedLinkTextWithEntities(ExpandLinksMod
 
 void HiddenUrlClickHandler::Open(QString url, QVariant context) {
 	url = tryConvertUrlToLocal(url);
-	if (InternalPassportLink(url)) {
+	if (Core::InternalPassportLink(url)) {
 		return;
 	}
 
@@ -158,7 +164,7 @@ void HiddenUrlClickHandler::Open(QString url, QVariant context) {
 	} else {
 		const auto parsedUrl = QUrl::fromUserInput(url);
 		if (UrlRequiresConfirmation(url)) {
-			Messenger::Instance().hideMediaView();
+			Core::App().hideMediaView();
 			const auto displayUrl = parsedUrl.isValid()
 				? parsedUrl.toDisplayString()
 				: url;
@@ -176,7 +182,7 @@ void HiddenUrlClickHandler::Open(QString url, QVariant context) {
 
 void BotGameUrlClickHandler::onClick(ClickContext context) const {
 	const auto url = tryConvertUrlToLocal(this->url());
-	if (InternalPassportLink(url)) {
+	if (Core::InternalPassportLink(url)) {
 		return;
 	}
 
@@ -242,7 +248,7 @@ TextWithEntities MentionClickHandler::getExpandedLinkTextWithEntities(ExpandLink
 void MentionNameClickHandler::onClick(ClickContext context) const {
 	const auto button = context.button;
 	if (button == Qt::LeftButton || button == Qt::MiddleButton) {
-		if (auto user = App::userLoaded(_userId)) {
+		if (auto user = Auth().data().userLoaded(_userId)) {
 			Ui::showPeerProfile(user);
 		}
 	}
@@ -254,7 +260,7 @@ TextWithEntities MentionNameClickHandler::getExpandedLinkTextWithEntities(Expand
 }
 
 QString MentionNameClickHandler::tooltip() const {
-	if (auto user = App::userLoaded(_userId)) {
+	if (auto user = Auth().data().userLoaded(_userId)) {
 		auto name = App::peerName(user);
 		if (name != _text) {
 			return name;

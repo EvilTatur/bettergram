@@ -11,8 +11,8 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include <propkey.h>
 
 #include <roapi.h>
-#include <wrl\client.h>
-#include <wrl\implements.h>
+#include <wrl/client.h>
+#include "platform/win/wrapper_wrl_implements_h.h"
 #include <windows.ui.notifications.h>
 
 using namespace Microsoft::WRL;

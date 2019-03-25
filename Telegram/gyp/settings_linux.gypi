@@ -21,6 +21,7 @@
           '-Wno-unused-but-set-variable',
           '-Wno-missing-field-initializers',
           '-Wno-sign-compare',
+          '-Wno-attributes',
         ],
       },
       'conditions': [

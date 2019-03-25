@@ -6,7 +6,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #pragma once
 
-#include <windows.h>
+#include "platform/win/wrapper_windows_h.h"
 
 class LocationCoords;
 
@@ -55,10 +55,6 @@ inline void psCheckLocalSocket(const QString &) {
 void psWriteDump();
 
 void psDeleteDir(const QString &dir);
-
-void psUserActionDone();
-bool psIdleSupported();
-TimeMs psIdleTime();
 
 QStringList psInitLogs();
 void psClearInitLogs();

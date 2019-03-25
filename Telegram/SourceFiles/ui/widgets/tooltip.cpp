@@ -285,7 +285,7 @@ void ImportantTooltip::toggleAnimated(bool visible) {
 	}
 }
 
-void ImportantTooltip::hideAfter(TimeMs timeout) {
+void ImportantTooltip::hideAfter(crl::time timeout) {
 	_hideTimer.callOnce(timeout);
 }
 

@@ -7,7 +7,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #pragma once
 
 #include "window/notifications_manager.h"
-#include "core/single_timer.h"
+#include "base/timer.h"
 
 namespace Ui {
 class IconButton;
@@ -78,7 +78,7 @@ private:
 	std::unique_ptr<HideAllButton> _hideAll;
 
 	bool _positionsOutdated = false;
-	SingleTimer _inputCheckTimer;
+	base::Timer _inputCheckTimer;
 
 	struct QueuedNotification {
 		QueuedNotification(not_null<HistoryItem*> item, int forwardedCount);
@@ -215,9 +215,7 @@ private:
 	Animation a_actionsOpacity;
 	QPixmap _buttonsCache;
 
-#ifdef Q_OS_WIN
-	TimeMs _started;
-#endif // Q_OS_WIN
+	crl::time _started;
 
 	History *_history;
 	PeerData *_peer;

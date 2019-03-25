@@ -42,6 +42,9 @@ class ModuleBase {
 public:
 	virtual void start() = 0;
 	virtual void stop() = 0;
+
+	virtual ~ModuleBase() = default;
+
 };
 
 void registerModule(ModuleBase *module);

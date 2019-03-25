@@ -10,6 +10,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "core/media_active_cache.h"
 #include "storage/cache/storage_cache_database.h"
 #include "data/data_session.h"
+#include "data/data_file_origin.h"
 #include "auth_session.h"
 
 using namespace Images;
@@ -38,7 +39,7 @@ int64 ComputeUsage(const QImage &image) {
 	return ComputeUsage(image.size());
 }
 
-Core::MediaActiveCache<const Image> &ActiveCache() {
+[[nodiscard]] Core::MediaActiveCache<const Image> &ActiveCache() {
 	static auto Instance = Core::MediaActiveCache<const Image>(
 		kMemoryForCache,
 		[](const Image *image) { image->unload(); });
@@ -83,7 +84,7 @@ void ClearAll() {
 ImagePtr Create(const QString &file, QByteArray format) {
 	if (file.startsWith(qstr("http://"), Qt::CaseInsensitive)
 		|| file.startsWith(qstr("https://"), Qt::CaseInsensitive)) {
-		const auto key = file;
+		const auto &key = file;
 		auto i = WebUrlImages.constFind(key);
 		if (i == WebUrlImages.cend()) {
 			i = WebUrlImages.insert(
@@ -206,7 +207,7 @@ QSize getImageSize(const QVector<MTPDocumentAttribute> &attributes) {
 ImagePtr Create(const MTPDwebDocument &document) {
 	const auto size = getImageSize(document.vattributes.v);
 	if (size.isEmpty()) {
-		return Image::Blank();
+		return ImagePtr();
 	}
 
 	// We don't use size from WebDocument, because it is not reliable.
@@ -225,7 +226,7 @@ ImagePtr Create(const MTPDwebDocument &document) {
 ImagePtr Create(const MTPDwebDocumentNoProxy &document) {
 	const auto size = getImageSize(document.vattributes.v);
 	if (size.isEmpty()) {
-		return Image::Blank();
+		return ImagePtr();
 	}
 
 	return Create(qs(document.vurl), size.width(), size.height());
@@ -234,7 +235,7 @@ ImagePtr Create(const MTPDwebDocumentNoProxy &document) {
 ImagePtr Create(const MTPDwebDocument &document, QSize box) {
 	//const auto size = getImageSize(document.vattributes.v);
 	//if (size.isEmpty()) {
-	//	return Image::Blank();
+	//	return ImagePtr();
 	//}
 
 	// We don't use size from WebDocument, because it is not reliable.
@@ -252,7 +253,7 @@ ImagePtr Create(const MTPDwebDocument &document, QSize box) {
 ImagePtr Create(const MTPDwebDocumentNoProxy &document, QSize box) {
 	//const auto size = getImageSize(document.vattributes.v);
 	//if (size.isEmpty()) {
-	//	return Image::Blank();
+	//	return ImagePtr();
 	//}
 
 	return Create(qs(document.vurl), box);
@@ -332,11 +333,16 @@ Image::Image(std::unique_ptr<Source> &&source)
 }
 
 void Image::replaceSource(std::unique_ptr<Source> &&source) {
+	const auto width = _source->width();
+	const auto height = _source->height();
+	if (width > 0 && height > 0) {
+		source->setInformation(_source->bytesSize(), width, height);
+	}
 	_source = std::move(source);
 }
 
-ImagePtr Image::Blank() {
-	static const auto blankImage = [] {
+not_null<Image*> Image::Empty() {
+	static auto result = [] {
 		const auto factor = cIntRetinaFactor();
 		auto data = QImage(
 			factor,
@@ -344,15 +350,27 @@ ImagePtr Image::Blank() {
 			QImage::Format_ARGB32_Premultiplied);
 		data.fill(Qt::transparent);
 		data.setDevicePixelRatio(cRetinaFactor());
-		return Create(
-			std::move(data),
-			"GIF");
+		return Image(std::make_unique<ImageSource>(std::move(data), "GIF"));
 	}();
-	return blankImage;
+	return &result;
+}
+
+not_null<Image*> Image::BlankMedia() {
+	static auto result = [] {
+		const auto factor = cIntRetinaFactor();
+		auto data = QImage(
+			factor,
+			factor,
+			QImage::Format_ARGB32_Premultiplied);
+		data.fill(Qt::black);
+		data.setDevicePixelRatio(cRetinaFactor());
+		return Image(std::make_unique<ImageSource>(std::move(data), "GIF"));
+	}();
+	return &result;
 }
 
 bool Image::isNull() const {
-	return (this == Blank().get());
+	return (this == Empty());
 }
 
 const QPixmap &Image::pix(
@@ -653,7 +671,7 @@ QPixmap Image::pixNoCache(
 		if (h <= 0 && height() > 0) {
 			h = qRound(width() * w / float64(height()));
 		}
-		return Blank()->pixNoCache(origin, w, h, options, outerw, outerh);
+		return Empty()->pixNoCache(origin, w, h, options, outerw, outerh);
 	}
 
 	if (isNull() && outerw > 0 && outerh > 0) {
@@ -711,7 +729,7 @@ QPixmap Image::pixColoredNoCache(
 	checkSource();
 
 	if (_data.isNull()) {
-		return Blank()->pix(origin);
+		return Empty()->pix(origin);
 	}
 
 	auto img = _data;
@@ -735,7 +753,7 @@ QPixmap Image::pixBlurredColoredNoCache(
 	checkSource();
 
 	if (_data.isNull()) {
-		return Blank()->pix(origin);
+		return Empty()->pix(origin);
 	}
 
 	auto img = prepareBlur(_data);
@@ -746,6 +764,34 @@ QPixmap Image::pixBlurredColoredNoCache(
 	}
 
 	return App::pixmapFromImageInPlace(prepareColored(add, img));
+}
+
+QImage Image::original() const {
+	checkSource();
+	return _data;
+}
+
+void Image::automaticLoad(
+		Data::FileOrigin origin,
+		const HistoryItem *item) {
+	if (!loaded()) {
+		_source->automaticLoad(origin, item);
+	}
+}
+
+void Image::load(Data::FileOrigin origin, bool loadFirst, bool prior) {
+	if (!loaded()) {
+		_source->load(origin, loadFirst, prior);
+	}
+}
+
+void Image::loadEvenCancelled(
+		Data::FileOrigin origin,
+		bool loadFirst,
+		bool prior) {
+	if (!loaded()) {
+		_source->loadEvenCancelled(origin, loadFirst, prior);
+	}
 }
 
 std::optional<Storage::Cache::Key> Image::cacheKey() const {
@@ -798,6 +844,8 @@ void Image::invalidateSizeCache() const {
 }
 
 Image::~Image() {
-	unload();
-	ActiveCache().remove(this);
+	if (this != Empty() && this != BlankMedia()) {
+		unload();
+		ActiveCache().remove(this);
+	}
 }

@@ -8,8 +8,8 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 #include "lang/lang_keys.h"
 #include "layout.h"
-#include "auth_session.h"
 #include "history/history_item.h"
+#include "history/history.h"
 #include "data/data_document.h"
 #include "data/data_session.h"
 #include "styles/style_history.h"
@@ -26,13 +26,13 @@ void HistoryFileMedia::clickHandlerActiveChanged(const ClickHandlerPtr &p, bool 
 }
 
 void HistoryFileMedia::thumbAnimationCallback() {
-	Auth().data().requestViewRepaint(_parent);
+	history()->owner().requestViewRepaint(_parent);
 }
 
 void HistoryFileMedia::clickHandlerPressedChanged(
 		const ClickHandlerPtr &handler,
 		bool pressed) {
-	Auth().data().requestViewRepaint(_parent);
+	history()->owner().requestViewRepaint(_parent);
 }
 
 void HistoryFileMedia::setLinks(
@@ -66,7 +66,7 @@ void HistoryFileMedia::setStatusSize(int newSize, int fullSize, int duration, qi
 	}
 }
 
-void HistoryFileMedia::step_radial(TimeMs ms, bool timer) {
+void HistoryFileMedia::step_radial(crl::time ms, bool timer) {
 	const auto updateRadial = [&] {
 		return _animation->radial.update(
 			dataProgress(),
@@ -75,7 +75,7 @@ void HistoryFileMedia::step_radial(TimeMs ms, bool timer) {
 	};
 	if (timer) {
 		if (!anim::Disabled() || updateRadial()) {
-			Auth().data().requestViewRepaint(_parent);
+			history()->owner().requestViewRepaint(_parent);
 		}
 	} else {
 		updateRadial();
@@ -100,25 +100,11 @@ void HistoryFileMedia::checkAnimationFinished() const {
 }
 void HistoryFileMedia::setDocumentLinks(
 		not_null<DocumentData*> document,
-		not_null<HistoryItem*> realParent,
-		bool inlinegif) {
-	FileClickHandlerPtr open, save;
+		not_null<HistoryItem*> realParent) {
 	const auto context = realParent->fullId();
-	if (inlinegif) {
-		open = std::make_shared<GifOpenClickHandler>(document, context);
-	} else {
-		open = std::make_shared<DocumentOpenClickHandler>(document, context);
-	}
-	if (inlinegif) {
-		save = std::make_shared<GifOpenClickHandler>(document, context);
-	} else if (document->isVoiceMessage()) {
-		save = std::make_shared<DocumentOpenClickHandler>(document, context);
-	} else {
-		save = std::make_shared<DocumentSaveClickHandler>(document, context);
-	}
 	setLinks(
-		std::move(open),
-		std::move(save),
+		std::make_shared<DocumentOpenClickHandler>(document, context),
+		std::make_shared<DocumentSaveClickHandler>(document, context),
 		std::make_shared<DocumentCancelClickHandler>(document, context));
 }
 

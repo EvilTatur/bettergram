@@ -6,7 +6,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #pragma once
 
-#include "core/single_timer.h"
 #include "mtproto/type_utils.h"
 #include "mtproto/mtp_instance.h"
 
@@ -152,7 +151,7 @@ inline DcId maindc() {
 }
 
 inline int32 dcstate(ShiftedDcId shiftedDcId = 0) {
-	if (auto instance = MainInstance()) {
+	if (const auto instance = MainInstance()) {
 		return instance->dcstate(shiftedDcId);
 	}
 	return DisconnectedState;
@@ -170,7 +169,7 @@ inline mtpRequestId send(
 		const TRequest &request,
 		RPCResponseHandler &&callbacks = {},
 		ShiftedDcId dcId = 0,
-		TimeMs msCanWait = 0,
+		crl::time msCanWait = 0,
 		mtpRequestId after = 0) {
 	return MainInstance()->send(request, std::move(callbacks), dcId, msCanWait, after);
 }
@@ -181,29 +180,39 @@ inline mtpRequestId send(
 		RPCDoneHandlerPtr &&onDone,
 		RPCFailHandlerPtr &&onFail = nullptr,
 		ShiftedDcId dcId = 0,
-		TimeMs msCanWait = 0,
+		crl::time msCanWait = 0,
 		mtpRequestId after = 0) {
 	return MainInstance()->send(request, std::move(onDone), std::move(onFail), dcId, msCanWait, after);
 }
 
-inline void sendAnything(ShiftedDcId shiftedDcId = 0, TimeMs msCanWait = 0) {
-	return MainInstance()->sendAnything(shiftedDcId, msCanWait);
+inline void sendAnything(ShiftedDcId shiftedDcId = 0, crl::time msCanWait = 0) {
+	if (const auto instance = MainInstance()) {
+		instance->sendAnything(shiftedDcId, msCanWait);
+	}
 }
 
 inline void cancel(mtpRequestId requestId) {
-	return MainInstance()->cancel(requestId);
+	if (const auto instance = MainInstance()) {
+		instance->cancel(requestId);
+	}
 }
 
 inline void ping() {
-	return MainInstance()->ping();
+	if (const auto instance = MainInstance()) {
+		instance->ping();
+	}
 }
 
 inline void killSession(ShiftedDcId shiftedDcId) {
-	return MainInstance()->killSession(shiftedDcId);
+	if (const auto instance = MainInstance()) {
+		instance->killSession(shiftedDcId);
+	}
 }
 
 inline void stopSession(ShiftedDcId shiftedDcId) {
-	return MainInstance()->stopSession(shiftedDcId);
+	if (const auto instance = MainInstance()) {
+		instance->stopSession(shiftedDcId);
+	}
 }
 
 inline int32 state(mtpRequestId requestId) { // < 0 means waiting for such count of ms

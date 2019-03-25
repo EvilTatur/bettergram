@@ -10,8 +10,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 class PhotoCropBox : public BoxContent {
 public:
-	PhotoCropBox(QWidget*, const QImage &img, const PeerId &peer);
-	PhotoCropBox(QWidget*, const QImage &img, not_null<PeerData*> peer);
+	PhotoCropBox(QWidget*, const QImage &img, const QString &title);
 
 	int32 mouseState(QPoint p);
 
@@ -27,7 +26,6 @@ protected:
 	void mouseMoveEvent(QMouseEvent *e) override;
 
 private:
-	void init(const QImage &img, PeerData *peer);
 	void sendPhoto();
 
 	QString _title;
@@ -38,7 +36,6 @@ private:
 	QImage _img;
 	QPixmap _thumb;
 	QImage _mask, _fade;
-	PeerId _peerId = 0;
 	rpl::event_stream<QImage> _readyImages;
 
 };

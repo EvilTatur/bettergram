@@ -10,6 +10,8 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include <rpl/combine.h>
 #include "data/data_photo.h"
 #include "data/data_peer_values.h"
+#include "data/data_channel.h"
+#include "data/data_chat.h"
 #include "info/profile/info_profile_values.h"
 #include "info/info_controller.h"
 #include "info/info_memento.h"
@@ -20,7 +22,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "ui/special_buttons.h"
 #include "window/window_controller.h"
 #include "observer_peer.h"
-#include "messenger.h"
+#include "core/application.h"
 #include "auth_session.h"
 #include "apiwrap.h"
 
@@ -41,7 +43,7 @@ public:
 		int left,
 		int top,
 		int outerWidth,
-		TimeMs ms) override;
+		crl::time ms) override;
 	QImage prepareRippleMask() const override;
 	bool checkRippleStartPosition(QPoint position) const override;
 
@@ -69,7 +71,7 @@ void SectionToggle::paint(
 		int left,
 		int top,
 		int outerWidth,
-		TimeMs ms) {
+		crl::time ms) {
 	auto sqrt2 = sqrt(2.);
 	auto vLeft = rtlpoint(left + _st.skip, 0, outerWidth).x() + 0.;
 	auto vTop = top + _st.skip + 0.;
@@ -282,14 +284,14 @@ void Cover::initViewers() {
 		_peer,
 		Flag::UserOnlineChanged | Flag::MembersChanged
 	) | rpl::start_with_next(
-		[this] { refreshStatusText(); },
+		[=] { refreshStatusText(); },
 		lifetime());
 	if (!_peer->isUser()) {
 		Notify::PeerUpdateValue(
 			_peer,
-			Flag::ChannelRightsChanged | Flag::ChatCanEdit
+			Flag::RightsChanged
 		) | rpl::start_with_next(
-			[this] { refreshUploadPhotoOverlay(); },
+			[=] { refreshUploadPhotoOverlay(); },
 			lifetime());
 	} else if (_peer->isSelf()) {
 		refreshUploadPhotoOverlay();
@@ -297,14 +299,14 @@ void Cover::initViewers() {
 	VerifiedValue(
 		_peer
 	) | rpl::start_with_next(
-		[this](bool verified) { setVerified(verified); },
+		[=](bool verified) { setVerified(verified); },
 		lifetime());
 }
 
 void Cover::refreshUploadPhotoOverlay() {
 	_userpic->switchChangePhotoOverlay([&] {
 		if (const auto chat = _peer->asChat()) {
-			return chat->canEdit();
+			return chat->canEditInformation();
 		} else if (const auto channel = _peer->asChannel()) {
 			return channel->canEditInformation();
 		}

@@ -13,6 +13,7 @@ enum class WebPageType {
 	Photo,
 	Video,
 	Profile,
+	WallPaper,
 	Article,
 	ArticleWithIV,
 };

@@ -35,7 +35,7 @@ class FadeWrapScaled;
 
 namespace Window {
 class Controller;
-class ConnectingWidget;
+class ConnectionState;
 } // namespace Window
 
 enum DialogsSearchRequestType {
@@ -62,7 +62,7 @@ public:
 	void createDialog(Dialogs::Key key);
 	void removeDialog(Dialogs::Key key);
 	void repaintDialogRow(Dialogs::Mode list, not_null<Dialogs::Row*> row);
-	void repaintDialogRow(not_null<History*> history, MsgId messageId);
+	void repaintDialogRow(Dialogs::RowDescriptor row);
 
 	void dialogsToUp();
 
@@ -92,6 +92,8 @@ public:
 
 	void notify_historyMuteUpdated(History *history);
 
+	~DialogsWidget();
+
 	void performFilter();
 	void unreadCountChanged();
 	void markAsRead(Dialogs::EntryTypes type);
@@ -105,7 +107,6 @@ public slots:
 	void onCancel();
 	void onListScroll();
 	void activate();
-	void onFilterUpdate(bool force = false);
 	bool onCancelSearch();
 	void onCancelSearchInChat();
 
@@ -153,7 +154,7 @@ private:
 		const QVector<MTPDialog> &dialogs,
 		const QVector<MTPMessage> &messages);
 
-	void setupSupportLoadingLimit();
+	void setupSupportMode();
 	void setupConnectingWidget();
 	bool searchForPeersRequired(const QString &query) const;
 	void setSearchInChat(Dialogs::Key chat, UserData *from = nullptr);
@@ -168,8 +169,10 @@ private:
 	void updateForwardBar();
 	void checkUpdateStatus();
 
+	void applyFilterUpdate(bool force = false);
 	bool loadingBlockedByDate() const;
 	void refreshLoadMoreButton();
+	void loadMoreBlockedByDateChats();
 
 	bool dialogsFailed(const RPCError &error, mtpRequestId req);
 	bool searchFailed(DialogsSearchRequestType type, const RPCError &error, mtpRequestId req);
@@ -204,8 +207,9 @@ private:
 	class BottomButton;
 	object_ptr<BottomButton> _updateTelegram = { nullptr };
 	object_ptr<BottomButton> _loadMoreChats = { nullptr };
-	base::unique_qptr<Window::ConnectingWidget> _connecting;
+	std::unique_ptr<Window::ConnectionState> _connecting;
 
+	Animation _scrollToAnimation;
 	Animation _a_show;
 	Window::SlideDirection _showDirection;
 	QPixmap _cacheUnder, _cacheOver;

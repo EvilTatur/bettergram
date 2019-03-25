@@ -29,8 +29,8 @@ HistorySticker::HistorySticker(
 : HistoryMedia(parent)
 , _data(document)
 , _emoji(_data->sticker()->alt) {
-	_data->thumb->load(parent->data()->fullId());
-	if (auto emoji = Ui::Emoji::Find(_emoji)) {
+	_data->loadThumbnail(parent->data()->fullId());
+	if (const auto emoji = Ui::Emoji::Find(_emoji)) {
 		_emoji = emoji->text();
 	}
 }
@@ -86,13 +86,13 @@ QSize HistorySticker::countCurrentSize(int newWidth) {
 	return { newWidth, minHeight() };
 }
 
-void HistorySticker::draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const {
+void HistorySticker::draw(Painter &p, const QRect &r, TextSelection selection, crl::time ms) const {
 	auto sticker = _data->sticker();
 	if (!sticker) return;
 
 	if (width() < st::msgPadding.left() + st::msgPadding.right() + 1) return;
 
-	_data->checkSticker();
+	_data->checkStickerLarge();
 	bool loaded = _data->loaded();
 	bool selected = (selection == FullSelection);
 
@@ -116,14 +116,25 @@ void HistorySticker::draw(Painter &p, const QRect &r, TextSelection selection, T
 		const auto w = _pixw;
 		const auto h = _pixh;
 		const auto &c = st::msgStickerOverlay;
-		if (const auto image = _data->getStickerImage()) {
+		if (const auto image = _data->getStickerLarge()) {
 			return selected
 				? image->pixColored(o, c, w, h)
 				: image->pix(o, w, h);
+		//
+		// Inline thumbnails can't have alpha channel.
+		//
+		//} else if (const auto blurred = _data->thumbnailInline()) {
+		//	return selected
+		//		? blurred->pixBlurredColored(o, c, w, h)
+		//		: blurred->pixBlurred(o, w, h);
+		} else if (const auto thumbnail = _data->thumbnail()) {
+			return selected
+				? thumbnail->pixBlurredColored(o, c, w, h)
+				: thumbnail->pixBlurred(o, w, h);
+		} else {
+			static QPixmap empty;
+			return empty;
 		}
-		return selected
-			? _data->thumb->pixBlurredColored(o, c, w, h)
-			: _data->thumb->pixBlurred(o, w, h);
 	}();
 	p.drawPixmap(
 		QPoint{ usex + (usew - _pixw) / 2, (minHeight() - _pixh) / 2 },

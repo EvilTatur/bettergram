@@ -20,8 +20,8 @@ public:
 		Fn<void()> callback = nullptr);
 	explicit Timer(Fn<void()> callback = nullptr);
 
-	static Qt::TimerType DefaultType(TimeMs timeout) {
-		constexpr auto kThreshold = TimeMs(1000);
+	static Qt::TimerType DefaultType(crl::time timeout) {
+		constexpr auto kThreshold = crl::time(1000);
 		return (timeout > kThreshold) ? Qt::CoarseTimer : Qt::PreciseTimer;
 	}
 
@@ -29,19 +29,19 @@ public:
 		_callback = std::move(callback);
 	}
 
-	void callOnce(TimeMs timeout) {
+	void callOnce(crl::time timeout) {
 		callOnce(timeout, DefaultType(timeout));
 	}
 
-	void callEach(TimeMs timeout) {
+	void callEach(crl::time timeout) {
 		callEach(timeout, DefaultType(timeout));
 	}
 
-	void callOnce(TimeMs timeout, Qt::TimerType type) {
+	void callOnce(crl::time timeout, Qt::TimerType type) {
 		start(timeout, type, Repeat::SingleShot);
 	}
 
-	void callEach(TimeMs timeout, Qt::TimerType type) {
+	void callEach(crl::time timeout, Qt::TimerType type) {
 		start(timeout, type, Repeat::Interval);
 	}
 
@@ -50,7 +50,7 @@ public:
 	}
 
 	void cancel();
-	TimeMs remainingTime() const;
+	crl::time remainingTime() const;
 
 	static void Adjust();
 
@@ -62,10 +62,10 @@ private:
 		Interval   = 0,
 		SingleShot = 1,
 	};
-	void start(TimeMs timeout, Qt::TimerType type, Repeat repeat);
+	void start(crl::time timeout, Qt::TimerType type, Repeat repeat);
 	void adjust();
 
-	void setTimeout(TimeMs timeout);
+	void setTimeout(crl::time timeout);
 	int timeout() const;
 
 	void setRepeat(Repeat repeat) {
@@ -76,7 +76,7 @@ private:
 	}
 
 	Fn<void()> _callback;
-	TimeMs _next = 0;
+	crl::time _next = 0;
 	int _timeout = 0;
 	int _timerId = 0;
 
@@ -88,7 +88,7 @@ private:
 
 class DelayedCallTimer final : private QObject {
 public:
-	int call(TimeMs timeout, FnMut<void()> callback) {
+	int call(crl::time timeout, FnMut<void()> callback) {
 		return call(
 			timeout,
 			std::move(callback),
@@ -96,7 +96,7 @@ public:
 	}
 
 	int call(
-		TimeMs timeout,
+		crl::time timeout,
 		FnMut<void()> callback,
 		Qt::TimerType type);
 	void cancel(int callId);

@@ -11,7 +11,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "mainwidget.h"
 #include "mainwindow.h"
 #include "apiwrap.h"
-#include "application.h"
 #include "history/history.h"
 #include "history/history_item.h"
 #include "ui/widgets/checkbox.h"
@@ -22,41 +21,14 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "ui/image/image.h"
 #include "ui/empty_userpic.h"
 #include "core/click_handler_types.h"
+#include "window/window_controller.h"
 #include "storage/localstorage.h"
 #include "data/data_session.h"
+#include "data/data_channel.h"
+#include "data/data_chat.h"
+#include "data/data_user.h"
 #include "auth_session.h"
 #include "observer_peer.h"
-
-namespace {
-
-void ConvertToSupergroupDone(const MTPUpdates &updates) {
-	Auth().api().applyUpdates(updates);
-
-	auto handleChats = [](const MTPVector<MTPChat> &chats) {
-		for (const auto &chat : chats.v) {
-			if (chat.type() == mtpc_channel) {
-				const auto channel = App::channel(chat.c_channel().vid.v);
-				Ui::showPeerHistory(channel, ShowAtUnreadMsgId);
-				Auth().api().requestParticipantsCountDelayed(channel);
-			}
-		}
-	};
-
-	switch (updates.type()) {
-	case mtpc_updates:
-		handleChats(updates.c_updates().vchats);
-		break;
-	case mtpc_updatesCombined:
-		handleChats(updates.c_updatesCombined().vchats);
-		break;
-	default:
-		LOG(("API Error: unexpected update cons %1 "
-			"(ConvertToSupergroupBox::convertDone)").arg(updates.type()));
-		break;
-	}
-}
-
-} // namespace
 
 TextParseOptions _confirmBoxTextOptions = {
 	TextParseLinks | TextParseMultiline | TextParseRichText, // flags
@@ -65,7 +37,11 @@ TextParseOptions _confirmBoxTextOptions = {
 	Qt::LayoutDirectionAuto, // dir
 };
 
-ConfirmBox::ConfirmBox(QWidget*, const QString &text, FnMut<void()> confirmedCallback, FnMut<void()> cancelledCallback)
+ConfirmBox::ConfirmBox(
+	QWidget*,
+	const QString &text,
+	FnMut<void()> confirmedCallback,
+	FnMut<void()> cancelledCallback)
 : _confirmText(lang(lng_box_ok))
 , _cancelText(lang(lng_cancel))
 , _confirmStyle(st::defaultBoxButton)
@@ -75,7 +51,12 @@ ConfirmBox::ConfirmBox(QWidget*, const QString &text, FnMut<void()> confirmedCal
 	init(text);
 }
 
-ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText, FnMut<void()> confirmedCallback, FnMut<void()> cancelledCallback)
+ConfirmBox::ConfirmBox(
+	QWidget*,
+	const QString &text,
+	const QString &confirmText,
+	FnMut<void()> confirmedCallback,
+	FnMut<void()> cancelledCallback)
 : _confirmText(confirmText)
 , _cancelText(lang(lng_cancel))
 , _confirmStyle(st::defaultBoxButton)
@@ -85,7 +66,12 @@ ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText
 	init(text);
 }
 
-ConfirmBox::ConfirmBox(QWidget*, const TextWithEntities &text, const QString &confirmText, FnMut<void()> confirmedCallback, FnMut<void()> cancelledCallback)
+ConfirmBox::ConfirmBox(
+	QWidget*,
+	const TextWithEntities &text,
+	const QString &confirmText,
+	FnMut<void()> confirmedCallback,
+	FnMut<void()> cancelledCallback)
 : _confirmText(confirmText)
 , _cancelText(lang(lng_cancel))
 , _confirmStyle(st::defaultBoxButton)
@@ -95,7 +81,13 @@ ConfirmBox::ConfirmBox(QWidget*, const TextWithEntities &text, const QString &co
 	init(text);
 }
 
-ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText, const style::RoundButton &confirmStyle, FnMut<void()> confirmedCallback, FnMut<void()> cancelledCallback)
+ConfirmBox::ConfirmBox(
+	QWidget*,
+	const QString &text,
+	const QString &confirmText,
+	const style::RoundButton &confirmStyle,
+	FnMut<void()> confirmedCallback,
+	FnMut<void()> cancelledCallback)
 : _confirmText(confirmText)
 , _cancelText(lang(lng_cancel))
 , _confirmStyle(confirmStyle)
@@ -105,7 +97,13 @@ ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText
 	init(text);
 }
 
-ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText, const QString &cancelText, FnMut<void()> confirmedCallback, FnMut<void()> cancelledCallback)
+ConfirmBox::ConfirmBox(
+	QWidget*,
+	const QString &text,
+	const QString &confirmText,
+	const QString &cancelText,
+	FnMut<void()> confirmedCallback,
+	FnMut<void()> cancelledCallback)
 : _confirmText(confirmText)
 , _cancelText(cancelText)
 , _confirmStyle(st::defaultBoxButton)
@@ -115,7 +113,14 @@ ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText
 	init(text);
 }
 
-ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText, const style::RoundButton &confirmStyle, const QString &cancelText, FnMut<void()> confirmedCallback, FnMut<void()> cancelledCallback)
+ConfirmBox::ConfirmBox(
+	QWidget*,
+	const QString &text,
+	const QString &confirmText,
+	const style::RoundButton &confirmStyle,
+	const QString &cancelText,
+	FnMut<void()> confirmedCallback,
+	FnMut<void()> cancelledCallback)
 : _confirmText(confirmText)
 , _cancelText(cancelText)
 , _confirmStyle(st::defaultBoxButton)
@@ -125,7 +130,11 @@ ConfirmBox::ConfirmBox(QWidget*, const QString &text, const QString &confirmText
 	init(text);
 }
 
-ConfirmBox::ConfirmBox(const InformBoxTag &, const QString &text, const QString &doneText, Fn<void()> closedCallback)
+ConfirmBox::ConfirmBox(
+	const InformBoxTag &,
+	const QString &text,
+	const QString &doneText,
+	Fn<void()> closedCallback)
 : _confirmText(doneText)
 , _confirmStyle(st::defaultBoxButton)
 , _informative(true)
@@ -135,7 +144,11 @@ ConfirmBox::ConfirmBox(const InformBoxTag &, const QString &text, const QString 
 	init(text);
 }
 
-ConfirmBox::ConfirmBox(const InformBoxTag &, const TextWithEntities &text, const QString &doneText, Fn<void()> closedCallback)
+ConfirmBox::ConfirmBox(
+	const InformBoxTag &,
+	const TextWithEntities &text,
+	const QString &doneText,
+	Fn<void()> closedCallback)
 : _confirmText(doneText)
 , _confirmStyle(st::defaultBoxButton)
 , _informative(true)
@@ -145,8 +158,9 @@ ConfirmBox::ConfirmBox(const InformBoxTag &, const TextWithEntities &text, const
 	init(text);
 }
 
-FnMut<void()> ConfirmBox::generateInformCallback(Fn<void()> closedCallback) {
-	return crl::guard(this, [this, closedCallback] {
+FnMut<void()> ConfirmBox::generateInformCallback(
+		Fn<void()> closedCallback) {
+	return crl::guard(this, [=] {
 		closeBox();
 		if (closedCallback) {
 			closedCallback();
@@ -155,7 +169,10 @@ FnMut<void()> ConfirmBox::generateInformCallback(Fn<void()> closedCallback) {
 }
 
 void ConfirmBox::init(const QString &text) {
-	_text.setText(st::boxLabelStyle, text, _informative ? _confirmBoxTextOptions : _textPlainOptions);
+	_text.setText(
+		st::boxLabelStyle,
+		text,
+		_informative ? _confirmBoxTextOptions : _textPlainOptions);
 }
 
 void ConfirmBox::init(const TextWithEntities &text) {
@@ -163,9 +180,14 @@ void ConfirmBox::init(const TextWithEntities &text) {
 }
 
 void ConfirmBox::prepare() {
-	addButton([this] { return _confirmText; }, [this] { confirmed(); }, _confirmStyle);
+	addButton(
+		[=] { return _confirmText; },
+		[=] { confirmed(); },
+		_confirmStyle);
 	if (!_informative) {
-		addButton([this] { return _cancelText; }, [this] { _cancelled = true; closeBox(); });
+		addButton(
+			[=] { return _cancelText; },
+			[=] { _cancelled = true; closeBox(); });
 	}
 
 	boxClosing() | rpl::start_with_next([=] {
@@ -317,7 +339,7 @@ void MaxInviteBox::mousePressEvent(QMouseEvent *e) {
 	mouseMoveEvent(e);
 	if (_linkOver) {
 		if (_channel->inviteLink().isEmpty()) {
-			Auth().api().exportInviteLink(_channel);
+			_channel->session().api().exportInviteLink(_channel);
 		} else {
 			QGuiApplication::clipboard()->setText(_channel->inviteLink());
 			Ui::Toast::Show(lang(lng_create_channel_link_copied));
@@ -360,65 +382,6 @@ void MaxInviteBox::paintEvent(QPaintEvent *e) {
 void MaxInviteBox::resizeEvent(QResizeEvent *e) {
 	BoxContent::resizeEvent(e);
 	_invitationLink = myrtlrect(st::boxPadding.left(), st::boxPadding.top() + _textHeight + st::boxTextFont->height, width() - st::boxPadding.left() - st::boxPadding.right(), 2 * st::boxTextFont->height);
-}
-
-ConvertToSupergroupBox::ConvertToSupergroupBox(QWidget*, ChatData *chat)
-: _chat(chat)
-, _text(100)
-, _note(100) {
-}
-
-void ConvertToSupergroupBox::prepare() {
-	QStringList text;
-	text.push_back(lang(lng_profile_convert_feature1));
-	text.push_back(lang(lng_profile_convert_feature2));
-	text.push_back(lang(lng_profile_convert_feature3));
-	text.push_back(lang(lng_profile_convert_feature4));
-
-	setTitle(langFactory(lng_profile_convert_title));
-
-	addButton(langFactory(lng_profile_convert_confirm), [this] { convertToSupergroup(); });
-	addButton(langFactory(lng_cancel), [this] { closeBox(); });
-
-	_text.setText(st::boxLabelStyle, text.join('\n'), _confirmBoxTextOptions);
-	_note.setText(st::boxLabelStyle, lng_profile_convert_warning(lt_bold_start, textcmdStartSemibold(), lt_bold_end, textcmdStopSemibold()), _confirmBoxTextOptions);
-	_textWidth = st::boxWideWidth - st::boxPadding.left() - st::boxButtonPadding.right();
-	_textHeight = _text.countHeight(_textWidth);
-	setDimensions(st::boxWideWidth, _textHeight + st::boxPadding.bottom() + _note.countHeight(_textWidth));
-}
-
-void ConvertToSupergroupBox::convertToSupergroup() {
-	MTP::send(MTPmessages_MigrateChat(_chat->inputChat), rpcDone(&ConvertToSupergroupBox::convertDone), rpcFail(&ConvertToSupergroupBox::convertFail));
-}
-
-void ConvertToSupergroupBox::convertDone(const MTPUpdates &updates) {
-	Ui::hideLayer();
-	ConvertToSupergroupDone(updates);
-}
-
-bool ConvertToSupergroupBox::convertFail(const RPCError &error) {
-	if (MTP::isDefaultHandledError(error)) return false;
-	Ui::hideLayer();
-	return true;
-}
-
-void ConvertToSupergroupBox::keyPressEvent(QKeyEvent *e) {
-	if (e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-		convertToSupergroup();
-	} else {
-		BoxContent::keyPressEvent(e);
-	}
-}
-
-void ConvertToSupergroupBox::paintEvent(QPaintEvent *e) {
-	BoxContent::paintEvent(e);
-
-	Painter p(this);
-
-	// draw box title / text
-	p.setPen(st::boxTextFg);
-	_text.drawLeft(p, st::boxPadding.left(), 0, _textWidth, width());
-	_note.drawLeft(p, st::boxPadding.left(), _textHeight + st::boxPadding.bottom(), _textWidth, width());
 }
 
 PinMessageBox::PinMessageBox(
@@ -478,7 +441,7 @@ void PinMessageBox::pinMessage() {
 }
 
 void PinMessageBox::pinDone(const MTPUpdates &updates) {
-	Auth().api().applyUpdates(updates);
+	_peer->session().api().applyUpdates(updates);
 	Ui::hideLayer();
 }
 
@@ -492,8 +455,7 @@ DeleteMessagesBox::DeleteMessagesBox(
 	QWidget*,
 	not_null<HistoryItem*> item,
 	bool suggestModerateActions)
-: _ids(1, item->fullId())
-, _singleItem(true) {
+: _ids(1, item->fullId()) {
 	if (suggestModerateActions) {
 		_moderateBan = item->suggestBanReport();
 		_moderateDeleteAll = item->suggestDeleteAllReport();
@@ -511,11 +473,54 @@ DeleteMessagesBox::DeleteMessagesBox(
 	Expects(!_ids.empty());
 }
 
+DeleteMessagesBox::DeleteMessagesBox(
+	QWidget*,
+	not_null<PeerData*> peer,
+	bool justClear)
+: _wipeHistoryPeer(peer)
+, _wipeHistoryJustClear(justClear) {
+}
+
 void DeleteMessagesBox::prepare() {
-	auto text = QString();
-	if (_moderateFrom) {
+	auto details = TextWithEntities();
+	const auto appendDetails = [&](TextWithEntities &&text) {
+		TextUtilities::Append(details, { "\n\n" });
+		TextUtilities::Append(details, std::move(text));
+	};
+	auto deleteKey = lng_box_delete;
+	auto deleteStyle = &st::defaultBoxButton;
+	if (const auto peer = _wipeHistoryPeer) {
+		if (_wipeHistoryJustClear) {
+			details.text = peer->isSelf()
+				? lang(lng_sure_delete_saved_messages)
+				: peer->isUser()
+				? lng_sure_delete_history(lt_contact, peer->name)
+				: lng_sure_delete_group_history(lt_group, peer->name);
+			deleteStyle = &st::attentionBoxButton;
+		} else {
+			details.text = peer->isSelf()
+				? lang(lng_sure_delete_saved_messages)
+				: peer->isUser()
+				? lng_sure_delete_history(lt_contact, peer->name)
+				: peer->isChat()
+				? lng_sure_delete_and_exit(lt_group, peer->name)
+				: lang(peer->isMegagroup()
+					? lng_sure_leave_group
+					: lng_sure_leave_channel);
+			deleteKey = _wipeHistoryPeer->isUser()
+				? lng_box_delete
+				: lng_box_leave;
+			deleteStyle = &(peer->isChannel()
+				? st::defaultBoxButton
+				: st::attentionBoxButton);
+		}
+		if (auto revoke = revokeText(peer)) {
+			_revoke.create(this, revoke->checkbox, false, st::defaultBoxCheckbox);
+			appendDetails(std::move(revoke->description));
+		}
+	} else if (_moderateFrom) {
 		Assert(_moderateInChannel != nullptr);
-		text = lang(lng_selected_delete_sure_this);
+		details.text = lang(lng_selected_delete_sure_this);
 		if (_moderateBan) {
 			_banUser.create(this, lang(lng_ban_user), false, st::defaultBoxCheckbox);
 		}
@@ -524,49 +529,32 @@ void DeleteMessagesBox::prepare() {
 			_deleteAll.create(this, lang(lng_delete_all_from), false, st::defaultBoxCheckbox);
 		}
 	} else {
-		text = _singleItem ? lang(lng_selected_delete_sure_this) : lng_selected_delete_sure(lt_count, _ids.size());
-		auto canDeleteAllForEveryone = true;
-		auto now = unixtime();
-		auto deleteForUser = (UserData*)nullptr;
-		auto peer = (PeerData*)nullptr;
-		auto forEveryoneText = lang(lng_delete_for_everyone_check);
-		for (const auto fullId : std::as_const(_ids)) {
-			if (const auto item = App::histItemById(fullId)) {
-				peer = item->history()->peer;
-				if (!item->canDeleteForEveryone(now)) {
-					canDeleteAllForEveryone = false;
-					break;
-				} else if (auto user = item->history()->peer->asUser()) {
-					if (!deleteForUser || deleteForUser == user) {
-						deleteForUser = user;
-						forEveryoneText = lng_delete_for_other_check(
-							lt_user,
-							user->firstName);
-					} else {
-						forEveryoneText = lang(lng_delete_for_everyone_check);
-					}
+		details.text = (_ids.size() == 1)
+			? lang(lng_selected_delete_sure_this)
+			: lng_selected_delete_sure(lt_count, _ids.size());
+		if (const auto peer = checkFromSinglePeer()) {
+			auto count = int(_ids.size());
+			if (auto revoke = revokeText(peer)) {
+				_revoke.create(this, revoke->checkbox, false, st::defaultBoxCheckbox);
+				appendDetails(std::move(revoke->description));
+			} else if (peer && peer->isChannel()) {
+				if (peer->isMegagroup()) {
+					appendDetails({ lng_delete_for_everyone_hint(lt_count, count) });
 				}
-			} else {
-				canDeleteAllForEveryone = false;
+			} else if (peer->isChat()) {
+				appendDetails({ lng_delete_for_me_chat_hint(lt_count, count) });
+			} else if (!peer->isSelf()) {
+				appendDetails({ lng_delete_for_me_hint(lt_count, count) });
 			}
-		}
-		auto count = int(_ids.size());
-		if (canDeleteAllForEveryone) {
-			_forEveryone.create(this, forEveryoneText, false, st::defaultBoxCheckbox);
-		} else if (peer && peer->isChannel()) {
-			if (peer->isMegagroup()) {
-				text += qsl("\n\n") + lng_delete_for_everyone_hint(lt_count, count);
-			}
-		} else if (peer->isChat()) {
-			text += qsl("\n\n") + lng_delete_for_me_chat_hint(lt_count, count);
-		} else if (!peer->isSelf()) {
-			text += qsl("\n\n") + lng_delete_for_me_hint(lt_count, count);
 		}
 	}
-	_text.create(this, text, Ui::FlatLabel::InitType::Simple, st::boxLabel);
+	_text.create(this, rpl::single(std::move(details)), st::boxLabel);
 
-	addButton(langFactory(lng_box_delete), [this] { deleteAndClear(); });
-	addButton(langFactory(lng_cancel), [this] { closeBox(); });
+	addButton(
+		langFactory(deleteKey),
+		[=] { deleteAndClear(); },
+		*deleteStyle);
+	addButton(langFactory(lng_cancel), [=] { closeBox(); });
 
 	auto fullHeight = st::boxPadding.top() + _text->height() + st::boxPadding.bottom();
 	if (_moderateFrom) {
@@ -578,10 +566,110 @@ void DeleteMessagesBox::prepare() {
 		if (_deleteAll) {
 			fullHeight += st::boxLittleSkip + _deleteAll->heightNoMargins();
 		}
-	} else if (_forEveryone) {
-		fullHeight += st::boxMediumSkip + _forEveryone->heightNoMargins();
+	} else if (_revoke) {
+		fullHeight += st::boxMediumSkip + _revoke->heightNoMargins();
 	}
 	setDimensions(st::boxWidth, fullHeight);
+}
+
+PeerData *DeleteMessagesBox::checkFromSinglePeer() const {
+	auto result = (PeerData*)nullptr;
+	for (const auto fullId : std::as_const(_ids)) {
+		if (const auto item = App::histItemById(fullId)) {
+			const auto peer = item->history()->peer;
+			if (!result) {
+				result = peer;
+			} else if (result != peer) {
+				return nullptr;
+			}
+		}
+	}
+	return result;
+}
+
+auto DeleteMessagesBox::revokeText(not_null<PeerData*> peer) const
+-> std::optional<RevokeConfig> {
+	auto result = RevokeConfig();
+	if (peer == _wipeHistoryPeer) {
+		if (!peer->canRevokeFullHistory()) {
+			return std::nullopt;
+		} else if (const auto user = peer->asUser()) {
+			result.checkbox = lng_delete_for_other_check(
+				lt_user,
+				user->firstName);
+		} else {
+			result.checkbox = lang(lng_delete_for_everyone_check);
+		}
+		return result;
+	}
+
+	const auto items = ranges::view::all(
+		_ids
+	) | ranges::view::transform([](FullMsgId id) {
+		return App::histItemById(id);
+	}) | ranges::view::filter([](HistoryItem *item) {
+		return (item != nullptr);
+	}) | ranges::to_vector;
+
+	if (items.size() != _ids.size()) {
+		// We don't have information about all messages.
+		return std::nullopt;
+	}
+
+	const auto now = unixtime();
+	const auto canRevoke = [&](HistoryItem * item) {
+		return item->canDeleteForEveryone(now);
+	};
+	const auto cannotRevoke = [&](HistoryItem *item) {
+		return !item->canDeleteForEveryone(now);
+	};
+	const auto canRevokeAll = ranges::find_if(
+		items,
+		cannotRevoke
+	) == end(items);
+	auto outgoing = items | ranges::view::filter(&HistoryItem::out);
+	const auto canRevokeOutgoingCount = canRevokeAll
+		? -1
+		: ranges::count_if(outgoing, canRevoke);
+
+	if (canRevokeAll) {
+		if (const auto user = peer->asUser()) {
+			result.checkbox = lng_delete_for_other_check(
+				lt_user,
+				user->firstName);
+		} else {
+			result.checkbox = lang(lng_delete_for_everyone_check);
+		}
+		return result;
+	} else if (canRevokeOutgoingCount > 0) {
+		result.checkbox = lang(lng_delete_for_other_my);
+		if (const auto user = peer->asUser()) {
+			auto boldName = TextWithEntities{ user->firstName };
+			boldName.entities.push_back(
+				EntityInText(EntityInTextBold, 0, boldName.text.size()));
+			if (canRevokeOutgoingCount == 1) {
+				result.description = lng_selected_unsend_about_user_one__generic<TextWithEntities>(
+					lt_user,
+					boldName);
+			} else {
+				result.description = lng_selected_unsend_about_user__generic<TextWithEntities>(
+					lt_count,
+					canRevokeOutgoingCount,
+					lt_user,
+					boldName);
+			}
+		} else if (canRevokeOutgoingCount == 1) {
+			result.description = TextWithEntities{
+				lang(lng_selected_unsend_about_group_one) };
+		} else {
+			result.description = TextWithEntities{
+				lng_selected_unsend_about_group(
+					lt_count,
+					canRevokeOutgoingCount) };
+		}
+		return result;
+	}
+	return std::nullopt;
 }
 
 void DeleteMessagesBox::resizeEvent(QResizeEvent *e) {
@@ -599,10 +687,10 @@ void DeleteMessagesBox::resizeEvent(QResizeEvent *e) {
 		if (_deleteAll) {
 			_deleteAll->moveToLeft(st::boxPadding.left(), top);
 		}
-	} else if (_forEveryone) {
-		auto availableWidth = width() - 2 * st::boxPadding.left();
-		_forEveryone->resizeToNaturalWidth(availableWidth);
-		_forEveryone->moveToLeft(st::boxPadding.left(), _text->bottomNoMargins() + st::boxMediumSkip);
+	} else if (_revoke) {
+		const auto availableWidth = width() - 2 * st::boxPadding.left();
+		_revoke->resizeToNaturalWidth(availableWidth);
+		_revoke->moveToLeft(st::boxPadding.left(), _text->bottomNoMargins() + st::boxMediumSkip);
 	}
 }
 
@@ -615,22 +703,45 @@ void DeleteMessagesBox::keyPressEvent(QKeyEvent *e) {
 }
 
 void DeleteMessagesBox::deleteAndClear() {
+	const auto revoke = _revoke ? _revoke->checked() : false;
+	if (const auto peer = _wipeHistoryPeer) {
+		const auto justClear = _wipeHistoryJustClear;
+		closeBox();
+
+		if (justClear) {
+			peer->session().api().clearHistory(peer, revoke);
+		} else {
+			const auto controller = App::wnd()->controller();
+			if (controller->activeChatCurrent().peer() == peer) {
+				Ui::showChatsList();
+			}
+			// Don't delete old history by default,
+			// because Android app doesn't.
+			//
+			//if (const auto from = peer->migrateFrom()) {
+			//	peer->session().api().deleteConversation(from, false);
+			//}
+			peer->session().api().deleteConversation(peer, revoke);
+		}
+		return;
+	}
 	if (_moderateFrom) {
 		if (_banUser && _banUser->checked()) {
-			Auth().api().kickParticipant(
+			_moderateInChannel->session().api().kickParticipant(
 				_moderateInChannel,
 				_moderateFrom,
-				MTP_channelBannedRights(MTP_flags(0), MTP_int(0)));
+				MTP_chatBannedRights(MTP_flags(0), MTP_int(0)));
 		}
 		if (_reportSpam->checked()) {
-			MTP::send(
+			_moderateInChannel->session().api().request(
 				MTPchannels_ReportSpam(
 					_moderateInChannel->inputChannel,
 					_moderateFrom->inputUser,
-					MTP_vector<MTPint>(1, MTP_int(_ids[0].msg))));
+					MTP_vector<MTPint>(1, MTP_int(_ids[0].msg)))
+			).send();
 		}
 		if (_deleteAll && _deleteAll->checked()) {
-			Auth().api().deleteAllFromUser(
+			_moderateInChannel->session().api().deleteAllFromUser(
 				_moderateInChannel,
 				_moderateFrom);
 		}
@@ -640,25 +751,25 @@ void DeleteMessagesBox::deleteAndClear() {
 		_deleteConfirmedCallback();
 	}
 
-	QMap<PeerData*, QVector<MTPint>> idsByPeer;
+	base::flat_map<not_null<PeerData*>, QVector<MTPint>> idsByPeer;
 	for (const auto itemId : _ids) {
-		if (auto item = App::histItemById(itemId)) {
-			auto history = item->history();
-			auto wasOnServer = (item->id > 0);
-			auto wasLast = (history->lastMessage() == item);
+		if (const auto item = App::histItemById(itemId)) {
+			const auto history = item->history();
+			const auto wasOnServer = IsServerMsgId(item->id);
+			const auto wasLast = (history->lastMessage() == item);
+			const auto wasInChats = (history->chatListMessage() == item);
 			item->destroy();
 
 			if (wasOnServer) {
 				idsByPeer[history->peer].push_back(MTP_int(itemId.msg));
-			} else if (wasLast && !history->lastMessageKnown()) {
-				Auth().api().requestDialogEntry(history);
+			} else if (wasLast || wasInChats) {
+				history->requestChatListMessage();
 			}
 		}
 	}
 
-	auto forEveryone = _forEveryone ? _forEveryone->checked() : false;
-	for (auto i = idsByPeer.cbegin(), e = idsByPeer.cend(); i != e; ++i) {
-		App::main()->deleteMessages(i.key(), i.value(), forEveryone);
+	for (const auto &[peer, ids] : idsByPeer) {
+		peer->session().api().deleteMessages(peer, ids, revoke);
 	}
 	Ui::hideLayer();
 	Auth().data().sendHistoryChangeNotifications();
@@ -723,7 +834,7 @@ std::vector<not_null<UserData*>> ConfirmInviteBox::GetParticipants(
 	auto result = std::vector<not_null<UserData*>>();
 	result.reserve(v.size());
 	for (const auto &participant : v) {
-		if (const auto user = App::feedUser(participant)) {
+		if (const auto user = Auth().data().processUser(participant)) {
 			result.push_back(user);
 		}
 	}

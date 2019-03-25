@@ -12,8 +12,8 @@ The source code is published under GPLv3 with OpenSSL exception, the license is 
 
 * Windows XP - Windows 10 (**not** RT)
 * Mac OS X 10.8 - Mac OS X 10.11
-* Ubuntu 12.04 - Ubuntu 18.04
-* Fedora 22 - Fedora 28
+* Ubuntu 12.04 - Ubuntu 18.10
+* Fedora 22 - Fedora 29
 * [Snappy](https://snapcraft.io/telegram-desktop)
 
 ## Third-party
@@ -43,7 +43,7 @@ The source code is published under GPLv3 with OpenSSL exception, the license is 
 
 * [Build instructions][building]
 * [Visual Studio 2017][msvc]
-* [Xcode 9][xcode]
+* [Xcode 10][xcode]
 * [GYP/CMake on GNU/Linux][cmake]
 
 [//]: # (LINKS)

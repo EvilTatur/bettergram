@@ -16,7 +16,7 @@ public:
 		not_null<Element*> parent,
 		not_null<PollData*> poll);
 
-	void draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const override;
+	void draw(Painter &p, const QRect &r, TextSelection selection, crl::time ms) const override;
 	TextState textState(QPoint point, StateRequest request) const override;
 
 	bool toggleSelectionByHandlerClick(const ClickHandlerPtr &p) const override {
@@ -33,6 +33,10 @@ public:
 		return false;
 	}
 
+	void clickHandlerPressedChanged(
+		const ClickHandlerPtr &handler,
+		bool pressed) override;
+
 	~HistoryPoll();
 
 private:
@@ -46,20 +50,25 @@ private:
 
 	bool canVote() const;
 
-	int countAnswerHeight(const Answer &answer, int innerWidth) const;
+	[[nodiscard]] int countAnswerTop(
+		const Answer &answer,
+		int innerWidth) const;
+	[[nodiscard]] int countAnswerHeight(
+		const Answer &answer,
+		int innerWidth) const;
 	[[nodiscard]] ClickHandlerPtr createAnswerClickHandler(
 		const Answer &answer) const;
 	void updateTexts();
 	void updateAnswers();
-	void updateVotes() const;
-	void updateTotalVotes() const;
-	void updateAnswerVotes() const;
+	void updateVotes();
+	void updateTotalVotes();
+	void updateAnswerVotes();
 	void updateAnswerVotesFromOriginal(
-		const Answer &answer,
+		Answer &answer,
 		const PollAnswer &original,
-		int totalVotes,
-		int maxVotes) const;
-	void updateVotesCheckAnimations() const;
+		int percent,
+		int maxVotes);
+	void checkSendingAnimation() const;
 
 	int paintAnswer(
 		Painter &p,
@@ -70,7 +79,7 @@ private:
 		int width,
 		int outerWidth,
 		TextSelection selection,
-		TimeMs ms) const;
+		crl::time ms) const;
 	void paintRadio(
 		Painter &p,
 		const Answer &answer,
@@ -99,20 +108,23 @@ private:
 	void saveStateInAnimation() const;
 	void startAnswersAnimation() const;
 	void resetAnswersAnimation() const;
-	void step_radial(TimeMs ms, bool timer);
+	void step_radial(crl::time ms, bool timer);
+
+	void toggleRipple(Answer &answer, bool pressed);
 
 	not_null<PollData*> _poll;
 	int _pollVersion = 0;
-	mutable int _totalVotes = 0;
-	mutable bool _voted = false;
+	int _totalVotes = 0;
+	bool _voted = false;
 	bool _closed = false;
 
 	Text _question;
 	Text _subtitle;
 	std::vector<Answer> _answers;
-	mutable Text _totalVotesLabel;
+	Text _totalVotesLabel;
 
 	mutable std::unique_ptr<AnswersAnimation> _answersAnimation;
 	mutable std::unique_ptr<SendingAnimation> _sendingAnimation;
+	mutable QPoint _lastLinkPoint;
 
 };

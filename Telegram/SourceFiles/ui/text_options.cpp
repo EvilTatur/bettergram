@@ -8,6 +8,9 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 #include "history/history.h"
 #include "history/history_item.h"
+#include "data/data_channel.h"
+#include "data/data_chat.h"
+#include "data/data_user.h"
 #include "styles/style_history.h"
 #include "styles/style_window.h"
 

@@ -20,6 +20,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "boxes/abstract_box.h"
 #include "storage/storage_media_prepare.h"
+#include "storage/file_upload.h" // For Storage::kUseBigFilesFrom.
 #include "styles/style_boxes.h"
 #include "styles/style_passport.h"
 
@@ -30,7 +31,7 @@ constexpr auto kMaxDimensions = 2048;
 constexpr auto kMaxSize = 10 * 1024 * 1024;
 constexpr auto kJpegQuality = 89;
 
-static_assert(kMaxSize <= UseBigFilesFrom);
+static_assert(kMaxSize <= Storage::kUseBigFilesFrom);
 
 base::variant<ReadScanError, QByteArray> ProcessImage(QByteArray &&bytes) {
 	auto image = App::readImage(base::take(bytes));

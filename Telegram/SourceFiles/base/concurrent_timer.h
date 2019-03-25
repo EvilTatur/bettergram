@@ -22,7 +22,7 @@ public:
 	~TimerObjectWrap();
 
 	void call(
-		crl::time_type timeout,
+		crl::time timeout,
 		Qt::TimerType type,
 		FnMut<void()> method);
 	void cancel();
@@ -66,8 +66,8 @@ public:
 		crl::weak_on_queue<Object> weak,
 		Fn<void()> callback = nullptr);
 
-	static Qt::TimerType DefaultType(TimeMs timeout) {
-		constexpr auto kThreshold = TimeMs(1000);
+	static Qt::TimerType DefaultType(crl::time timeout) {
+		constexpr auto kThreshold = crl::time(1000);
 		return (timeout > kThreshold) ? Qt::CoarseTimer : Qt::PreciseTimer;
 	}
 
@@ -75,19 +75,19 @@ public:
 		_callback = std::move(callback);
 	}
 
-	void callOnce(TimeMs timeout) {
+	void callOnce(crl::time timeout) {
 		callOnce(timeout, DefaultType(timeout));
 	}
 
-	void callEach(TimeMs timeout) {
+	void callEach(crl::time timeout) {
 		callEach(timeout, DefaultType(timeout));
 	}
 
-	void callOnce(TimeMs timeout, Qt::TimerType type) {
+	void callOnce(crl::time timeout, Qt::TimerType type) {
 		start(timeout, type, Repeat::SingleShot);
 	}
 
-	void callEach(TimeMs timeout, Qt::TimerType type) {
+	void callEach(crl::time timeout, Qt::TimerType type) {
 		start(timeout, type, Repeat::Interval);
 	}
 
@@ -96,7 +96,7 @@ public:
 	}
 
 	void cancel();
-	TimeMs remainingTime() const;
+	crl::time remainingTime() const;
 
 private:
 	enum class Repeat : unsigned {
@@ -104,12 +104,12 @@ private:
 		SingleShot = 1,
 	};
 	Fn<void()> createAdjuster();
-	void start(TimeMs timeout, Qt::TimerType type, Repeat repeat);
+	void start(crl::time timeout, Qt::TimerType type, Repeat repeat);
 	void adjust();
 
 	void cancelAndSchedule(int timeout);
 
-	void setTimeout(TimeMs timeout);
+	void setTimeout(crl::time timeout);
 	int timeout() const;
 
 	void timerEvent();
@@ -126,7 +126,7 @@ private:
 	details::TimerObjectWrap _object;
 	Fn<void()> _callback;
 	base::binary_guard _running;
-	TimeMs _next = 0;
+	crl::time _next = 0;
 	int _timeout = 0;
 
 	Qt::TimerType _type : 2;

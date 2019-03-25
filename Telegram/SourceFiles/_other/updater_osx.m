@@ -5,6 +5,7 @@ For license and copyright information please follow this link:
 https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #import <Cocoa/Cocoa.h>
+#include <sys/xattr.h>
 
 NSString *appName = @"Bettergram.app";
 NSString *appDir = nil;
@@ -41,6 +42,20 @@ void writeLog(NSString *msg) {
 
 	[_logFile writeData:[[msg stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding]];
 	[_logFile synchronizeFile];
+}
+
+void RemoveQuarantineAttribute(NSString *path) {
+	const char *kQuarantineAttribute = "com.apple.quarantine";
+
+	writeLog([@"Removing quarantine: " stringByAppendingString:path]);
+	removexattr([path fileSystemRepresentation], kQuarantineAttribute, 0);
+}
+
+void RemoveQuarantineFromBundle(NSString *path) {
+    RemoveQuarantineAttribute(path);
+    RemoveQuarantineAttribute([path stringByAppendingString:@"/Contents/MacOS/Telegram"]);
+    RemoveQuarantineAttribute([path stringByAppendingString:@"/Contents/Helpers/crashpad_handler"]);
+    RemoveQuarantineAttribute([path stringByAppendingString:@"/Contents/Frameworks/Updater"]);
 }
 
 void delFolder() {
@@ -231,6 +246,9 @@ int main(int argc, const char * argv[]) {
 	}
 
 	NSString *appPath = [[NSArray arrayWithObjects:appDir, appRealName, nil] componentsJoinedByString:@""];
+
+	RemoveQuarantineFromBundle(appPath);
+
 	NSMutableArray *args = [[NSMutableArray alloc] initWithObjects: @"-noupdate", nil];
 	if (toSettings) [args addObject:@"-tosettings"];
 	if (_debug) [args addObject:@"-debug"];
@@ -247,18 +265,24 @@ int main(int argc, const char * argv[]) {
 		[args addObject:workDir];
 	}
 	writeLog([[NSArray arrayWithObjects:@"Running application '", appPath, @"' with args '", [args componentsJoinedByString:@"' '"], @"'..", nil] componentsJoinedByString:@""]);
-	NSError *error = nil;
-	NSRunningApplication *result = [[NSWorkspace sharedWorkspace]
+
+	for (int i = 0; i < 5; ++i) {
+		NSError *error = nil;
+		NSRunningApplication *result = [[NSWorkspace sharedWorkspace]
 					launchApplicationAtURL:[NSURL fileURLWithPath:appPath]
 					options:NSWorkspaceLaunchDefault
 					configuration:[NSDictionary
 								   dictionaryWithObject:args
 								   forKey:NSWorkspaceLaunchConfigurationArguments]
 					error:&error];
-	if (!result) {
+		if (result) {
+			closeLog();
+			return 0;
+		}
 		writeLog([[NSString stringWithFormat:@"Could not run application, error %ld: ", (long)[error code]] stringByAppendingString: error ? [error localizedDescription] : @"(nil)"]);
+		usleep(200000);
 	}
 	closeLog();
-	return result ? 0 : -1;
+	return -1;
 }
 

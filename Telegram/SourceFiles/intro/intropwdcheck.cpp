@@ -12,7 +12,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "core/core_cloud_password.h"
 #include "boxes/confirm_box.h"
 #include "lang/lang_keys.h"
-#include "application.h"
 #include "intro/introsignup.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/input_fields.h"
@@ -170,7 +169,7 @@ void PwdCheckWidget::pwdSubmitFail(const RPCError &error) {
 }
 
 void PwdCheckWidget::handleSrpIdInvalid() {
-	const auto now = getms(true);
+	const auto now = crl::now();
 	if (_lastSrpIdInvalidTime > 0
 		&& now - _lastSrpIdInvalidTime < Core::kHandleSrpIdInvalidTimeout) {
 		_request.id = 0;

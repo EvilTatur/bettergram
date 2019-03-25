@@ -28,9 +28,9 @@ class Checkbox;
 
 class PaintContext : public PaintContextBase {
 public:
-	PaintContext(TimeMs ms, bool selecting) : PaintContextBase(ms, selecting), isAfterDate(false) {
+	PaintContext(crl::time ms, bool selecting) : PaintContextBase(ms, selecting) {
 	}
-	bool isAfterDate;
+	bool isAfterDate = false;
 
 };
 
@@ -128,12 +128,12 @@ protected:
 		ClickHandlerPtr &&cancell);
 	void setDocumentLinks(not_null<DocumentData*> document);
 
-	void step_radial(TimeMs ms, bool timer);
+	void step_radial(crl::time ms, bool timer);
 
 	void ensureRadial();
 	void checkRadialFinished();
 
-	bool isRadialAnimation(TimeMs ms) const {
+	bool isRadialAnimation(crl::time ms) const {
 		if (!_radial || !_radial->animating()) return false;
 
 		_radial->step(ms);
@@ -155,7 +155,7 @@ protected:
 class StatusText {
 public:
 	// duration = -1 - no duration, duration = -2 - "GIF" duration
-	void update(int newSize, int fullSize, int duration, TimeMs realDuration);
+	void update(int newSize, int fullSize, int duration, crl::time realDuration);
 	void setSize(int newSize);
 
 	int size() const {
@@ -207,6 +207,8 @@ public:
 		StateRequest request) const override;
 
 private:
+	void setPixFrom(not_null<Image*> image);
+
 	not_null<PhotoData*> _data;
 	ClickHandlerPtr _link;
 
@@ -240,7 +242,6 @@ private:
 
 	QString _duration;
 	QPixmap _pix;
-	bool _thumbLoaded = false;
 
 	void updateStatusText();
 
@@ -308,13 +309,19 @@ protected:
 	const style::RoundCheckbox &checkboxStyle() const override;
 
 private:
+	[[nodiscard]] bool downloadInCorner() const;
+	void drawCornerDownload(Painter &p, bool selected, const PaintContext *context) const;
+	[[nodiscard]] TextState cornerDownloadTextState(
+		QPoint point,
+		StateRequest request) const;
+
 	not_null<DocumentData*> _data;
 	StatusText _status;
 	ClickHandlerPtr _msgl, _namel;
 
 	const style::OverviewFileLayout &_st;
 
-	bool _thumbForLoaded = false;
+	bool _thumbLoaded = false;
 	QPixmap _thumb;
 
 	Text _name;
@@ -351,7 +358,7 @@ private:
 	WebPageData *_page = nullptr;
 	int _pixw = 0;
 	int _pixh = 0;
-	Text _text = { int(st::msgMinWidth) };
+	Text _text = { st::msgMinWidth };
 
 	struct LinkEntry {
 		LinkEntry() : width(0) {

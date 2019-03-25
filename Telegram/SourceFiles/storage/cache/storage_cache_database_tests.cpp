@@ -160,8 +160,8 @@ Error ClearByTag(Database &db, uint8 tag) {
 const auto Settings = [] {
 	auto result = Database::Settings();
 	result.trackEstimatedTime = false;
-	result.writeBundleDelay = 1 * crl::time_type(1000);
-	result.pruneTimeout = 1 * crl::time_type(1500);
+	result.writeBundleDelay = 1 * crl::time(1000);
+	result.pruneTimeout = 1 * crl::time(1500);
 	result.maxDataSize = 20;
 	return result;
 }();
@@ -220,7 +220,7 @@ TEST_CASE("compacting db", "[storage_cache_database]") {
 	};
 	SECTION("simple compact with min size") {
 		auto settings = Settings;
-		settings.writeBundleDelay = crl::time_type(100);
+		settings.writeBundleDelay = crl::time(100);
 		settings.readBlockSize = 512;
 		settings.maxBundledRecords = 5;
 		settings.compactAfterExcess = (3 * (16 * 5 + 16) + 15 * 32) / 2;
@@ -263,7 +263,7 @@ TEST_CASE("compacting db", "[storage_cache_database]") {
 	}
 	SECTION("simple compact without min size") {
 		auto settings = Settings;
-		settings.writeBundleDelay = crl::time_type(100);
+		settings.writeBundleDelay = crl::time(100);
 		settings.readBlockSize = 512;
 		settings.maxBundledRecords = 5;
 		settings.compactAfterExcess = 3 * (16 * 5 + 16) + 15 * 32;
@@ -303,7 +303,7 @@ TEST_CASE("compacting db", "[storage_cache_database]") {
 	}
 	SECTION("double compact") {
 		auto settings = Settings;
-		settings.writeBundleDelay = crl::time_type(100);
+		settings.writeBundleDelay = crl::time(100);
 		settings.readBlockSize = 512;
 		settings.maxBundledRecords = 5;
 		settings.compactAfterExcess = 3 * (16 * 5 + 16) + 15 * 32;
@@ -345,7 +345,7 @@ TEST_CASE("compacting db", "[storage_cache_database]") {
 	}
 	SECTION("time tracking compact") {
 		auto settings = Settings;
-		settings.writeBundleDelay = crl::time_type(100);
+		settings.writeBundleDelay = crl::time(100);
 		settings.trackEstimatedTime = true;
 		settings.readBlockSize = 512;
 		settings.maxBundledRecords = 5;
@@ -707,11 +707,11 @@ TEST_CASE("large db", "[storage_cache_database]") {
 	}
 	SECTION("time tracking large db") {
 		auto settings = Database::Settings();
-		settings.writeBundleDelay = crl::time_type(1000);
+		settings.writeBundleDelay = crl::time(1000);
 		settings.maxDataSize = 20;
 		settings.totalSizeLimit = 1024 * 1024;
 		settings.totalTimeLimit = 120;
-		settings.pruneTimeout = crl::time_type(1500);
+		settings.pruneTimeout = crl::time(1500);
 		settings.compactAfterExcess = 1024 * 1024;
 		settings.trackEstimatedTime = true;
 		Database db(name, settings);

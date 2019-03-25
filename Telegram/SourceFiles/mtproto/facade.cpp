@@ -7,15 +7,15 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "mtproto/facade.h"
 
 #include "storage/localstorage.h"
-#include "messenger.h"
+#include "core/application.h"
 
 namespace MTP {
 namespace internal {
-namespace {
+//namespace {
 
 int PauseLevel = 0;
 
-} // namespace
+//} // namespace
 
 bool paused() {
 	return PauseLevel > 0;
@@ -37,7 +37,7 @@ void unpause() {
 } // namespace internal
 
 Instance *MainInstance() {
-	return Messenger::Instance().mtp();
+	return Core::IsAppLaunched() ? Core::App().mtp() : nullptr;
 }
 
 } // namespace MTP

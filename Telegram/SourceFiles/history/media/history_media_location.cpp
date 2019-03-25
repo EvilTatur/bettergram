@@ -14,6 +14,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "history/view/history_view_cursor_state.h"
 #include "ui/image/image.h"
 #include "ui/text_options.h"
+#include "data/data_file_origin.h"
 #include "styles/style_history.h"
 
 namespace {
@@ -121,7 +122,7 @@ TextSelection HistoryLocation::fromDescriptionSelection(
 	return HistoryView::ShiftItemSelection(selection, _title);
 }
 
-void HistoryLocation::draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const {
+void HistoryLocation::draw(Painter &p, const QRect &r, TextSelection selection, crl::time ms) const {
 	if (width() < st::msgPadding.left() + st::msgPadding.right() + 1) return;
 	auto paintx = 0, painty = 0, paintw = width(), painth = height();
 	bool bubble = _parent->hasBubble();

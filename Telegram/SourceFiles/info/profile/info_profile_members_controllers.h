@@ -33,7 +33,7 @@ public:
 	QSize actionSize() const override;
 	void paintAction(
 		Painter &p,
-		TimeMs ms,
+		crl::time ms,
 		int x,
 		int y,
 		int outerWidth,
@@ -47,9 +47,7 @@ public:
 		int outerWidth,
 		bool selected) override;
 
-	not_null<UserData*> user() const {
-		return peer()->asUser();
-	}
+	not_null<UserData*> user() const;
 	bool canRemove() const {
 		return _type.canRemove;
 	}

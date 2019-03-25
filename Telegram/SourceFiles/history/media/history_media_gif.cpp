@@ -9,17 +9,19 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "layout.h"
 #include "mainwindow.h"
-#include "auth_session.h"
-#include "media/media_audio.h"
-#include "media/media_clip_reader.h"
+#include "media/audio/media_audio.h"
+#include "media/clip/media_clip_reader.h"
 #include "media/player/media_player_round_controller.h"
-#include "media/view/media_clip_playback.h"
+#include "media/player/media_player_instance.h"
+#include "media/view/media_view_playback_progress.h"
 #include "boxes/confirm_box.h"
 #include "history/history_item_components.h"
 #include "history/history_item.h"
+#include "history/history.h"
 #include "history/view/history_view_element.h"
 #include "history/view/history_view_cursor_state.h"
 #include "window/window_controller.h"
+#include "core/application.h" // for Application::showDocument.
 #include "ui/image/image.h"
 #include "data/data_session.h"
 #include "data/data_document.h"
@@ -50,12 +52,12 @@ HistoryGif::HistoryGif(
 , _data(document)
 , _caption(st::minPhotoSize - st::msgPadding.left() - st::msgPadding.right()) {
 	const auto item = parent->data();
-	setDocumentLinks(_data, item, true);
+	setDocumentLinks(_data, item);
 
 	setStatusSize(FileStatusSizeReady);
 
 	_caption = createCaption(item);
-	_data->thumb->load(item->fullId());
+	_data->loadThumbnail(item->fullId());
 }
 
 QSize HistoryGif::countOptimalSize() {
@@ -66,12 +68,6 @@ QSize HistoryGif::countOptimalSize() {
 			_parent->skipBlockWidth(),
 			_parent->skipBlockHeight());
 	}
-	if (!_openInMediaviewLink) {
-		_openInMediaviewLink = std::make_shared<DocumentOpenClickHandler>(
-			_data,
-			_parent->data()->fullId());
-	}
-
 	auto tw = 0;
 	auto th = 0;
 	if (_gif && _gif->state() == Media::Clip::State::Error) {
@@ -88,8 +84,8 @@ QSize HistoryGif::countOptimalSize() {
 	} else {
 		tw = ConvertScale(_data->dimensions.width()), th = ConvertScale(_data->dimensions.height());
 		if (!tw || !th) {
-			tw = ConvertScale(_data->thumb->width());
-			th = ConvertScale(_data->thumb->height());
+			tw = ConvertScale(_data->thumbnail()->width());
+			th = ConvertScale(_data->thumbnail()->height());
 		}
 	}
 	const auto maxSize = _data->isVideoMessage()
@@ -146,8 +142,8 @@ QSize HistoryGif::countCurrentSize(int newWidth) {
 	} else {
 		tw = ConvertScale(_data->dimensions.width()), th = ConvertScale(_data->dimensions.height());
 		if (!tw || !th) {
-			tw = ConvertScale(_data->thumb->width());
-			th = ConvertScale(_data->thumb->height());
+			tw = ConvertScale(_data->thumbnail()->width());
+			th = ConvertScale(_data->thumbnail()->height());
 		}
 	}
 	const auto maxSize = _data->isVideoMessage()
@@ -235,7 +231,7 @@ QSize HistoryGif::countCurrentSize(int newWidth) {
 	return { newWidth, newHeight };
 }
 
-void HistoryGif::draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const {
+void HistoryGif::draw(Painter &p, const QRect &r, TextSelection selection, crl::time ms) const {
 	if (width() < st::msgPadding.left() + st::msgPadding.right() + 1) return;
 
 	const auto item = _parent->data();
@@ -317,7 +313,7 @@ void HistoryGif::draw(Painter &p, const QRect &r, TextSelection selection, TimeM
 		p.drawPixmap(rthumb.topLeft(), reader->current(_thumbw, _thumbh, usew, painth, roundRadius, roundCorners, paused ? 0 : ms));
 
 		if (const auto playback = videoPlayback()) {
-			const auto value = playback->value(ms);
+			const auto value = playback->value();
 			if (value > 0.) {
 				auto pen = st::historyVideoMessageProgressFg->p;
 				auto was = p.pen();
@@ -346,7 +342,23 @@ void HistoryGif::draw(Painter &p, const QRect &r, TextSelection selection, TimeM
 			if (good) {
 				good->load({});
 			}
-			p.drawPixmap(rthumb.topLeft(), _data->thumb->pixBlurredSingle(_realParent->fullId(), _thumbw, _thumbh, usew, painth, roundRadius, roundCorners));
+			const auto normal = _data->thumbnail();
+			if (normal && normal->loaded()) {
+				p.drawPixmap(rthumb.topLeft(), normal->pixSingle(_realParent->fullId(), _thumbw, _thumbh, usew, painth, roundRadius, roundCorners));
+			} else if (const auto blurred = _data->thumbnailInline()) {
+				p.drawPixmap(rthumb.topLeft(), blurred->pixBlurredSingle(_realParent->fullId(), _thumbw, _thumbh, usew, painth, roundRadius, roundCorners));
+			} else if (!isRound) {
+				const auto roundTop = (roundCorners & RectPart::TopLeft);
+				const auto roundBottom = (roundCorners & RectPart::BottomLeft);
+				const auto margin = inWebPage
+					? st::buttonRadius
+					: st::historyMessageRadius;
+				const auto parts = roundCorners
+					| RectPart::NoTopBottom
+					| (roundTop ? RectPart::Top : RectPart::None)
+					| (roundBottom ? RectPart::Bottom : RectPart::None);
+				App::roundRect(p, rthumb.marginsAdded({ 0, roundTop ? 0 : margin, 0, roundBottom ? 0 : margin }), st::imageBg, roundRadius, parts);
+			}
 		}
 	}
 
@@ -416,12 +428,12 @@ void HistoryGif::draw(Painter &p, const QRect &r, TextSelection selection, TimeM
 	}
 
 	if (!inWebPage && isRound) {
-		auto mediaUnread = item->isMediaUnread();
+		auto mediaUnread = item->hasUnreadMediaFlag();
 		auto statusW = st::normalFont->width(_statusText) + 2 * st::msgDateImgPadding.x();
 		auto statusH = st::normalFont->height + 2 * st::msgDateImgPadding.y();
 		auto statusX = usex + paintx + st::msgDateImgDelta + st::msgDateImgPadding.x();
 		auto statusY = painty + painth - st::msgDateImgDelta - statusH + st::msgDateImgPadding.y();
-		if (item->isMediaUnread()) {
+		if (mediaUnread) {
 			statusW += st::mediaUnreadSkip + st::mediaUnreadSize;
 		}
 		App::roundRect(p, rtlrect(statusX - st::msgDateImgPadding.x(), statusY - st::msgDateImgPadding.y(), statusW, statusH, width()), selected ? st::msgServiceBgSelected : st::msgServiceBg, selected ? StickerSelectedCorners : StickerCorners);
@@ -617,10 +629,12 @@ TextState HistoryGif::textState(QPoint point, StateRequest request) const {
 	if (QRect(usex + paintx, painty, usew, painth).contains(point)) {
 		if (_data->uploading()) {
 			result.link = _cancell;
-		} else if (!_gif || !cAutoPlayGif() || _data->isVideoMessage()) {
-			result.link = _data->loaded() ? _openl : (_data->loading() ? _cancell : _savel);
 		} else {
-			result.link = _openInMediaviewLink;
+			result.link = _data->loaded()
+				? _openl :
+				_data->loading()
+				? _cancell
+				: _savel;
 		}
 	}
 	if (isRound || _caption.isEmpty()) {
@@ -711,7 +725,7 @@ void HistoryGif::setStatusSize(int newSize) const {
 		if (newSize < 0) {
 			_statusText = formatDurationText(-newSize - 1);
 		} else {
-			_statusText = formatDurationText(_data->duration());
+			_statusText = formatDurationText(_data->getDuration());
 		}
 	} else {
 		HistoryFileMedia::setStatusSize(newSize, _data->size, -2, 0);
@@ -731,10 +745,10 @@ void HistoryGif::updateStatusText() const {
 	} else if (_data->loaded()) {
 		statusSize = FileStatusSizeLoaded;
 		if (const auto video = activeRoundPlayer()) {
-			statusSize = -1 - _data->duration();
+			statusSize = -1 - _data->getDuration();
 
-			const auto state = Media::Player::mixer()->currentState(
-				AudioMsgId::Type::Voice);
+			const auto type = AudioMsgId::Type::Voice;
+			const auto state = Media::Player::instance()->getState(type);
 			if (state.id == video->audioMsgId() && state.length) {
 				auto position = int64(0);
 				if (Media::Player::IsStoppedAtEnd(state.state)) {
@@ -750,15 +764,6 @@ void HistoryGif::updateStatusText() const {
 	}
 	if (statusSize != _statusSize) {
 		setStatusSize(statusSize);
-	}
-}
-
-void HistoryGif::refreshParentId(not_null<HistoryItem*> realParent) {
-	HistoryFileMedia::refreshParentId(realParent);
-
-	const auto fullId = realParent->fullId();
-	if (_openInMediaviewLink) {
-		_openInMediaviewLink->setMessageId(fullId);
 	}
 }
 
@@ -778,7 +783,7 @@ void HistoryGif::parentTextUpdated() {
 	_caption = (_parent->media() == this)
 		? createCaption(_parent->data())
 		: Text();
-	Auth().data().requestViewResize(_parent);
+	history()->owner().requestViewResize(_parent);
 }
 
 int HistoryGif::additionalWidth(const HistoryMessageVia *via, const HistoryMessageReply *reply, const HistoryMessageForwarded *forwarded) const {
@@ -816,7 +821,7 @@ Media::Clip::Reader *HistoryGif::currentReader() const {
 	return (_gif && _gif->ready()) ? _gif.get() : nullptr;
 }
 
-Media::Clip::Playback *HistoryGif::videoPlayback() const {
+Media::View::PlaybackProgress *HistoryGif::videoPlayback() const {
 	if (const auto video = activeRoundVideo()) {
 		return video->playback();
 	}
@@ -835,7 +840,7 @@ void HistoryGif::clipCallback(Media::Clip::Notification notification) {
 		auto stopped = false;
 		if (reader->autoPausedGif()) {
 			auto amVisible = false;
-			Auth().data().queryItemVisibility().notify(
+			history()->owner().queryItemVisibility().notify(
 				{ _parent->data(), &amVisible },
 				true);
 			if (!amVisible) { // Stop animation if it is not visible.
@@ -844,13 +849,13 @@ void HistoryGif::clipCallback(Media::Clip::Notification notification) {
 			}
 		}
 		if (!stopped) {
-			Auth().data().requestViewResize(_parent);
+			history()->owner().requestViewResize(_parent);
 		}
 	} break;
 
 	case NotificationRepaint: {
 		if (!reader->currentDisplayed()) {
-			Auth().data().requestViewRepaint(_parent);
+			history()->owner().requestViewRepaint(_parent);
 		}
 	} break;
 	}
@@ -861,13 +866,16 @@ void HistoryGif::playAnimation(bool autoplay) {
 		return;
 	} else if (_gif && autoplay) {
 		return;
+	} else if (_gif && cAutoPlayGif()) {
+		Core::App().showDocument(_data, _parent->data());
+		return;
 	}
 	using Mode = Media::Clip::Reader::Mode;
 	if (_gif) {
 		stopAnimation();
-	} else if (_data->loaded(DocumentData::FilePathResolveChecked)) {
+	} else if (_data->loaded(DocumentData::FilePathResolve::Checked)) {
 		if (!cAutoPlayGif()) {
-			Auth().data().stopAutoplayAnimations();
+			history()->owner().stopAutoplayAnimations();
 		}
 		setClipReader(Media::Clip::MakeReader(
 			_data,
@@ -883,18 +891,18 @@ void HistoryGif::playAnimation(bool autoplay) {
 void HistoryGif::stopAnimation() {
 	if (_gif) {
 		clearClipReader();
-		Auth().data().requestViewResize(_parent);
+		history()->owner().requestViewResize(_parent);
 		_data->unload();
 	}
 }
 
 void HistoryGif::setClipReader(Media::Clip::ReaderPointer gif) {
 	if (_gif) {
-		Auth().data().unregisterAutoplayAnimation(_gif.get());
+		history()->owner().unregisterAutoplayAnimation(_gif.get());
 	}
 	_gif = std::move(gif);
 	if (_gif) {
-		Auth().data().registerAutoplayAnimation(_gif.get(), _parent);
+		history()->owner().registerAutoplayAnimation(_gif.get(), _parent);
 	}
 }
 

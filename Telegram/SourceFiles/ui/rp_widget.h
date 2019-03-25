@@ -123,6 +123,8 @@ public:
 
 	rpl::lifetime &lifetime();
 
+	virtual ~RpWidgetMethods() = default;
+
 protected:
 	bool handleEvent(QEvent *event);
 	virtual bool eventHook(QEvent *event) = 0;

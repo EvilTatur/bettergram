@@ -21,8 +21,8 @@ public:
 
 	ConnectionPointer clone(const ProxyData &proxy) override;
 
-	TimeMs pingTime() const override;
-	TimeMs fullConnectTimeout() const override;
+	crl::time pingTime() const override;
+	crl::time fullConnectTimeout() const override;
 	void sendData(mtpBuffer &&buffer) override;
 	void disconnectFromServer() override;
 	void connectToServer(
@@ -89,7 +89,7 @@ private:
 
 	QString _address;
 	int32 _port = 0;
-	TimeMs _pingTime = 0;
+	crl::time _pingTime = 0;
 
 };
 

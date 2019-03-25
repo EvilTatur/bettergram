@@ -19,21 +19,21 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "chat_helpers/message_field.h"
 #include "mainwindow.h"
 #include "mainwidget.h"
-#include "messenger.h"
+#include "core/application.h"
 #include "apiwrap.h"
 #include "layout.h"
 #include "window/window_controller.h"
 #include "window/window_peer_menu.h"
 #include "auth_session.h"
 #include "ui/widgets/popup_menu.h"
-#include "core/tl_help.h"
-#include "base/overload.h"
+#include "ui/toast/toast.h"
 #include "lang/lang_keys.h"
-#include "boxes/edit_participant_box.h"
+#include "boxes/peers/edit_participant_box.h"
 #include "data/data_session.h"
 #include "data/data_feed.h"
 #include "data/data_media_types.h"
 #include "data/data_document.h"
+#include "data/data_peer.h"
 #include "styles/style_history.h"
 
 namespace HistoryView {
@@ -422,7 +422,7 @@ bool ListWidget::isBelowPosition(Data::MessagePosition position) const {
 void ListWidget::highlightMessage(FullMsgId itemId) {
 	if (const auto item = App::histItemById(itemId)) {
 		if (const auto view = viewForItem(item)) {
-			_highlightStart = getms();
+			_highlightStart = crl::now();
 			_highlightedMessageId = itemId;
 			_highlightTimer.callEach(AnimationTimerDelta);
 
@@ -436,7 +436,7 @@ void ListWidget::updateHighlightedMessage() {
 		if (const auto view = viewForItem(item)) {
 			repaintItem(view);
 			auto duration = st::activeFadeInDuration + st::activeFadeOutDuration;
-			if (getms() - _highlightStart <= duration) {
+			if (crl::now() - _highlightStart <= duration) {
 				return;
 			}
 		}
@@ -1110,14 +1110,14 @@ void ListWidget::elementAnimationAutoplayAsync(
 	});
 }
 
-TimeMs ListWidget::elementHighlightTime(
+crl::time ListWidget::elementHighlightTime(
 		not_null<const HistoryView::Element*> element) {
 	if (element->data()->fullId() == _highlightedMessageId) {
 		if (_highlightTimer.isActive()) {
-			return getms() - _highlightStart;
+			return crl::now() - _highlightStart;
 		}
 	}
-	return TimeMs(0);
+	return crl::time(0);
 }
 
 bool ListWidget::elementInSelectionMode() {
@@ -1267,7 +1267,7 @@ void ListWidget::paintEvent(QPaintEvent *e) {
 
 	Painter p(this);
 
-	auto ms = getms();
+	auto ms = crl::now();
 	auto clip = e->rect();
 
 	auto from = std::lower_bound(begin(_items), end(_items), clip.top(), [this](auto &elem, int top) {
@@ -1303,12 +1303,23 @@ void ListWidget::paintEvent(QPaintEvent *e) {
 				const auto message = view->data()->toHistoryMessage();
 				Assert(message != nullptr);
 
-				message->from()->paintUserpicLeft(
-					p,
-					st::historyPhotoLeft,
-					userpicTop,
-					view->width(),
-					st::msgPhotoSize);
+				if (const auto from = message->displayFrom()) {
+					from->paintUserpicLeft(
+						p,
+						st::historyPhotoLeft,
+						userpicTop,
+						view->width(),
+						st::msgPhotoSize);
+				} else if (const auto info = message->hiddenForwardedInfo()) {
+					info->userpic.paint(
+						p,
+						st::historyPhotoLeft,
+						userpicTop,
+						view->width(),
+						st::msgPhotoSize);
+				} else {
+					Unexpected("Corrupt forwarded information in message.");
+				}
 			}
 			return true;
 		});
@@ -1562,12 +1573,12 @@ void ListWidget::switchToWordSelection() {
 	mouseActionUpdate();
 
 	_trippleClickPoint = _mousePosition;
-	_trippleClickStartTime = getms();
+	_trippleClickStartTime = crl::now();
 }
 
 void ListWidget::validateTrippleClickStartTime() {
 	if (_trippleClickStartTime) {
-		const auto elapsed = (getms() - _trippleClickStartTime);
+		const auto elapsed = (crl::now() - _trippleClickStartTime);
 		if (elapsed >= QApplication::doubleClickInterval()) {
 			_trippleClickStartTime = 0;
 		}
@@ -1887,7 +1898,7 @@ void ListWidget::mouseActionStart(
 				_mouseAction = MouseAction::Selecting;
 				_mouseSelectType = TextSelectType::Paragraphs;
 				mouseActionUpdate();
-				_trippleClickStartTime = getms();
+				_trippleClickStartTime = crl::now();
 			}
 		} else if (pressElement) {
 			StateRequest request;
@@ -2147,9 +2158,10 @@ void ListWidget::mouseActionUpdate() {
 							const auto message = view->data()->toHistoryMessage();
 							Assert(message != nullptr);
 
-							dragState = TextState(
-								nullptr,
-								message->displayFrom()->openLink());
+							const auto from = message->displayFrom();
+							dragState = TextState(nullptr, from
+								? from->openLink()
+								: hiddenUserpicLink(message->fullId()));
 							_overItemExact = App::histItemById(dragState.itemId);
 							lnkhost = view;
 							return false;
@@ -2219,6 +2231,13 @@ void ListWidget::mouseActionUpdate() {
 	//} else {
 	//	_widget->noSelectingScroll();
 	//} // #TODO select scroll
+}
+
+ClickHandlerPtr ListWidget::hiddenUserpicLink(FullMsgId id) {
+	static const auto result = std::make_shared<LambdaClickHandler>([] {
+		Ui::Toast::Show(lang(lng_forwarded_hidden));
+	});
+	return result;
 }
 
 style::cursor ListWidget::computeMouseCursor() const {
@@ -2311,7 +2330,7 @@ std::unique_ptr<QMimeData> ListWidget::prepareDrag() {
 		if (const auto media = pressedView->media()) {
 			if (const auto document = media->getDocument()) {
 				const auto filepath = document->filepath(
-					DocumentData::FilePathResolveChecked);
+					DocumentData::FilePathResolve::Checked);
 				if (!filepath.isEmpty()) {
 					QList<QUrl> urls;
 					urls.push_back(QUrl::fromLocalFile(filepath));

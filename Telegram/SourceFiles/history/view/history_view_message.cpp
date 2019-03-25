@@ -12,12 +12,13 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "history/media/history_media.h"
 #include "history/media/history_media_web_page.h"
 #include "history/history.h"
+#include "ui/toast/toast.h"
 #include "data/data_session.h"
+#include "data/data_user.h"
 #include "lang/lang_keys.h"
 #include "mainwidget.h"
 #include "mainwindow.h"
 #include "window/window_controller.h"
-#include "auth_session.h"
 #include "layout.h"
 #include "styles/style_widgets.h"
 #include "styles/style_history.h"
@@ -56,7 +57,7 @@ const style::TextStyle &KeyboardStyle::textStyle() const {
 }
 
 void KeyboardStyle::repaint(not_null<const HistoryItem*> item) const {
-	Auth().data().requestItemRepaint(item);
+	item->history()->owner().requestItemRepaint(item);
 }
 
 int KeyboardStyle::buttonRadius() const {
@@ -148,7 +149,7 @@ void PaintBubble(Painter &p, QRect rect, int outerWidth, bool selected, bool out
 	App::roundRect(p, rect, bg, cors, &sh, parts);
 }
 
-style::color FromNameFg(not_null<PeerData*> peer, bool selected) {
+style::color FromNameFg(PeerId peerId, bool selected) {
 	if (selected) {
 		const style::color colors[] = {
 			st::historyPeer1NameFgSelected,
@@ -160,7 +161,7 @@ style::color FromNameFg(not_null<PeerData*> peer, bool selected) {
 			st::historyPeer7NameFgSelected,
 			st::historyPeer8NameFgSelected,
 		};
-		return colors[Data::PeerColorIndex(peer->id)];
+		return colors[Data::PeerColorIndex(peerId)];
 	} else {
 		const style::color colors[] = {
 			st::historyPeer1NameFg,
@@ -172,7 +173,7 @@ style::color FromNameFg(not_null<PeerData*> peer, bool selected) {
 			st::historyPeer7NameFg,
 			st::historyPeer8NameFg,
 		};
-		return colors[Data::PeerColorIndex(peer->id)];
+		return colors[Data::PeerColorIndex(peerId)];
 	}
 }
 
@@ -271,14 +272,26 @@ QSize Message::performCountOptimalSize() {
 		}
 		if (mediaDisplayed) {
 			// Parts don't participate in maxWidth() in case of media message.
-			accumulate_max(maxWidth, media->maxWidth());
+			if (media->enforceBubbleWidth()) {
+				maxWidth = media->maxWidth();
+				if (hasVisibleText() && maxWidth < plainMaxWidth()) {
+					minHeight -= item->_text.minHeight();
+					minHeight += item->_text.countHeight(maxWidth - st::msgPadding.left() - st::msgPadding.right());
+				}
+			} else {
+				accumulate_max(maxWidth, media->maxWidth());
+			}
 			minHeight += media->minHeight();
 		} else {
 			// Count parts in maxWidth(), don't count them in minHeight().
 			// They will be added in resizeGetHeight() anyway.
 			if (displayFromName()) {
+				const auto from = item->displayFrom();
+				const auto &name = from
+					? from->nameText
+					: item->hiddenForwardedInfo()->nameText;
 				auto namew = st::msgPadding.left()
-					+ item->displayFrom()->nameText.maxWidth()
+					+ name.maxWidth()
 					+ st::msgPadding.right();
 				if (via && !displayForwardedFrom()) {
 					namew += st::msgServiceFont->spacew + via->maxWidth;
@@ -365,7 +378,7 @@ void Message::draw(
 		Painter &p,
 		QRect clip,
 		TextSelection selection,
-		TimeMs ms) const {
+		crl::time ms) const {
 	auto g = countGeometry();
 	if (g.width() < 1) {
 		return;
@@ -412,7 +425,9 @@ void Message::draw(
 	}
 
 	if (bubble) {
-		if (displayFromName() && item->displayFrom()->nameVersion > item->_fromNameVersion) {
+		if (displayFromName()
+			&& item->displayFrom()
+			&& item->displayFrom()->nameVersion > item->_fromNameVersion) {
 			fromNameUpdated(g.width());
 		}
 
@@ -522,13 +537,23 @@ void Message::paintFromName(
 		}
 
 		p.setFont(st::msgNameFont);
-		if (item->isPost()) {
-			p.setPen(selected ? st::msgInServiceFgSelected : st::msgInServiceFg);
-		} else {
-			p.setPen(FromNameFg(item->displayFrom(), selected));
-		}
-		item->displayFrom()->nameText.drawElided(p, availableLeft, trect.top(), availableWidth);
-		auto skipWidth = item->displayFrom()->nameText.maxWidth() + st::msgServiceFont->spacew;
+		const auto nameText = [&]() -> const Text* {
+			const auto from = item->displayFrom();
+			if (item->isPost()) {
+				p.setPen(selected ? st::msgInServiceFgSelected : st::msgInServiceFg);
+				return &from->nameText;
+			} else if (from) {
+				p.setPen(FromNameFg(from->id, selected));
+				return &from->nameText;
+			} else if (const auto info = item->hiddenForwardedInfo()) {
+				p.setPen(FromNameFg(info->colorPeerId, selected));
+				return &info->nameText;
+			} else {
+				Unexpected("Corrupt forwarded information in message.");
+			}
+		}();
+		nameText->drawElided(p, availableLeft, trect.top(), availableWidth);
+		const auto skipWidth = nameText->maxWidth() + st::msgServiceFont->spacew;
 		availableLeft += skipWidth;
 		availableWidth -= skipWidth;
 
@@ -557,7 +582,8 @@ void Message::paintFromName(
 
 void Message::paintForwardedInfo(Painter &p, QRect &trect, bool selected) const {
 	if (displayForwardedFrom()) {
-		style::font serviceFont(st::msgServiceFont), serviceName(st::msgServiceNameFont);
+		const auto &serviceFont = st::msgServiceFont;
+		const auto &serviceName = st::msgServiceNameFont;
 
 		const auto item = message();
 		const auto outbg = hasOutLayout();
@@ -852,19 +878,31 @@ bool Message::getStateFromName(
 			if (replyWidth) {
 				availableWidth -= st::msgPadding.right() + replyWidth;
 			}
-			auto user = item->displayFrom();
+			const auto from = item->displayFrom();
+			const auto nameText = [&]() -> const Text* {
+				if (from) {
+					return &from->nameText;
+				} else if (const auto info = item->hiddenForwardedInfo()) {
+					return &info->nameText;
+				} else {
+					Unexpected("Corrupt forwarded information in message.");
+				}
+			}();
 			if (point.x() >= availableLeft
 				&& point.x() < availableLeft + availableWidth
-				&& point.x() < availableLeft + user->nameText.maxWidth()) {
-				outResult->link = user->openLink();
+				&& point.x() < availableLeft + nameText->maxWidth()) {
+				static const auto hidden = std::make_shared<LambdaClickHandler>([] {
+					Ui::Toast::Show(lang(lng_forwarded_hidden));
+				});
+				outResult->link = from ? from->openLink() : hidden;
 				return true;
 			}
 			auto via = item->Get<HistoryMessageVia>();
 			if (via
 				&& !displayForwardedFrom()
-				&& point.x() >= availableLeft + item->displayFrom()->nameText.maxWidth() + st::msgServiceFont->spacew
+				&& point.x() >= availableLeft + nameText->maxWidth() + st::msgServiceFont->spacew
 				&& point.x() < availableLeft + availableWidth
-				&& point.x() < availableLeft + user->nameText.maxWidth() + st::msgServiceFont->spacew + via->width) {
+				&& point.x() < availableLeft + nameText->maxWidth() + st::msgServiceFont->spacew + via->width) {
 				outResult->link = via->link;
 				return true;
 			}
@@ -1307,7 +1345,8 @@ bool Message::displayForwardedFrom() const {
 			|| !media
 			|| !media->isDisplayed()
 			|| !media->hideForwardedFrom()
-			|| forwarded->originalSender->isChannel();
+			|| (forwarded->originalSender
+				&& forwarded->originalSender->isChannel());
 	}
 	return false;
 }
@@ -1366,6 +1405,8 @@ bool Message::displayFastShare() const {
 	} else if (const auto user = peer->asUser()) {
 		if (const auto forwarded = item->Get<HistoryMessageForwarded>()) {
 			return !peer->isSelf()
+				&& !item->out()
+				&& forwarded->originalSender
 				&& forwarded->originalSender->isChannel()
 				&& !forwarded->originalSender->isMegagroup();
 		} else if (user->botInfo && !item->out()) {
@@ -1511,13 +1552,23 @@ void Message::fromNameUpdated(int width) const {
 	} else if (replyWidth) {
 		width -= st::msgPadding.right() + replyWidth;
 	}
-	item->_fromNameVersion = item->displayFrom()->nameVersion;
+	const auto from = item->displayFrom();
+	item->_fromNameVersion = from ? from->nameVersion : 1;
 	if (const auto via = item->Get<HistoryMessageVia>()) {
 		if (!displayForwardedFrom()) {
+			const auto nameText = [&]() -> const Text* {
+				if (from) {
+					return &from->nameText;
+				} else if (const auto info = item->hiddenForwardedInfo()) {
+					return &info->nameText;
+				} else {
+					Unexpected("Corrupted forwarded information in message.");
+				}
+			}();
 			via->resize(width
 				- st::msgPadding.left()
 				- st::msgPadding.right()
-				- item->displayFrom()->nameText.maxWidth()
+				- nameText->maxWidth()
 				- st::msgServiceFont->spacew);
 		}
 	}
@@ -1557,7 +1608,8 @@ QRect Message::countGeometry() const {
 	accumulate_min(contentWidth, st::msgMaxWidth);
 	if (mediaWidth < contentWidth) {
 		const auto textualWidth = plainMaxWidth();
-		if (mediaWidth < textualWidth) {
+		if (mediaWidth < textualWidth
+			&& (!media || !media->enforceBubbleWidth())) {
 			accumulate_min(contentWidth, textualWidth);
 		} else {
 			contentWidth = mediaWidth;
@@ -1600,7 +1652,8 @@ int Message::resizeContentGetHeight(int newWidth) {
 		media->resizeGetHeight(contentWidth);
 		if (media->width() < contentWidth) {
 			const auto textualWidth = plainMaxWidth();
-			if (media->width() < textualWidth) {
+			if (media->width() < textualWidth
+				&& !media->enforceBubbleWidth()) {
 				accumulate_min(contentWidth, textualWidth);
 			} else {
 				contentWidth = media->width();

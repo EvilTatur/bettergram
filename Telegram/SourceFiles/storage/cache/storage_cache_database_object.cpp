@@ -24,7 +24,7 @@ namespace Cache {
 namespace details {
 namespace {
 
-constexpr auto kMaxDelayAfterFailure = 24 * 60 * 60 * crl::time_type(1000);
+constexpr auto kMaxDelayAfterFailure = 24 * 60 * 60 * crl::time(1000);
 
 uint32 CountChecksum(bytes::const_span data) {
 	const auto seed = uint32(0);
@@ -328,7 +328,7 @@ bool DatabaseObject::startDelayedPruning() {
 		const auto seconds = int64(_minimalEntryTime - before);
 		if (!_pruneTimer.isActive()) {
 			_pruneTimer.callOnce(std::min(
-				crl::time_type(seconds * 1000),
+				crl::time(seconds * 1000),
 				_settings.maxPruneCheckTimeout));
 		}
 	}
@@ -723,7 +723,7 @@ void DatabaseObject::compactorDone(
 void DatabaseObject::compactorFail() {
 	const auto delay = _compactor.delayAfterFailure;
 	_compactor = CompactorWrap();
-	_compactor.nextAttempt = crl::time() + delay;
+	_compactor.nextAttempt = crl::now() + delay;
 	_compactor.delayAfterFailure = std::min(
 		delay * 2,
 		kMaxDelayAfterFailure);
@@ -867,7 +867,7 @@ std::optional<QString> DatabaseObject::writeKeyPlace(
 	const auto writing = record.time.getRelative();
 	const auto current = _time.getRelative();
 	Assert(writing >= current);
-	if ((writing - current) * crl::time_type(1000)
+	if ((writing - current) * crl::time(1000)
 		< _settings.writeBundleDelay) {
 		// We don't want to produce a lot of unique _time.relative values.
 		// So if change in it is not large we stick to the old value.
@@ -922,7 +922,7 @@ Error DatabaseObject::writeExistingPlace(
 	const auto writing = record.time.getRelative();
 	const auto current = _time.getRelative();
 	Assert(writing >= current);
-	if ((writing - current) * crl::time_type(1000)
+	if ((writing - current) * crl::time(1000)
 		< _settings.writeBundleDelay) {
 		// We don't want to produce a lot of unique _time.relative values.
 		// So if change in it is not large we stick to the old value.
@@ -1188,7 +1188,7 @@ void DatabaseObject::checkCompactor() {
 		&& (_binlogExcessLength * _settings.compactAfterFullSize
 			< _settings.compactAfterExcess * _binlog.size())) {
 		return;
-	} else if (crl::time() < _compactor.nextAttempt || !_binlog.isOpen()) {
+	} else if (crl::now() < _compactor.nextAttempt || !_binlog.isOpen()) {
 		return;
 	}
 	auto info = Compactor::Info();

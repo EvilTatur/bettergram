@@ -8,7 +8,6 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 
 #include <rpl/never.h>
 #include <rpl/merge.h>
-#include "styles/style_info.h"
 #include "lang/lang_keys.h"
 #include "info/info_wrap_widget.h"
 #include "info/info_controller.h"
@@ -25,6 +24,9 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "ui/wrap/padding_wrap.h"
 #include "ui/search_field_controller.h"
 #include "window/window_peer_menu.h"
+#include "data/data_channel.h"
+#include "data/data_user.h"
+#include "styles/style_info.h"
 
 namespace Info {
 
@@ -210,10 +212,7 @@ void TopBar::createSearchView(
 
 	auto button = base::make_unique_q<Ui::IconButton>(this, _st.search);
 	auto search = button.get();
-	search->addClickHandler([=] {
-		_searchModeEnabled = true;
-		updateControlsVisibility(anim::type::normal);
-	});
+	search->addClickHandler([=] { showSearch(); });
 	auto searchWrap = pushButton(std::move(button));
 	registerToggleControlCallback(searchWrap, [=] {
 		return !selectionMode()
@@ -281,6 +280,11 @@ void TopBar::createSearchView(
 		_searchModeAvailable = visible || alreadyInSearch;
 		updateControlsVisibility(anim::type::instant);
 	}, wrap->lifetime());
+}
+
+void TopBar::showSearch() {
+	_searchModeEnabled = true;
+	updateControlsVisibility(anim::type::normal);
 }
 
 void TopBar::removeButton(not_null<Ui::RpWidget*> button) {
@@ -351,7 +355,7 @@ void TopBar::updateSelectionControlsGeometry(int newWidth) {
 void TopBar::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 
-	auto ms = getms();
+	auto ms = crl::now();
 	auto highlight = _a_highlight.current(ms, _highlight ? 1. : 0.);
 	if (_highlight && !_a_highlight.animating()) {
 		_highlight = false;
@@ -610,6 +614,8 @@ rpl::producer<QString> TitleValue(
 				return lng_settings_advanced;
 			case Section::SettingsType::Chat:
 				return lng_settings_section_chat_settings;
+			case Section::SettingsType::Calls:
+				return lng_settings_section_call_settings;
 			}
 			Unexpected("Bad settings type in Info::TitleValue()");
 		}

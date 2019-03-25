@@ -20,6 +20,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "boxes/change_phone_box.h"
 #include "boxes/photo_crop_box.h"
 #include "boxes/username_box.h"
+#include "data/data_user.h"
 #include "info/profile/info_profile_values.h"
 #include "info/profile/info_profile_button.h"
 #include "lang/lang_keys.h"
@@ -73,7 +74,8 @@ void SetupPhoto(
 				return;
 			}
 
-			auto box = Ui::show(Box<PhotoCropBox>(image, self));
+			const auto box = Ui::show(
+				Box<PhotoCropBox>(image, lang(lng_settings_crop_profile)));
 			box->ready(
 			) | rpl::start_with_next([=](QImage &&image) {
 				Auth().api().uploadPeerPhoto(self, std::move(image));

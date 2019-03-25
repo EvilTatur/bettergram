@@ -6,7 +6,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 */
 #pragma once
 
-#include <windows.h>
+#include "platform/win/wrapper_windows_h.h"
 
 namespace Platform {
 namespace AppUserModelId {

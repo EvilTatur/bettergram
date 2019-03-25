@@ -14,6 +14,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "ui/wrap/padding_wrap.h"
 #include "ui/special_buttons.h"
 #include "boxes/passcode_box.h"
+#include "data/data_user.h"
 #include "lang/lang_keys.h"
 #include "info/profile/info_profile_icon.h"
 #include "styles/style_passport.h"

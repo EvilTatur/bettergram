@@ -9,8 +9,8 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "core/crash_reports.h"
 #include "core/update_checker.h"
 #include "platform/platform_specific.h"
+#include "platform/win/wrapper_windows_h.h"
 
-#include <windows.h>
 #include <shellapi.h>
 
 namespace Platform {

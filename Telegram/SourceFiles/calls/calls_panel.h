@@ -91,7 +91,7 @@ private:
 	void processUserPhoto();
 	void refreshUserPhoto();
 	bool isGoodUserPhoto(PhotoData *photo);
-	void createUserpicCache(ImagePtr image, Data::FileOrigin origin);
+	void createUserpicCache(Image *image, Data::FileOrigin origin);
 	QRect signalBarsRect() const;
 	void paintSignalBarsBg(Painter &p);
 
@@ -101,7 +101,7 @@ private:
 	void stateChanged(State state);
 	void showControls();
 	void updateStatusText(State state);
-	void startDurationUpdateTimer(TimeMs currentDuration);
+	void startDurationUpdateTimer(crl::time currentDuration);
 	void fillFingerprint();
 	void toggleOpacityAnimation(bool visible);
 	void finishAnimating();

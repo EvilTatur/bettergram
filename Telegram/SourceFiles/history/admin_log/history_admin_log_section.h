@@ -149,11 +149,11 @@ public:
 
 	void setItems(
 			std::vector<OwnedItem> &&items,
-			std::map<uint64, not_null<Element*>> &&itemsByIds,
+			std::set<uint64> &&eventIds,
 			bool upLoaded,
 			bool downLoaded) {
 		_items = std::move(items);
-		_itemsByIds = std::move(itemsByIds);
+		_eventIds = std::move(eventIds);
 		_upLoaded = upLoaded;
 		_downLoaded = downLoaded;
 	}
@@ -169,8 +169,8 @@ public:
 	std::vector<OwnedItem> takeItems() {
 		return std::move(_items);
 	}
-	std::map<uint64, not_null<Element*>> takeItemsByIds() {
-		return std::move(_itemsByIds);
+	std::set<uint64> takeEventIds() {
+		return std::move(_eventIds);
 	}
 	std::shared_ptr<LocalIdManager> takeIdManager() {
 		return std::move(_idManager);
@@ -194,7 +194,7 @@ private:
 	std::vector<not_null<UserData*>> _admins;
 	std::vector<not_null<UserData*>> _adminsCanEdit;
 	std::vector<OwnedItem> _items;
-	std::map<uint64, not_null<Element*>> _itemsByIds;
+	std::set<uint64> _eventIds;
 	bool _upLoaded = false;
 	bool _downLoaded = true;
 	std::shared_ptr<LocalIdManager> _idManager;

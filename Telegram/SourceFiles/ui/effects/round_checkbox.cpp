@@ -9,7 +9,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 namespace Ui {
 namespace {
 
-static constexpr int kWideScale = 3;
+constexpr auto kWideScale = 3;
 
 class CheckCaches : public QObject {
 public:
@@ -282,7 +282,7 @@ RoundCheckbox::RoundCheckbox(const style::RoundCheckbox &st, Fn<void()> updateCa
 , _updateCallback(updateCallback) {
 }
 
-void RoundCheckbox::paint(Painter &p, TimeMs ms, int x, int y, int outerWidth, float64 masterScale) {
+void RoundCheckbox::paint(Painter &p, crl::time ms, int x, int y, int outerWidth, float64 masterScale) {
 	if (!_checkedProgress.animating() && !_checked && !_displayInactive) {
 		return;
 	}
@@ -316,12 +316,16 @@ void RoundCheckbox::setChecked(bool newChecked, SetStyle speed) {
 		return;
 	}
 	_checked = newChecked;
-	_checkedProgress.start(
-		_updateCallback,
-		_checked ? 0. : 1.,
-		_checked ? 1. : 0.,
-		_st.duration,
-		anim::linear);
+	if (speed == SetStyle::Animated) {
+		_checkedProgress.start(
+			_updateCallback,
+			_checked ? 0. : 1.,
+			_checked ? 1. : 0.,
+			_st.duration,
+			anim::linear);
+	} else {
+		_checkedProgress.finish();
+	}
 }
 
 void RoundCheckbox::invalidateCache() {
@@ -380,7 +384,7 @@ RoundImageCheckbox::RoundImageCheckbox(const style::RoundImageCheckbox &st, Fn<v
 , _check(_st.check, _updateCallback) {
 }
 
-void RoundImageCheckbox::paint(Painter &p, TimeMs ms, int x, int y, int outerWidth) {
+void RoundImageCheckbox::paint(Painter &p, crl::time ms, int x, int y, int outerWidth) {
 	_selection.step(ms);
 
 	auto selectionLevel = _selection.current(checked() ? 1. : 0.);

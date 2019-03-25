@@ -11,6 +11,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "storage/localstorage.h"
 #include "lang/lang_keys.h"
 #include "history/history.h"
+#include "data/data_channel.h"
 
 namespace InlineBots {
 namespace internal {
@@ -44,7 +45,7 @@ void SendDataCommon::addToHistory(
 			MTP_int(msgId),
 			MTP_int(fromId),
 			peerToMTP(history->peer->id),
-			MTPnullFwdHeader,
+			MTPMessageFwdHeader(),
 			MTP_int(viaBotId),
 			MTP_int(replyToId),
 			mtpDate,
@@ -62,12 +63,10 @@ void SendDataCommon::addToHistory(
 QString SendDataCommon::getErrorOnSend(
 		const Result *owner,
 		not_null<History*> history) const {
-	if (const auto megagroup = history->peer->asMegagroup()) {
-		if (megagroup->restricted(ChannelRestriction::f_send_messages)) {
-			return lang(lng_restricted_send_message);
-		}
-	}
-	return QString();
+	const auto errorKey = Data::RestrictionErrorKey(
+		history->peer,
+		ChatRestriction::f_send_messages);
+	return errorKey ? lang(*errorKey) : QString();
 }
 
 SendDataCommon::SentMTPMessageFields SendText::getSentMessageFields() const {
@@ -144,12 +143,10 @@ void SendPhoto::addToHistory(
 QString SendPhoto::getErrorOnSend(
 		const Result *owner,
 		not_null<History*> history) const {
-	if (const auto megagroup = history->peer->asMegagroup()) {
-		if (megagroup->restricted(ChannelRestriction::f_send_media)) {
-			return lang(lng_restricted_send_media);
-		}
-	}
-	return QString();
+	const auto errorKey = Data::RestrictionErrorKey(
+		history->peer,
+		ChatRestriction::f_send_media);
+	return errorKey ? lang(*errorKey) : QString();
 }
 
 void SendFile::addToHistory(
@@ -179,19 +176,24 @@ void SendFile::addToHistory(
 QString SendFile::getErrorOnSend(
 		const Result *owner,
 		not_null<History*> history) const {
-	if (const auto megagroup = history->peer->asMegagroup()) {
-		if (megagroup->restricted(ChannelRestriction::f_send_media)) {
-			return lang(lng_restricted_send_media);
-		} else if (megagroup->restricted(ChannelRestriction::f_send_stickers)
-			&& (_document->sticker() != nullptr)) {
-			return lang(lng_restricted_send_stickers);
-		} else if (megagroup->restricted(ChannelRestriction::f_send_gifs)
+	const auto errorMedia = Data::RestrictionErrorKey(
+		history->peer,
+		ChatRestriction::f_send_media);
+	const auto errorStickers = Data::RestrictionErrorKey(
+		history->peer,
+		ChatRestriction::f_send_stickers);
+	const auto errorGifs = Data::RestrictionErrorKey(
+		history->peer,
+		ChatRestriction::f_send_gifs);
+	return errorMedia
+		? lang(*errorMedia)
+		: (errorStickers && (_document->sticker() != nullptr))
+		? lang(*errorStickers)
+		: (errorGifs
 			&& _document->isAnimation()
-			&& !_document->isVideoMessage()) {
-			return lang(lng_restricted_send_gifs);
-		}
-	}
-	return QString();
+			&& !_document->isVideoMessage())
+		? lang(*errorGifs)
+		: QString();
 }
 
 void SendGame::addToHistory(
@@ -220,12 +222,10 @@ void SendGame::addToHistory(
 QString SendGame::getErrorOnSend(
 		const Result *owner,
 		not_null<History*> history) const {
-	if (auto megagroup = history->peer->asMegagroup()) {
-		if (megagroup->restricted(ChannelRestriction::f_send_games)) {
-			return lang(lng_restricted_send_inline);
-		}
-	}
-	return QString();
+	const auto errorKey = Data::RestrictionErrorKey(
+		history->peer,
+		ChatRestriction::f_send_games);
+	return errorKey ? lang(*errorKey) : QString();
 }
 
 } // namespace internal

@@ -14,7 +14,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #define TDESKTOP_ALPHA_VERSION (0ULL)
 #endif // TDESKTOP_OFFICIAL_TARGET
 
-constexpr auto AppVersion = 1005000;
-constexpr auto AppVersionStr = "1.5.0";
+constexpr auto AppVersion = 1006002;
+constexpr auto AppVersionStr = "1.6.2";
 constexpr auto AppBetaVersion = false;
 constexpr auto AppAlphaVersion = TDESKTOP_ALPHA_VERSION;

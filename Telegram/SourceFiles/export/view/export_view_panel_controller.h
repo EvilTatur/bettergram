@@ -33,7 +33,7 @@ class Panel;
 
 class PanelController {
 public:
-	PanelController(not_null<ControllerWrap*> process);
+	PanelController(not_null<Controller*> process);
 
 	void activatePanel();
 	void stopWithConfirmation(FnMut<void()> callback = nullptr);
@@ -64,7 +64,7 @@ private:
 
 	void saveSettings() const;
 
-	not_null<ControllerWrap*> _process;
+	not_null<Controller*> _process;
 	std::unique_ptr<Settings> _settings;
 	base::Timer _saveSettingsTimer;
 

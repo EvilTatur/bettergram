@@ -9,20 +9,24 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "ui/effects/ripple_animation.h"
 #include "ui/image/image.h"
+#include "ui/toast/toast.h"
 #include "ui/text_options.h"
+#include "history/history.h"
 #include "history/history_message.h"
 #include "history/view/history_view_service_message.h"
 #include "history/media/history_media_document.h"
-#include "media/media_audio.h"
+#include "media/audio/media_audio.h"
 #include "media/player/media_player_instance.h"
-#include "auth_session.h"
 #include "data/data_media_types.h"
 #include "data/data_session.h"
+#include "data/data_user.h"
+#include "data/data_file_origin.h"
+#include "auth_session.h"
 #include "styles/style_widgets.h"
 #include "styles/style_history.h"
 
 void HistoryMessageVia::create(UserId userId) {
-	bot = App::user(peerFromUser(userId));
+	bot = Auth().data().user(userId);
 	maxWidth = st::msgServiceNameFont->width(
 		lng_inline_bot_via(lt_inline_bot, '@' + bot->username));
 	link = std::make_shared<LambdaClickHandler>([bot = this->bot] {
@@ -46,11 +50,12 @@ void HistoryMessageVia::resize(int32 availw) const {
 }
 
 void HistoryMessageSigned::refresh(const QString &date) {
-	auto time = qsl(", ") + date;
 	auto name = author;
-	auto timew = st::msgDateFont->width(time);
-	auto namew = st::msgDateFont->width(name);
-	if (timew + namew > st::maxSignatureSize) {
+	const auto time = qsl(", ") + date;
+	const auto timew = st::msgDateFont->width(time);
+	const auto namew = st::msgDateFont->width(name);
+	isElided = (timew + namew > st::maxSignatureSize);
+	if (isElided) {
 		name = st::msgDateFont->elided(author, st::maxSignatureSize - timew);
 	}
 	signature.setText(
@@ -72,17 +77,37 @@ int HistoryMessageEdited::maxWidth() const {
 	return text.maxWidth();
 }
 
+HiddenSenderInfo::HiddenSenderInfo(const QString &name)
+: name(name)
+, colorPeerId(Data::FakePeerIdForJustName(name))
+, userpic(Data::PeerUserpicColor(colorPeerId), name) {
+	nameText.setText(st::msgNameStyle, name, Ui::NameTextOptions());
+	const auto parts = name.trimmed().split(' ', QString::SkipEmptyParts);
+	firstName = parts[0];
+	for (const auto &part : parts.mid(1)) {
+		if (!lastName.isEmpty()) {
+			lastName.append(' ');
+		}
+		lastName.append(part);
+	}
+}
+
 void HistoryMessageForwarded::create(const HistoryMessageVia *via) const {
 	auto phrase = QString();
-	auto fromChannel = (originalSender->isChannel() && !originalSender->isMegagroup());
+	const auto fromChannel = originalSender
+		&& originalSender->isChannel()
+		&& !originalSender->isMegagroup();
+	const auto name = originalSender
+		? App::peerName(originalSender)
+		: hiddenSenderInfo->name;
 	if (!originalAuthor.isEmpty()) {
 		phrase = lng_forwarded_signed(
 			lt_channel,
-			App::peerName(originalSender),
+			name,
 			lt_user,
 			originalAuthor);
 	} else {
-		phrase = App::peerName(originalSender);
+		phrase = name;
 	}
 	if (via) {
 		if (fromChannel) {
@@ -116,9 +141,15 @@ void HistoryMessageForwarded::create(const HistoryMessageVia *via) const {
 		Qt::LayoutDirectionAuto
 	};
 	text.setText(st::fwdTextStyle, phrase, opts);
+	static const auto hidden = std::make_shared<LambdaClickHandler>([] {
+		Ui::Toast::Show(lang(lng_forwarded_hidden));
+	});
+
 	text.setLink(1, fromChannel
 		? goToMessageClickHandler(originalSender, originalId)
-		: originalSender->openLink());
+		: originalSender
+		? originalSender->openLink()
+		: hidden);
 	if (via) {
 		text.setLink(2, via->link);
 	}
@@ -164,7 +195,7 @@ bool HistoryMessageReply::updateData(
 		replyToMsgId = 0;
 	}
 	if (force) {
-		Auth().data().requestItemResize(holder);
+		holder->history()->owner().requestItemResize(holder);
 	}
 	return (replyToMsg || !replyToMsgId);
 }
@@ -227,7 +258,7 @@ void HistoryMessageReply::itemRemoved(
 		HistoryItem *removed) {
 	if (replyToMsg == removed) {
 		clearData(holder);
-		Auth().data().requestItemResize(holder);
+		holder->history()->owner().requestItemResize(holder);
 	}
 }
 
@@ -507,7 +538,7 @@ int ReplyKeyboard::naturalHeight() const {
 	return (_rows.size() - 1) * _st->buttonSkip() + _rows.size() * _st->buttonHeight();
 }
 
-void ReplyKeyboard::paint(Painter &p, int outerWidth, const QRect &clip, TimeMs ms) const {
+void ReplyKeyboard::paint(Painter &p, int outerWidth, const QRect &clip, crl::time ms) const {
 	Assert(_st != nullptr);
 	Assert(_width > 0);
 
@@ -605,7 +636,7 @@ void ReplyKeyboard::startAnimation(int i, int j, int direction) {
 
 	_animations.remove(-indexForAnimation);
 	if (!_animations.contains(indexForAnimation)) {
-		_animations.emplace(indexForAnimation, getms());
+		_animations.emplace(indexForAnimation, crl::now());
 	}
 
 	if (notStarted && !_a_selected.animating()) {
@@ -613,7 +644,7 @@ void ReplyKeyboard::startAnimation(int i, int j, int direction) {
 	}
 }
 
-void ReplyKeyboard::step_selected(TimeMs ms, bool timer) {
+void ReplyKeyboard::step_selected(crl::time ms, bool timer) {
 	if (anim::Disabled()) {
 		ms += st::botKbDuration;
 	}
@@ -663,7 +694,7 @@ void ReplyKeyboard::Style::paintButton(
 		Painter &p,
 		int outerWidth,
 		const ReplyKeyboard::Button &button,
-		TimeMs ms) const {
+		crl::time ms) const {
 	const QRect &rect = button.rect;
 	paintButtonBg(p, rect, button.howMuchOver);
 	if (button.ripple) {
@@ -850,5 +881,5 @@ void HistoryDocumentVoice::startSeeking() {
 
 void HistoryDocumentVoice::stopSeeking() {
 	_seeking = false;
-	Media::Player::instance()->stopSeeking(AudioMsgId::Type::Voice);
+	Media::Player::instance()->cancelSeeking(AudioMsgId::Type::Voice);
 }

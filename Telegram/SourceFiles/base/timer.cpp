@@ -39,7 +39,7 @@ Timer::Timer(Fn<void()> callback)
 		Qt::QueuedConnection);
 }
 
-void Timer::start(TimeMs timeout, Qt::TimerType type, Repeat repeat) {
+void Timer::start(crl::time timeout, Qt::TimerType type, Repeat repeat) {
 	cancel();
 
 	_type = type;
@@ -48,7 +48,7 @@ void Timer::start(TimeMs timeout, Qt::TimerType type, Repeat repeat) {
 	setTimeout(timeout);
 	_timerId = startTimer(_timeout, _type);
 	if (_timerId) {
-		_next = crl::time() + _timeout;
+		_next = crl::now() + _timeout;
 	} else {
 		_next = 0;
 	}
@@ -60,12 +60,12 @@ void Timer::cancel() {
 	}
 }
 
-TimeMs Timer::remainingTime() const {
+crl::time Timer::remainingTime() const {
 	if (!isActive()) {
 		return -1;
 	}
-	auto now = crl::time();
-	return (_next > now) ? (_next - now) : TimeMs(0);
+	const auto now = crl::now();
+	return (_next > now) ? (_next - now) : crl::time(0);
 }
 
 void Timer::Adjust() {
@@ -86,7 +86,7 @@ void Timer::adjust() {
 	}
 }
 
-void Timer::setTimeout(TimeMs timeout) {
+void Timer::setTimeout(crl::time timeout) {
 	Expects(timeout >= 0 && timeout <= std::numeric_limits<int>::max());
 
 	_timeout = static_cast<unsigned int>(timeout);
@@ -101,7 +101,7 @@ void Timer::timerEvent(QTimerEvent *e) {
 		if (_adjusted) {
 			start(_timeout, _type, repeat());
 		} else {
-			_next = crl::time() + _timeout;
+			_next = crl::now() + _timeout;
 		}
 	} else {
 		cancel();
@@ -113,7 +113,7 @@ void Timer::timerEvent(QTimerEvent *e) {
 }
 
 int DelayedCallTimer::call(
-		TimeMs timeout,
+		crl::time timeout,
 		FnMut<void()> callback,
 		Qt::TimerType type) {
 	Expects(timeout >= 0);

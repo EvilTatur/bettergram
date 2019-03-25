@@ -28,7 +28,7 @@ void DiscreteSlider::activateCallback() {
 		killTimer(_timerId);
 		_timerId = -1;
 	}
-	auto ms = getms();
+	auto ms = crl::now();
 	if (ms >= _callbackAfterMs) {
 		_sectionActivated.fire_copy(_activeIndex);
 	} else {
@@ -76,7 +76,7 @@ void DiscreteSlider::setSections(const QStringList &labels) {
 	resizeToWidth(width());
 }
 
-int DiscreteSlider::getCurrentActiveLeft(TimeMs ms) {
+int DiscreteSlider::getCurrentActiveLeft(crl::time ms) {
 	const auto left = _sections.empty() ? 0 : _sections[_selected].left;
 	return _a_left.current(ms, left);
 }
@@ -143,7 +143,7 @@ void DiscreteSlider::setSelectedSection(int index) {
 		auto to = _sections[_selected].left;
 		auto duration = getAnimationDuration();
 		_a_left.start([this] { update(); }, from, to, duration);
-		_callbackAfterMs = getms() + duration;
+		_callbackAfterMs = crl::now() + duration;
 	}
 }
 
@@ -278,7 +278,7 @@ void SettingsSlider::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 
 	auto clip = e->rect();
-	auto ms = getms();
+	auto ms = crl::now();
 	auto activeLeft = getCurrentActiveLeft(ms);
 	auto activeWidth = getCurrentActiveWidth();
 

@@ -17,7 +17,7 @@ https://github.com/bettergram/bettergram/blob/master/LEGAL
 #include "ui/widgets/tooltip.h"
 #include "window/layer_widget.h"
 #include "window/themes/window_theme.h"
-#include "messenger.h"
+#include "core/application.h"
 #include "styles/style_widgets.h"
 #include "styles/style_info.h"
 #include "styles/style_calls.h"
@@ -332,7 +332,7 @@ void SeparatePanel::setInnerSize(QSize size) {
 }
 
 void SeparatePanel::initGeometry(QSize size) {
-	const auto center = Messenger::Instance().getPointForCallPanelCenter();
+	const auto center = Core::App().getPointForCallPanelCenter();
 	_useTransparency = Platform::TranslucentWindowsSupported(center);
 	_padding = _useTransparency
 		? st::callShadow.extend
@@ -376,7 +376,7 @@ void SeparatePanel::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 	if (!_animationCache.isNull()) {
 		auto opacity = _opacityAnimation.current(
-			getms(),
+			crl::now(),
 			_visible ? 1. : 0.);
 		if (!_opacityAnimation.animating()) {
 			finishAnimating();

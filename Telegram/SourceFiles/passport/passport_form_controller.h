@@ -517,7 +517,7 @@ private:
 	mtpRequestId _configRequestId = 0;
 
 	PasswordSettings _password;
-	TimeMs _lastSrpIdInvalidTime = 0;
+	crl::time _lastSrpIdInvalidTime = 0;
 	bytes::vector _passwordCheckHash;
 	PasswordCheckCallback _passwordCheckCallback;
 	QByteArray _savedPasswordValue;

@@ -20,7 +20,7 @@ public:
 
 	void refreshParentId(not_null<HistoryItem*> realParent) override;
 
-	void draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const override;
+	void draw(Painter &p, const QRect &r, TextSelection selection, crl::time ms) const override;
 	TextState textState(QPoint point, StateRequest request) const override;
 
 	bool hideMessageText() const override {
@@ -73,6 +73,7 @@ public:
 	bool allowsFastShare() const override {
 		return true;
 	}
+	bool enforceBubbleWidth() const override;
 
 	HistoryMedia *attach() const {
 		return _attach.get();
@@ -90,6 +91,10 @@ private:
 	QMargins inBubblePadding() const;
 	int bottomInfoPadding() const;
 	bool isLogEntryOriginal() const;
+
+	QString displayedSiteName() const;
+	ClickHandlerPtr replaceAttachLink(const ClickHandlerPtr &link) const;
+	bool asArticle() const;
 
 	not_null<WebPageData*> _data;
 	std::vector<std::unique_ptr<Data::Media>> _collage;

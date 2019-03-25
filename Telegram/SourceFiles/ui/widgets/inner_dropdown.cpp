@@ -95,7 +95,7 @@ void InnerDropdown::onScroll() {
 void InnerDropdown::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 
-	const auto ms = getms();
+	const auto ms = crl::now();
 	if (_a_show.animating(ms)) {
 		if (auto opacity = _a_opacity.current(ms, _hiding ? 0. : 1.)) {
 			// _a_opacity.current(ms)->opacityAnimationCallback()->_showAnimation.reset()
@@ -129,7 +129,7 @@ void InnerDropdown::enterEventHook(QEvent *e) {
 
 void InnerDropdown::leaveEventHook(QEvent *e) {
 	if (_autoHiding) {
-		const auto ms = getms();
+		const auto ms = crl::now();
 		if (_a_show.animating(ms) || _a_opacity.animating(ms)) {
 			hideAnimated();
 		} else {
@@ -147,7 +147,7 @@ void InnerDropdown::otherEnter() {
 
 void InnerDropdown::otherLeave() {
 	if (_autoHiding) {
-		const auto ms = getms();
+		const auto ms = crl::now();
 		if (_a_show.animating(ms) || _a_opacity.animating(ms)) {
 			hideAnimated();
 		} else {
