@@ -746,8 +746,6 @@ void RssWidget::fillRowsInSortBySiteMode()
 			continue;
 		}
 
-		_rows.add(Row(channel.staticCast<BaseArticleGroupPreviewItem>()), _channelRowHeight);
-
 		QList<QSharedPointer<RssItem>> items;
 
 		if (_isShowRead) {
@@ -755,6 +753,12 @@ void RssWidget::fillRowsInSortBySiteMode()
 		} else {
 			items = channel->getAllUnreadItems();
 		}
+
+		if (items.isEmpty()) {
+			continue;
+		}
+
+		_rows.add(Row(channel.staticCast<BaseArticleGroupPreviewItem>()), _channelRowHeight);
 
 		// Do not use const reference here,
 		// because we convert item from QSharedPointer<RssItem> to QSharedPointer<BaseArticlePreviewItem>
