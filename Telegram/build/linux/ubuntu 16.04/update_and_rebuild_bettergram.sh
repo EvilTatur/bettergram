@@ -70,6 +70,7 @@ cd ../.. \
   && rm -rf ../release/unpacked \
   && mkdir ../release/unpacked \
   && cp out/Release/Bettergram ../release/unpacked/ \
+  && cp out/Release/Updater ../release/ \
   && cp docs/legal/* ../release/unpacked/ \
   && cd ../release \
   && zip -j bettergram-linux.zip ./unpacked/* \
