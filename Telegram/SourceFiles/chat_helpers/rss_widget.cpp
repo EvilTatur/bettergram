@@ -789,6 +789,10 @@ void RssWidget::addPinnedNews()
 
 void RssWidget::addPinnedNews(const QList<QSharedPointer<PinnedNewsItem>> &news)
 {
+	if (news.isEmpty()) {
+		return;
+	}
+
 	if (_isSortBySite) {
 		_rows.insert(0, Row(_pinnedNewsGroupItem), _channelRowHeight);
 
