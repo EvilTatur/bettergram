@@ -105,6 +105,7 @@ echo ""
 
 git clone git://anongit.freedesktop.org/vdpau/libvdpau \
   && cd libvdpau \
+  && git checkout eac1393480bc7c2209d4984819951cb9dc1e03d0 \
   && ./autogen.sh --enable-static \
   && make $MAKE_THREADS_CNT \
   && $SUDO make install \
