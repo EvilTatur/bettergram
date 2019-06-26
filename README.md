@@ -1,3 +1,5 @@
+# Development stopped
+
 # [Bettergram][bettergram] – Official Messenger
 
 This is the complete source code and the build instructions for the official desktop client for the [Bettergram][bettergram] messenger, based on the [Telegram API][telegram_api] and the [MTProto][telegram_proto] secure protocol.
