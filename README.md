@@ -1,4 +1,4 @@
-# Please note that the development stopped.
+# Please note that the development is stopped.
 # Please do not create new Issues.
 
 # [Bettergram][bettergram] – Official Messenger
